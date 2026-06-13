@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "PromptForge",
+    "tagline": "Crea mejores prompts"
+  },
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "prompts": "Prompts",
+    "generate": "Generar",
+    "settings": "Configuración"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "language": {
+    "en": "English",
+    "es": "Español"
+  },
+  "home": {
+    "title": "Bienvenido a PromptForge",
+    "subtitle": "Crea, gestiona y optimiza tus prompts de IA",
+    "getStarted": "Comenzar",
+    "featurePrompts": "Gestor de Prompts",
+    "featurePromptsDesc": "Crea, edita y organiza tus prompts de IA fácilmente",
+    "featureGenerate": "Generador IA",
+    "featureGenerateDesc": "Prueba tus prompts con modelos de IA al instante",
+    "featureStorage": "Almacenamiento Local",
+    "featureStorageDesc": "Datos guardados localmente con IndexedDB para privacidad",
+    "featureI18n": "Multi-idioma",
+    "featureI18nDesc": "Cambia entre inglés y español sin problemas"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "recentPrompts": "Prompts Recientes",
+    "createPrompt": "Crear Prompt",
+    "subtitle": "Gestiona tu colección de prompts"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "edit": "Editar",
+    "search": "Buscar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "selectLanguage": "Seleccionar idioma"
+  },
+  "prompts": {
+    "name": "Nombre",
+    "content": "Contenido",
+    "category": "Categoría",
+    "tags": "Etiquetas",
+    "emptyTitle": "Sin prompts",
+    "emptyDescription": "Crea tu primer prompt para comenzar",
+    "createTitle": "Crear Prompt",
+    "editTitle": "Editar Prompt",
+    "deleteTitle": "Eliminar Prompt",
+    "deleteConfirmation": "¿Estás seguro de que quieres eliminar este prompt? Esta acción no se puede deshacer.",
+    "duplicateError": "Ya existe un prompt con este nombre"
+  },
+  "promptGeneration": {
+    "pageTitle": "Generar",
+    "pageDescription": "Prueba tus prompts con un modelo de IA",
+    "title": "Generador de Prompts",
+    "inputLabel": "Tu Prompt",
+    "placeholder": "Escribe tu prompt aquí...",
+    "submit": "Generar",
+    "clear": "Limpiar",
+    "response": "Respuesta",
+    "tokens": "Tokens totales: {{total}}"
+  }
+}

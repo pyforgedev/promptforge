@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "PromptForge",
+    "tagline": "Craft better prompts"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "prompts": "Prompts",
+    "generate": "Generate",
+    "settings": "Settings"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "en": "English",
+    "es": "Español"
+  },
+  "home": {
+    "title": "Welcome to PromptForge",
+    "subtitle": "Create, manage, and optimize your AI prompts",
+    "getStarted": "Get Started",
+    "featurePrompts": "Prompt Manager",
+    "featurePromptsDesc": "Create, edit, and organize your AI prompts with ease",
+    "featureGenerate": "AI Generator",
+    "featureGenerateDesc": "Test your prompts against AI models instantly",
+    "featureStorage": "Local Storage",
+    "featureStorageDesc": "All data stored locally with IndexedDB for privacy",
+    "featureI18n": "Multi-language",
+    "featureI18nDesc": "Switch between English and Spanish seamlessly"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "recentPrompts": "Recent Prompts",
+    "createPrompt": "Create Prompt",
+    "subtitle": "Manage your prompt collection"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "edit": "Edit",
+    "search": "Search",
+    "close": "Close",
+    "confirm": "Confirm",
+    "selectLanguage": "Select language"
+  },
+  "prompts": {
+    "name": "Name",
+    "content": "Content",
+    "category": "Category",
+    "tags": "Tags",
+    "emptyTitle": "No prompts yet",
+    "emptyDescription": "Create your first prompt to get started",
+    "createTitle": "Create Prompt",
+    "editTitle": "Edit Prompt",
+    "deleteTitle": "Delete Prompt",
+    "deleteConfirmation": "Are you sure you want to delete this prompt? This action cannot be undone.",
+    "duplicateError": "A prompt with this name already exists"
+  },
+  "promptGeneration": {
+    "pageTitle": "Generate",
+    "pageDescription": "Test your prompts against an AI model",
+    "title": "Prompt Generator",
+    "inputLabel": "Your Prompt",
+    "placeholder": "Enter your prompt here...",
+    "submit": "Generate",
+    "clear": "Clear",
+    "response": "Response",
+    "tokens": "Total tokens: {{total}}"
+  }
+}
