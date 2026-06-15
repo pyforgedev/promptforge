@@ -99,6 +99,14 @@
     "deleteAllConfirmation": "Apakah Anda yakin ingin menghapus semua riwayat? Tindakan ini tidak dapat dibatalkan.",
     "export": "Ekspor TXT"
   },
+  "toast": {
+    "copySuccess": "Prompt berhasil disalin!",
+    "deleteSuccess": "Prompt berhasil dihapus!",
+    "deleteAllSuccess": "Semua riwayat berhasil dihapus!",
+    "generationSuccess": "Prompt berhasil dibuat!",
+    "improveSuccess": "Prompt berhasil ditingkatkan!",
+    "error": "Kesalahan"
+  },
   "templates": {
     "pageTitle": "Template Prompt",
     "pageDescription": "Buat, edit, dan kelola template prompt Anda",

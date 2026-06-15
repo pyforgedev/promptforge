@@ -5,6 +5,7 @@ import {
   deleteHistoryItem,
   deleteAllHistory,
 } from '@/services/storage/indexeddb'
+import { useToast } from '@/hooks/useToast'
 import type { HistoryItem, HistoryFilters } from '../types'
 
 interface UseHistoryReturn {
@@ -38,6 +39,7 @@ export function useHistory(): UseHistoryReturn {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<HistoryFilters>(defaultFilters)
+  const { showDeleteSuccess, showDeleteAllSuccess, showError: showToastError } = useToast()
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -106,20 +108,26 @@ export function useHistory(): UseHistoryReturn {
     try {
       await deleteHistoryItem(id)
       setItems((prev) => prev.filter((i) => i.id !== id))
+      showDeleteSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete history item')
+      const msg = err instanceof Error ? err.message : 'Failed to delete history item'
+      setError(msg)
+      showToastError(msg)
     }
-  }, [])
+  }, [showDeleteSuccess, showToastError])
 
   const removeAll = useCallback(async () => {
     setError(null)
     try {
       await deleteAllHistory()
       setItems([])
+      showDeleteAllSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear history')
+      const msg = err instanceof Error ? err.message : 'Failed to clear history'
+      setError(msg)
+      showToastError(msg)
     }
-  }, [])
+  }, [showDeleteAllSuccess, showToastError])
 
   const exportText = useCallback(() => {
     return items

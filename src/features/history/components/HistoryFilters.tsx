@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { AspectRatio } from '@/features/generator/types'
 import type { HistoryFilters as HF } from '../types'
 
 interface HistoryFiltersProps {
@@ -48,7 +49,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
         </label>
         <Select
           value={filters.aspectRatio}
-          onValueChange={(v) => onFilterChange('aspectRatio', v)}
+          onValueChange={(v) => onFilterChange('aspectRatio', v as AspectRatio | 'all')}
         >
           <SelectTrigger className="w-28">
             <SelectValue placeholder={t('common.all')} />

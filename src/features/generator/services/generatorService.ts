@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { generateCompletion } from '@/services/ai/aiService'
+import type { AIConfig } from '@/features/settings/types'
 import type { GeneratorOptions, GeneratedPrompt, QualityScore } from '../types'
 
 const styleKeywords: Record<string, string[]> = {
@@ -102,11 +103,7 @@ function generateQualityScore(): QualityScore {
 
 export async function generatePrompts(
   options: GeneratorOptions,
-  config: {
-    apiKey: string
-    endpoint: string
-    model: string
-  }
+  config: AIConfig
 ): Promise<GeneratedPrompt[]> {
   const prompts: GeneratedPrompt[] = []
   const actualNiche = options.niche || generateRandomNiche()
@@ -146,17 +143,63 @@ export async function generatePrompts(
   return prompts
 }
 
+function parseImprovedPrompt(rawOutput: string, originalPrompt: string): string {
+  // 1. Remove "New prompt:", "Improved prompt:", etc.
+  let text = rawOutput.replace(/^(?:new|improved|final|enhanced)\s*prompt:\s*/i, '').trim()
+
+  // 2. Extract content from backticks or quotes if they wrap the entire output
+  const wrapMatch = text.match(/^[`"'](.+)[`"']$/s)
+  if (wrapMatch?.[1]) {
+    text = wrapMatch[1].trim()
+  }
+
+  // 3. Extract text after common indicators if present (like "New prompt: `...`")
+  const patterns = [
+    /New prompt:\s*[`"']?([^`"']+)`?"?/i,
+    /Improved prompt:\s*[`"']?([^`"']+)`?"?/i,
+    /Final prompt:\s*[`"']?([^`"']+)`?"?/i,
+  ]
+
+  for (const pattern of patterns) {
+    const match = rawOutput.match(pattern)
+    if (match?.[1]) {
+      return match[1].trim()
+    }
+  }
+
+  // 4. If output contains reasoning (more than one sentence or starts with reasoning patterns), 
+  // try to find the prompt part. Usually prompts for AI art are long comma-separated strings.
+  if (text.toLowerCase().includes('clash') || text.toLowerCase().includes('drop') || text.includes('\n')) {
+    const lines = text.split('\n')
+    // Search for lines that look like a prompt (long, many commas, starts with keywords)
+    const promptLine = lines.find(l => l.includes(',') && l.length > 20)
+    if (promptLine) return promptLine.trim()
+  }
+
+  return text || originalPrompt
+}
+
 export async function improvePrompt(
   content: string,
   options: GeneratorOptions,
-  config: {
-    apiKey: string
-    endpoint: string
-    model: string
-  }
+  config: AIConfig
 ): Promise<GeneratedPrompt> {
-  const improvementPrompt = `Improve the following prompt for better quality, clarity, and commercial potential: ${content}`
+  const improvementPrompt = `Improve the following prompt for better quality, clarity, and commercial potential.
+Original prompt: "${content}"
+
+Your task:
+1. Fix contradictions (e.g., "single icon" vs "cityscape").
+2. Enhance details and commercial appeal.
+3. Return ONLY the final improved prompt. 
+
+Format: "Prompt content goes here..."
+Do NOT include reasoning, labels like "Improved prompt:", or quotes.
+
+Improved Prompt:`
+
   const improvedContent = await generateCompletion(improvementPrompt, config)
+  
+  const parsedContent = parseImprovedPrompt(improvedContent, content)
   
   const aspectRatio = options.aspectRatio === 'random'
     ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
@@ -164,7 +207,7 @@ export async function improvePrompt(
 
   return {
     id: uuidv4(),
-    content: improvedContent,
+    content: parsedContent,
     aspectRatio,
     niche: options.niche || 'general',
     stylePreset: options.stylePreset,

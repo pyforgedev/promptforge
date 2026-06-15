@@ -6,6 +6,7 @@ import { HistoryList } from '@/features/history/components/HistoryList'
 import { HistoryFiltersBar } from '@/features/history/components/HistoryFilters'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/useToast'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ import { downloadAsTxt } from '@/services/export/txtExport'
 
 export default function HistoryPage() {
   const { t } = useTranslation()
+  const { showCopySuccess } = useToast()
   const {
     filteredItems,
     loading,
@@ -37,8 +39,9 @@ export default function HistoryPage() {
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content)
+      showCopySuccess()
     } catch {
-      // fallback
+      // fallback handled by clipboard API failing
     }
   }
 

@@ -99,6 +99,14 @@
     "deleteAllConfirmation": "Are you sure you want to delete all history? This action cannot be undone.",
     "export": "Export TXT"
   },
+  "toast": {
+    "copySuccess": "Prompt copied to clipboard!",
+    "deleteSuccess": "Prompt deleted successfully!",
+    "deleteAllSuccess": "All history deleted successfully!",
+    "generationSuccess": "Prompt generated successfully!",
+    "improveSuccess": "Prompt improved successfully!",
+    "error": "Error"
+  },
   "templates": {
     "pageTitle": "Prompt Templates",
     "pageDescription": "Create, edit, and manage your prompt templates",
