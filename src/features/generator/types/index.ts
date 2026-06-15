@@ -43,6 +43,11 @@ export interface QualityScore {
   uniqueness: number
 }
 
+export interface StructuredPromptOutput {
+  content: string
+  qualityScore: Omit<QualityScore, 'overall'>
+}
+
 export interface GeneratedPrompt {
   id: string
   content: string

@@ -1,7 +1,22 @@
 import { v4 as uuidv4 } from 'uuid'
-import { generateCompletion } from '@/services/ai/aiService'
+import { z } from 'zod'
+import pLimit from 'p-limit'
+import { generateCompletion, generateStructured, generateStructuredStream } from '@/services/ai/aiService'
 import type { AIConfig } from '@/features/settings/types'
-import type { GeneratorOptions, GeneratedPrompt, QualityScore } from '../types'
+import type { GeneratorOptions, GeneratedPrompt, QualityScore, StructuredPromptOutput } from '../types'
+
+const qualityScoreSchema = z.object({
+  commercialPotential: z.number().min(0).max(10),
+  creativity: z.number().min(0).max(10),
+  clarity: z.number().min(0).max(10),
+  marketability: z.number().min(0).max(10),
+  uniqueness: z.number().min(0).max(10),
+})
+
+const structuredPromptSchema = z.object({
+  content: z.string().min(1),
+  qualityScore: qualityScoreSchema
+})
 
 const styleKeywords: Record<string, string[]> = {
   'commercial-photography': ['commercial', 'professional lighting', 'product-focused', 'clean background', 'high-end'],
@@ -82,7 +97,7 @@ function generatePromptContent(
   return parts.join(', ')
 }
 
-function generateQualityScore(): QualityScore {
+function generateMockQualityScore(): QualityScore {
   const randomScore = () => Math.round((6 + Math.random() * 3.5) * 10) / 10
   const cp = randomScore()
   const cr = randomScore()
@@ -101,46 +116,98 @@ function generateQualityScore(): QualityScore {
   }
 }
 
+// No longer needed
+// async function evaluatePromptQuality(promptText: string, config: AIConfig): Promise<QualityScore> {
+// ...
+// }
+
 export async function generatePrompts(
   options: GeneratorOptions,
-  config: AIConfig
+  config: AIConfig,
+  onPartialUpdate?: (index: number, partialData: Partial<StructuredPromptOutput>) => void
 ): Promise<GeneratedPrompt[]> {
-  const prompts: GeneratedPrompt[] = []
   const actualNiche = options.niche || generateRandomNiche()
   const count = options.count
+  const concurrencyLimit = 3
+  const limit = pLimit(concurrencyLimit)
 
+  const tasks = Array.from({ length: count }, async (_, i) => {
+    return limit(async () => {
+      const aspectRatio = options.aspectRatio === 'random'
+        ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
+        : options.aspectRatio
 
+      const stylePreset = options.stylePreset === 'random'
+        ? (['commercial-photography', 'lifestyle', 'corporate', 'food', 'travel', 'technology', 'nature'] as const)[Math.floor(Math.random() * 7)]
+        : options.stylePreset
 
-  for (let i = 0; i < count; i++) {
-    const aspectRatio = options.aspectRatio === 'random'
-      ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
-      : options.aspectRatio
-
-    const stylePreset = options.stylePreset === 'random'
-      ? (['commercial-photography', 'lifestyle', 'corporate', 'food', 'travel', 'technology', 'nature'] as const)[Math.floor(Math.random() * 7)]
-      : options.stylePreset
-
-    const promptTemplate = generatePromptContent(
-      actualNiche,
-      aspectRatio,
-      stylePreset,
-      options.customStyle,
-    )
-    
-    const content = await generateCompletion(promptTemplate, config)
-
-    prompts.push({
-      id: uuidv4(),
-      content,
-      aspectRatio,
-      niche: actualNiche,
-      stylePreset,
-      qualityScore: generateQualityScore(),
-      createdAt: Date.now(),
-    })
+      const promptTemplate = generatePromptContent(
+        actualNiche,
+        aspectRatio,
+        stylePreset,
+        options.customStyle,
+      )
+      
+      const structuredPromptMsg = `Generate a high-quality stock photo prompt and evaluate its quality.
+Return ONLY valid JSON matching this structure:
+{
+  "content": "prompt text goes here",
+  "qualityScore": {
+    "commercialPotential": 0.0,
+    "creativity": 0.0,
+    "clarity": 0.0,
+    "marketability": 0.0,
+    "uniqueness": 0.0
   }
+}
 
-  return prompts
+Base requirements for the prompt:
+"${promptTemplate}"`
+
+      let output: StructuredPromptOutput | null = null
+
+      try {
+        if (onPartialUpdate && config.provider !== 'gemini') { // Gemini adapter stream not implemented yet
+          output = await generateStructuredStream(
+            structuredPromptMsg,
+            structuredPromptSchema,
+            config,
+            (partial) => onPartialUpdate(i, partial)
+          )
+        } else {
+          output = await generateStructured(structuredPromptMsg, structuredPromptSchema, config)
+        }
+      } catch (error) {
+        console.warn(`Generation failed for item ${i}, using fallback.`, error)
+        const mockScore = generateMockQualityScore()
+        output = {
+          content: promptTemplate, // fallback to template
+          qualityScore: {
+            commercialPotential: mockScore.commercialPotential,
+            creativity: mockScore.creativity,
+            clarity: mockScore.clarity,
+            marketability: mockScore.marketability,
+            uniqueness: mockScore.uniqueness
+          }
+        }
+      }
+
+      const s = output.qualityScore
+      const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
+
+      return {
+        id: uuidv4(),
+        content: output.content,
+        aspectRatio,
+        niche: actualNiche,
+        stylePreset,
+        qualityScore: { ...s, overall },
+        createdAt: Date.now(),
+      } as GeneratedPrompt
+    })
+  })
+
+  return Promise.all(tasks)
 }
 
 function parseImprovedPrompt(rawOutput: string, originalPrompt: string): string {
@@ -182,36 +249,69 @@ function parseImprovedPrompt(rawOutput: string, originalPrompt: string): string 
 export async function improvePrompt(
   content: string,
   options: GeneratorOptions,
-  config: AIConfig
+  config: AIConfig,
+  onPartialUpdate?: (partialData: Partial<StructuredPromptOutput>) => void
 ): Promise<GeneratedPrompt> {
-  const improvementPrompt = `Improve the following prompt for better quality, clarity, and commercial potential.
+  const improvementPrompt = `Improve the following stock photo prompt for better quality, clarity, and commercial potential.
 Original prompt: "${content}"
 
 Your task:
 1. Fix contradictions (e.g., "single icon" vs "cityscape").
 2. Enhance details and commercial appeal.
-3. Return ONLY the final improved prompt. 
+3. Return ONLY valid JSON matching this structure:
+{
+  "content": "improved prompt text goes here",
+  "qualityScore": {
+    "commercialPotential": 0.0,
+    "creativity": 0.0,
+    "clarity": 0.0,
+    "marketability": 0.0,
+    "uniqueness": 0.0
+  }
+}`
 
-Format: "Prompt content goes here..."
-Do NOT include reasoning, labels like "Improved prompt:", or quotes.
+  let output: StructuredPromptOutput | null = null
 
-Improved Prompt:`
+  try {
+    if (onPartialUpdate && config.provider !== 'gemini') {
+      output = await generateStructuredStream(
+        improvementPrompt,
+        structuredPromptSchema,
+        config,
+        onPartialUpdate
+      )
+    } else {
+      output = await generateStructured(improvementPrompt, structuredPromptSchema, config)
+    }
+  } catch (error) {
+    console.warn(`Improvement failed, using fallback.`, error)
+    const mockScore = generateMockQualityScore()
+    output = {
+      content, // fallback to original
+      qualityScore: {
+        commercialPotential: mockScore.commercialPotential,
+        creativity: mockScore.creativity,
+        clarity: mockScore.clarity,
+        marketability: mockScore.marketability,
+        uniqueness: mockScore.uniqueness
+      }
+    }
+  }
 
-  const improvedContent = await generateCompletion(improvementPrompt, config)
-  
-  const parsedContent = parseImprovedPrompt(improvedContent, content)
-  
+  const s = output.qualityScore
+  const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
+
   const aspectRatio = options.aspectRatio === 'random'
     ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
     : options.aspectRatio
 
   return {
     id: uuidv4(),
-    content: parsedContent,
+    content: output.content,
     aspectRatio,
     niche: options.niche || 'general',
     stylePreset: options.stylePreset,
-    qualityScore: generateQualityScore(),
+    qualityScore: { ...s, overall },
     createdAt: Date.now(),
   }
 }

@@ -137,8 +137,48 @@ export function useGenerator(): UseGeneratorReturn {
     setLoading(true)
     setError(null)
     setDuplicateWarnings([])
+    
+    // Initialize results with placeholders for streaming
+    const initialPrompts: GeneratedPrompt[] = Array.from({ length: state().count }).map(() => ({
+      id: crypto.randomUUID(),
+      content: '',
+      aspectRatio: state().aspectRatio,
+      niche: state().niche,
+      stylePreset: state().stylePreset,
+      qualityScore: {
+        commercialPotential: 0,
+        creativity: 0,
+        clarity: 0,
+        marketability: 0,
+        uniqueness: 0,
+        overall: 0
+      },
+      createdAt: Date.now()
+    }))
+    
+    setResultsState(initialPrompts)
+    
+    const handlePartialUpdate = (index: number, partialData: Partial<{ content: string; qualityScore: Partial<GeneratedPrompt['qualityScore']> }>) => {
+      setResultsState(prev => {
+        const newResults = [...prev]
+        if (newResults[index]) {
+          newResults[index] = {
+            ...newResults[index],
+            ...(partialData.content !== undefined ? { content: partialData.content } : {}),
+            ...(partialData.qualityScore !== undefined ? {
+              qualityScore: {
+                ...newResults[index].qualityScore,
+                ...partialData.qualityScore as any
+              }
+            } : {})
+          }
+        }
+        return newResults
+      })
+    }
+
     try {
-      const prompts = await generatePrompts(state(), activeConfig)
+      const prompts = await generatePrompts(state(), activeConfig, handlePartialUpdate)
       
       // Run duplicate check before setting results to ensure warnings are ready
       await runDuplicateCheck(prompts)
@@ -151,10 +191,12 @@ export function useGenerator(): UseGeneratorReturn {
     } catch (err) {
       showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
       setError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
+      // On error, clear placeholders
+      setResultsState(lastResult || [])
     } finally {
       setLoading(false)
     }
-  }, [state, t, runDuplicateCheck, activeConfig, showGenerationSuccess, showError, setResults])
+  }, [state, t, runDuplicateCheck, activeConfig, showGenerationSuccess, showError, setResults, lastResult])
 
   const generate = doGenerate
   const regenerate = doGenerate
@@ -165,12 +207,45 @@ export function useGenerator(): UseGeneratorReturn {
       return
     }
 
-    const prompt = results.find((p) => p.id === id)
-    if (!prompt) return
+    const promptIndex = results.findIndex((p) => p.id === id)
+    if (promptIndex === -1) return
+    const prompt = results[promptIndex]
 
     setImprovingId(id)
+    
+    // Clear content of target prompt during streaming to show new output
+    setResultsState(prev => {
+      const newResults = [...prev]
+      if (newResults[promptIndex]) {
+        newResults[promptIndex] = {
+          ...newResults[promptIndex],
+          content: ''
+        }
+      }
+      return newResults
+    })
+
+    const handlePartialUpdate = (partialData: Partial<{ content: string; qualityScore: Partial<GeneratedPrompt['qualityScore']> }>) => {
+      setResultsState(prev => {
+        const newResults = [...prev]
+        if (newResults[promptIndex]) {
+          newResults[promptIndex] = {
+            ...newResults[promptIndex],
+            ...(partialData.content !== undefined ? { content: partialData.content } : {}),
+            ...(partialData.qualityScore !== undefined ? {
+              qualityScore: {
+                ...newResults[promptIndex].qualityScore,
+                ...partialData.qualityScore as any
+              }
+            } : {})
+          }
+        }
+        return newResults
+      })
+    }
+
     try {
-      const improved = await improvePrompt(prompt.content, state(), activeConfig)
+      const improved = await improvePrompt(prompt.content, state(), activeConfig, handlePartialUpdate)
       const newResults = results.map((p) => (p.id === id ? { ...improved, id: p.id } : p))
       setResults(newResults)
       showImproveSuccess()
@@ -183,6 +258,8 @@ export function useGenerator(): UseGeneratorReturn {
     } catch (err) {
       showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
       setError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
+      // Revert if error
+      setResults(results)
     } finally {
       setImprovingId(null)
     }
