@@ -5,13 +5,29 @@ const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
 >(({ className, ...props }, ref) => {
+  const innerRef = React.useRef<HTMLTextAreaElement>(null)
+  React.useImperativeHandle(ref, () => innerRef.current!)
+
+  React.useEffect(() => {
+    const textarea = innerRef.current
+    if (textarea) {
+      const resize = () => {
+        textarea.style.height = "auto"
+        textarea.style.height = `${textarea.scrollHeight}px`
+      }
+      textarea.addEventListener("input", resize)
+      resize()
+      return () => textarea.removeEventListener("input", resize)
+    }
+  }, [])
+
   return (
     <textarea
       className={cn(
-        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[80px] w-full rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2 text-sm transition-all placeholder:text-[var(--text-muted)] focus-visible:outline-none focus-visible:border-[var(--brand-primary)] focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
-      ref={ref}
+      ref={innerRef}
       {...props}
     />
   )

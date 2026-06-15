@@ -188,15 +188,15 @@ export const GeneratorForm = memo(function GeneratorForm() {
                   <CardTitle className="text-lg">
                     {t('generator.promptNumber', { number: index + 1 })}
                   </CardTitle>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span className="px-2 py-1 bg-secondary rounded-full text-xs font-medium">
+                  <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)]">
+                    <span className="px-2 py-0.5 border border-[var(--border-subtle)] bg-[var(--bg-surface-hover)] rounded-full text-xs font-medium">
                       {prompt.aspectRatio}
                     </span>
-                    <span className="px-2 py-1 bg-secondary rounded-full text-xs font-medium">
+                    <span className="px-2 py-0.5 border border-[var(--border-subtle)] bg-[var(--bg-surface-hover)] rounded-full text-xs font-medium">
                       {prompt.niche}
                     </span>
                     {prompt.stylePreset !== 'none' && (
-                      <span className="px-2 py-1 bg-secondary rounded-full text-xs font-medium">
+                      <span className="px-2 py-0.5 border border-[var(--border-subtle)] bg-[var(--bg-surface-hover)] rounded-full text-xs font-medium">
                         {prompt.stylePreset}
                       </span>
                     )}
@@ -204,9 +204,14 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 </div>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                <p className="text-base text-foreground leading-relaxed">
-                  {prompt.content}
-                </p>
+                <div className="relative">
+                  <p className="font-mono text-base text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap min-h-[3rem]">
+                    {prompt.content}
+                    {loading && !prompt.content && (
+                      <span className="inline-block w-2 h-5 bg-[var(--brand-primary)] ml-1 animate-pulse" />
+                    )}
+                  </p>
+                </div>
                 <div className="flex items-center gap-3">
                   <EnhancedCopyButton
                     content={prompt.content}

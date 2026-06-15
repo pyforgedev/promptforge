@@ -47,18 +47,18 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
   const ActiveThemeIcon = themes.find(t => t.value === preferences.theme)?.icon || Monitor
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-overlay)] px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
         <button
-          className="cursor-pointer rounded-md p-2 hover:bg-secondary md:hidden"
+          className="cursor-pointer rounded-md p-2 hover:bg-[var(--bg-surface-hover)] md:hidden"
           onClick={onMenuToggle}
           aria-label={t('nav.home')}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-[var(--text-primary)]" />
         </button>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">
+          <Sparkles className="h-5 w-5 text-[var(--brand-primary)]" />
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">
             {t('app.name')}
           </h1>
         </div>
@@ -92,9 +92,9 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
             {themes.map(({ value, icon: Icon, label }) => (
               <DropdownMenuItem
                 key={value}
-                onClick={() => handleThemeChange(value)}
+                onSelect={() => handleThemeChange(value)}
                 className={`flex items-center gap-2 cursor-pointer ${
-                  preferences.theme === value ? 'font-bold text-primary bg-primary/10' : ''
+                  preferences.theme === value ? 'font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10' : ''
                 }`}
               >
                 <Icon className="h-4 w-4" />

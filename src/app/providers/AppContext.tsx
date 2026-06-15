@@ -20,17 +20,14 @@ const PREFERENCES_KEY = 'app-preferences'
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement
-  if (theme === 'system') {
-    root.classList.remove('light', 'dark')
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      root.classList.add('dark')
-    } else {
-      root.classList.add('light')
-    }
-  } else {
-    root.classList.remove('light', 'dark')
-    root.classList.add(theme)
-  }
+  const effectiveTheme = theme === 'system' 
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+  
+  root.setAttribute('data-theme', effectiveTheme);
+  // Maintain backward compatibility for transition
+  root.classList.remove('light', 'dark');
+  root.classList.add(effectiveTheme);
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
