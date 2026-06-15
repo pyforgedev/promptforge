@@ -7,7 +7,6 @@
     "home": "Beranda",
     "dashboard": "Dasbor",
     "prompts": "Prompt",
-    "generate": "Hasilkan",
     "generator": "Generator",
     "history": "Riwayat",
     "templates": "Template",
@@ -110,17 +109,6 @@
     "import": "Impor",
     "export": "Ekspor",
     "resetDefault": "Reset Default"
-  },
-  "promptGeneration": {
-    "pageTitle": "Hasilkan",
-    "pageDescription": "Uji prompt Anda terhadap model AI",
-    "title": "Generator Prompt",
-    "inputLabel": "Prompt Anda",
-    "placeholder": "Masukkan prompt Anda di sini...",
-    "submit": "Hasilkan",
-    "clear": "Bersihkan",
-    "response": "Respons",
-    "tokens": "Total token: {{total}}"
   },
   "generator": {
     "pageTitle": "Generator Premium",

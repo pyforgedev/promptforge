@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 
 const Home = lazy(() => import('@/pages/Home'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
-const Generate = lazy(() => import('@/pages/Generate'))
+
 const GeneratorPage = lazy(() => import('@/pages/GeneratorPage'))
 const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
 const TemplatesPage = lazy(() => import('@/pages/TemplatesPage'))
@@ -39,14 +39,7 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      {
-        path: '/generate',
-        element: (
-          <Suspense fallback={<LazyFallback />}>
-            <Generate />
-          </Suspense>
-        ),
-      },
+
       {
         path: '/generator',
         element: (

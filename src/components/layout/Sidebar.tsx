@@ -16,7 +16,7 @@ const navItems = [
   { to: '/generator', icon: Wand2, label: 'nav.generator' },
   { to: '/history', icon: Clock, label: 'nav.history' },
   { to: '/templates', icon: FileText, label: 'nav.templates' },
-  { to: '/generate', icon: Sparkles, label: 'nav.generate' },
+
   { to: '/settings', icon: Settings, label: 'nav.settings' },
 ]
 

@@ -7,7 +7,6 @@
     "home": "Home",
     "dashboard": "Dashboard",
     "prompts": "Prompts",
-    "generate": "Generate",
     "generator": "Generator",
     "history": "History",
     "templates": "Templates",
@@ -110,17 +109,6 @@
     "import": "Import",
     "export": "Export",
     "resetDefault": "Reset Default"
-  },
-  "promptGeneration": {
-    "pageTitle": "Generate",
-    "pageDescription": "Test your prompts against an AI model",
-    "title": "Prompt Generator",
-    "inputLabel": "Your Prompt",
-    "placeholder": "Enter your prompt here...",
-    "submit": "Generate",
-    "clear": "Clear",
-    "response": "Response",
-    "tokens": "Total tokens: {{total}}"
   },
   "generator": {
     "pageTitle": "Premium Generator",
