@@ -83,7 +83,8 @@
     "presetName": "Nama Prasetel",
     "load": "Muat",
     "exportPresets": "Ekspor",
-    "importPresets": "Impor"
+    "importPresets": "Impor",
+    "noPresets": "Belum ada prasetel. Impor atau buat satu."
   },
   "history": {
     "pageTitle": "Riwayat Prompt",

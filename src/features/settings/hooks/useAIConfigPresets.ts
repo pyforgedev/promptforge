@@ -90,7 +90,10 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const load = async () => {
+      await refresh()
+    }
+    void load()
   }, [refresh])
 
   const save = useCallback(async (name: string, config: AIConfig) => {

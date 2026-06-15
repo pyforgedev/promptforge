@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import { generateCompletion } from '@/services/ai/aiService'
 import type { GeneratorOptions, GeneratedPrompt, QualityScore } from '../types'
 
 const styleKeywords: Record<string, string[]> = {
@@ -99,12 +100,19 @@ function generateQualityScore(): QualityScore {
   }
 }
 
-export async function generatePrompts(options: GeneratorOptions): Promise<GeneratedPrompt[]> {
+export async function generatePrompts(
+  options: GeneratorOptions,
+  config: {
+    apiKey: string
+    endpoint: string
+    model: string
+  }
+): Promise<GeneratedPrompt[]> {
   const prompts: GeneratedPrompt[] = []
   const actualNiche = options.niche || generateRandomNiche()
   const count = options.count
 
-  await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700))
+
 
   for (let i = 0; i < count; i++) {
     const aspectRatio = options.aspectRatio === 'random'
@@ -115,12 +123,14 @@ export async function generatePrompts(options: GeneratorOptions): Promise<Genera
       ? (['commercial-photography', 'lifestyle', 'corporate', 'food', 'travel', 'technology', 'nature'] as const)[Math.floor(Math.random() * 7)]
       : options.stylePreset
 
-    const content = generatePromptContent(
+    const promptTemplate = generatePromptContent(
       actualNiche,
       aspectRatio,
       stylePreset,
       options.customStyle,
     )
+    
+    const content = await generateCompletion(promptTemplate, config)
 
     prompts.push({
       id: uuidv4(),
@@ -139,26 +149,22 @@ export async function generatePrompts(options: GeneratorOptions): Promise<Genera
 export async function improvePrompt(
   content: string,
   options: GeneratorOptions,
+  config: {
+    apiKey: string
+    endpoint: string
+    model: string
+  }
 ): Promise<GeneratedPrompt> {
-  const improvements = [
-    'with more dramatic lighting and enhanced shadows',
-    'featuring additional foreground elements for depth',
-    'with a wider angle perspective showing more context',
-    'with warmer color grading for a more inviting atmosphere',
-    'with increased detail in textures and materials',
-    'from a unique low-angle perspective for added impact',
-  ]
-
-  await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500))
-
-  const improvement = improvements[Math.floor(Math.random() * improvements.length)]
+  const improvementPrompt = `Improve the following prompt for better quality, clarity, and commercial potential: ${content}`
+  const improvedContent = await generateCompletion(improvementPrompt, config)
+  
   const aspectRatio = options.aspectRatio === 'random'
     ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
     : options.aspectRatio
 
   return {
     id: uuidv4(),
-    content: `${content}, ${improvement}`,
+    content: improvedContent,
     aspectRatio,
     niche: options.niche || 'general',
     stylePreset: options.stylePreset,

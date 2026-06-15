@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Plus } from 'lucide-react'
+import { Plus, RefreshCw, X, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
-import { useAIConfigPresets } from '@/features/settings/hooks/useAIConfigPresets'
+import { useToast } from '@/hooks/useToast'
+import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { getCustomModels, saveCustomModel, deleteCustomModel } from '@/features/settings/services/settingsService'
+import { testConnection } from '@/services/ai/aiService'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import type { AIProvider } from '@/features/settings/types'
 import {
   Select,
   SelectContent,
@@ -30,44 +34,113 @@ import {
 export default function Settings() {
   const { t, i18n } = useTranslation()
   const { preferences, setTheme, setLanguage } = useAppContext()
+  
   const {
     presets,
     activeConfig,
-    customModels,
-    saving,
-    error,
-    save,
-    remove,
-    loadPreset,
-    setConfig,
-    exportPresets,
-    importPresets,
-    addCustomModel,
-    removeCustomModel,
-  } = useAIConfigPresets()
+    isReady,
+    setActiveConfig,
+    savePreset,
+    deletePreset,
+  } = useAIConfigStore()
+
+  const [customModels, setCustomModels] = useState<string[]>([])
+  const [provider, setProvider] = useState<AIProvider>('openai')
+  const [apiKey, setApiKey] = useState('')
+  const [endpoint, setEndpoint] = useState('')
+  const [model, setModel] = useState('gpt-4')
+  const [isApplying, setIsApplying] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null)
+  const isInitialized = useRef(false)
 
   const [presetDialogOpen, setPresetDialogOpen] = useState(false)
   const [presetName, setPresetName] = useState('')
-  const [apiKey, setApiKey] = useState(activeConfig?.apiKey ?? '')
-  const [endpoint, setEndpoint] = useState(activeConfig?.endpoint ?? '')
-  const [model, setModel] = useState(activeConfig?.model ?? 'gpt-4')
   const [newCustomModel, setNewCustomModel] = useState('')
   const [importText, setImportText] = useState('')
   const [importOpen, setImportOpen] = useState(false)
+  const { showToast } = useToast()
+
+  // Initialize local state when store is ready
+  useEffect(() => {
+    if (isReady && activeConfig && !isInitialized.current) {
+      setApiKey(activeConfig.apiKey || '')
+      setEndpoint(activeConfig.endpoint || '')
+      setModel(activeConfig.model || 'gpt-4')
+      setProvider(activeConfig.provider || 'openai')
+      isInitialized.current = true
+    }
+  }, [isReady, activeConfig])
+
+  // Load custom models
+  useEffect(() => {
+    const load = async () => {
+      const models = await getCustomModels()
+      setCustomModels(models)
+    }
+    load()
+  }, [])
 
   const handleSavePreset = async () => {
     if (!presetName.trim()) return
-    await save(presetName.trim(), { apiKey, endpoint, model })
-    setPresetName('')
-    setPresetDialogOpen(false)
+    try {
+      await savePreset({
+        id: crypto.randomUUID(),
+        name: presetName.trim(),
+        provider,
+        apiKey,
+        endpoint,
+        model,
+        createdAt: Date.now()
+      })
+      setPresetName('')
+      setPresetDialogOpen(false)
+      showToast('success', t('toast.presetSaved', { defaultValue: 'Preset saved successfully' }))
+    } catch {
+      showToast('error', t('toast.saveFailed', { defaultValue: 'Failed to save preset' }))
+    }
   }
 
-  const handleApplyConfig = () => {
-    setConfig({ apiKey, endpoint, model })
+  const handleTestConnection = async () => {
+    setIsTesting(true)
+    setTestResult(null)
+    try {
+      await testConnection({ provider, apiKey, endpoint, model })
+      setTestResult('success')
+      showToast('success', t('settings.testSuccess', { defaultValue: 'Connection successful!' }))
+    } catch (err) {
+      setTestResult('error')
+      const msg = err instanceof Error ? err.message : 'Connection failed'
+      showToast('error', t('settings.testFailed', { defaultValue: `Connection failed: ${msg}` }))
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
+  const handleApplyConfig = async () => {
+    if (provider !== 'gemini' && !apiKey.startsWith('sk-') && provider !== 'custom') {
+      showToast('error', 'API Key must start with sk-')
+      return
+    }
+    if (!endpoint.startsWith('http')) {
+      showToast('error', 'Endpoint must be a valid URL')
+      return
+    }
+    
+    setIsApplying(true)
+    try {
+      await setActiveConfig({ provider, apiKey, endpoint, model })
+      showToast('success', t('toast.configApplied', { defaultValue: 'Configuration applied successfully' }))
+    } catch {
+      showToast('error', t('toast.applyFailed', { defaultValue: 'Failed to apply configuration' }))
+    } finally {
+      setIsApplying(false)
+    }
   }
 
   const handleExport = () => {
-    const json = exportPresets()
+    const data = { presets, activeConfig }
+    const json = JSON.stringify(data, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -77,13 +150,27 @@ export default function Settings() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+    showToast('success', t('toast.exportSuccess', { defaultValue: 'Presets exported successfully' }))
   }
 
   const handleImport = async () => {
     if (!importText.trim()) return
-    await importPresets(importText)
-    setImportText('')
-    setImportOpen(false)
+    try {
+      const data = JSON.parse(importText)
+      if (data.presets && Array.isArray(data.presets)) {
+        for (const p of data.presets) {
+          await savePreset(p)
+        }
+      }
+      if (data.activeConfig) {
+        await setActiveConfig(data.activeConfig)
+      }
+      setImportText('')
+      setImportOpen(false)
+      showToast('success', t('toast.importSuccess', { defaultValue: 'Presets imported successfully' }))
+    } catch {
+      showToast('error', t('toast.importFailed', { defaultValue: 'Failed to import presets' }))
+    }
   }
 
   return (
@@ -125,13 +212,13 @@ export default function Settings() {
               {t('settings.language')}
             </label>
             <Select
-              value={i18n.language}
+              value={i18n.language?.startsWith('id') ? 'id' : 'en'}
               onValueChange={(v) => {
                 setLanguage(v)
                 i18n.changeLanguage(v)
               }}
             >
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-36 h-8 px-3 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -152,6 +239,38 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
+            <label htmlFor="provider" className="text-sm font-medium text-foreground">
+              Provider
+            </label>
+            <Select 
+              value={provider} 
+              onValueChange={(v: AIProvider) => {
+                setProvider(v)
+                setTestResult(null)
+                if (v === 'openai') setEndpoint('https://api.openai.com/v1')
+                if (v === 'gemini') {
+                  setEndpoint('https://generativelanguage.googleapis.com/v1beta')
+                  setModel('gemini-1.5-flash')
+                }
+                if (v === 'openrouter') {
+                  setEndpoint('https://openrouter.ai/api/v1')
+                  setModel('openai/gpt-3.5-turbo')
+                }
+              }}
+            >
+              <SelectTrigger id="provider" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="gemini">Google Gemini</SelectItem>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
+                <SelectItem value="custom">Custom (9router / Local / Other)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label htmlFor="api-key" className="text-sm font-medium text-foreground">
               {t('settings.apiKey')}
             </label>
@@ -159,8 +278,11 @@ export default function Settings() {
               id="api-key"
               type="password"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={apiKey ? `sk-...${apiKey.slice(-4)}` : 'sk-...'}
+              onChange={(e) => {
+                setApiKey(e.target.value)
+                setTestResult(null)
+              }}
+              placeholder={apiKey ? `...${apiKey.slice(-4)}` : 'Enter API Key'}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -170,24 +292,48 @@ export default function Settings() {
             <Input
               id="endpoint"
               value={endpoint}
-              onChange={(e) => setEndpoint(e.target.value)}
+              onChange={(e) => {
+                setEndpoint(e.target.value)
+                setTestResult(null)
+              }}
               placeholder="https://api.openai.com/v1"
+              disabled={provider !== 'custom'}
             />
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="model" className="text-sm font-medium text-foreground">
               {t('settings.model')}
             </label>
-            <Select value={model} onValueChange={setModel}>
+            <Select value={model} onValueChange={(v) => {
+              setModel(v)
+              setTestResult(null)
+            }}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4">GPT-4</SelectItem>
-                <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
-                <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                {provider === 'openai' && (
+                  <>
+                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                  </>
+                )}
+                {provider === 'gemini' && (
+                  <>
+                    <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                    <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                    <SelectItem value="gemini-1.0-pro">Gemini 1.0 Pro</SelectItem>
+                  </>
+                )}
+                {provider === 'openrouter' && (
+                  <>
+                    <SelectItem value="openai/gpt-4o">OpenRouter: GPT-4o</SelectItem>
+                    <SelectItem value="anthropic/claude-3.5-sonnet">OpenRouter: Claude 3.5 Sonnet</SelectItem>
+                    <SelectItem value="meta-llama/llama-3.1-70b-instruct">OpenRouter: Llama 3.1 70B</SelectItem>
+                  </>
+                )}
                 {customModels.map((m) => (
                   <SelectItem key={m} value={m}>
                     {m}
@@ -211,15 +357,16 @@ export default function Settings() {
                 placeholder="e.g. gpt-4o"
                 className="h-9"
               />
-              <Button
-                variant="secondary"
+              <Button variant="secondary"
                 size="sm"
                 className="h-9"
-                onClick={() => {
+                onClick={async () => {
                   if (newCustomModel.trim()) {
-                    addCustomModel(newCustomModel.trim())
+                    const updated = await saveCustomModel(newCustomModel.trim())
+                    setCustomModels(updated)
                     setModel(newCustomModel.trim())
                     setNewCustomModel('')
+                    showToast('success', t('toast.modelAdded', { defaultValue: 'Custom model added' }))
                   }
                 }}
               >
@@ -236,7 +383,11 @@ export default function Settings() {
                   >
                     <span>{m}</span>
                     <button
-                      onClick={() => removeCustomModel(m)}
+                      onClick={async () => {
+                        const updated = await deleteCustomModel(m)
+                        setCustomModels(updated)
+                        showToast('success', t('toast.modelRemoved', { defaultValue: 'Custom model removed' }))
+                      }}
                       className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
                     >
                       <X className="h-3 w-3" />
@@ -247,20 +398,56 @@ export default function Settings() {
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={handleApplyConfig}>
+          <div className="flex gap-2 items-center">
+            <Button onClick={handleApplyConfig} disabled={isApplying}>
+              {isApplying && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
               {t('settings.apply')}
+            </Button>
+            <Button variant="secondary" onClick={handleTestConnection} disabled={isTesting || !apiKey || !endpoint}>
+              {isTesting ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              ) : testResult === 'success' ? (
+                <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+              ) : testResult === 'error' ? (
+                <AlertCircle className="mr-2 h-4 w-4 text-destructive" />
+              ) : null}
+              {t('settings.testConnection', { defaultValue: 'Test Connection' })}
             </Button>
             <Button variant="outline" onClick={() => setPresetDialogOpen(true)}>
               {t('settings.savePreset')}
             </Button>
           </div>
 
-          {presets.length > 0 && (
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">
                 {t('settings.savedPresets')}
               </label>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  id="import-file"
+                  className="hidden"
+                  accept=".json"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const text = await file.text()
+                    setImportText(text)
+                    setImportOpen(true)
+                  }}
+                />
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => document.getElementById('import-file')?.click()}>
+                  {t('settings.importPresets')}
+                </Button>
+                {presets.length > 0 && (
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={handleExport}>
+                    {t('settings.exportPresets')}
+                  </Button>
+                )}
+              </div>
+            </div>
+            {presets.length > 0 ? (
               <div className="flex flex-col gap-1.5">
                 {presets.map((preset) => (
                   <div
@@ -279,14 +466,21 @@ export default function Settings() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => loadPreset(preset)}
+                        onClick={async () => {
+                          setProvider(preset.provider || 'openai')
+                          setApiKey(preset.apiKey)
+                          setEndpoint(preset.endpoint)
+                          setModel(preset.model)
+                          setTestResult(null)
+                          showToast('success', t('toast.presetLoaded', { defaultValue: 'Preset loaded' }))
+                        }}
                       >
                         {t('settings.load')}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => remove(preset.id)}
+                        onClick={() => deletePreset(preset.id)}
                       >
                         {t('common.delete')}
                       </Button>
@@ -294,20 +488,16 @@ export default function Settings() {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2 mt-1">
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  {t('settings.exportPresets')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                  {t('settings.importPresets')}
-                </Button>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.noPresets', { defaultValue: 'No presets saved. Import or create one.' })}
+                </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+
         </CardContent>
       </Card>
 
@@ -334,7 +524,7 @@ export default function Settings() {
               <Button variant="outline" onClick={() => setPresetDialogOpen(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSavePreset} disabled={saving || !presetName.trim()}>
+              <Button onClick={handleSavePreset} disabled={!presetName.trim()}>
                 {t('common.save')}
               </Button>
             </div>

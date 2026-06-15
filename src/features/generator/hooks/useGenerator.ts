@@ -1,18 +1,13 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '@/hooks/useToast'
+import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { useGeneratorStore } from '@/store/useGeneratorStore'
 import { generatePrompts, getRandomNiche, improvePrompt } from '../services/generatorService'
-import { checkDuplicate } from '@/services/similarity/similarityService'
-import { saveHistoryItem, getHistoryItems } from '@/services/storage/indexeddb'
+import { calculateSimilarity, logHistoryItem } from '@/services/similarity/similarityService'
 import type { AspectRatio, StylePresetKey, VariationCount, GeneratedPrompt } from '../types'
 import type { SimilarityResult } from '@/services/similarity/similarityService'
-
-interface GeneratorState {
-  aspectRatio: AspectRatio
-  niche: string
-  stylePreset: StylePresetKey
-  customStyle: string
-  count: VariationCount
-}
+import { getHistoryItems } from '@/services/storage/indexeddb'
 
 interface DuplicateWarning {
   promptId: string
@@ -20,7 +15,13 @@ interface DuplicateWarning {
 }
 
 interface UseGeneratorReturn {
-  state: GeneratorState
+  state: {
+    aspectRatio: AspectRatio
+    niche: string
+    stylePreset: StylePresetKey
+    customStyle: string
+    count: VariationCount
+  }
   setAspectRatio: (value: AspectRatio) => void
   setNiche: (value: string) => void
   setStylePreset: (value: StylePresetKey) => void
@@ -36,50 +37,73 @@ interface UseGeneratorReturn {
   regenerate: () => Promise<void>
   improve: (id: string) => Promise<void>
   dismissDuplicateWarning: (promptId: string) => void
-  saveToHistory: (id: string) => Promise<void>
   clear: () => void
+  isConfigValid: boolean
 }
 
 export function useGenerator(): UseGeneratorReturn {
   const { t } = useTranslation()
-  const [state, setState] = useState<GeneratorState>({
-    aspectRatio: 'random',
-    niche: '',
-    stylePreset: 'none',
-    customStyle: '',
-    count: 1,
-  })
+  const { showGenerationSuccess, showImproveSuccess, showError } = useToast()
+  const { activeConfig, isReady: isAIReady } = useAIConfigStore()
+  const {
+    aspectRatio,
+    niche,
+    stylePreset,
+    customStyle,
+    count,
+    lastResult,
+    isReady: isStoreReady,
+    setAspectRatio,
+    setNiche,
+    setStylePreset,
+    setCustomStyle,
+    setCount,
+    setLastResult,
+    hydrate
+  } = useGeneratorStore()
 
-  const [results, setResults] = useState<GeneratedPrompt[]>([])
+  useEffect(() => {
+    if (!isStoreReady) {
+      hydrate()
+    }
+  }, [isStoreReady, hydrate])
+
+  const state = {
+    aspectRatio,
+    niche,
+    stylePreset,
+    customStyle,
+    count,
+  }
+
+  const isConfigValid = isAIReady && !!(
+    activeConfig?.apiKey &&
+    activeConfig?.endpoint?.startsWith('http') &&
+    activeConfig?.model
+  )
+
+  const [results, setResultsState] = useState<GeneratedPrompt[]>([])
+  
+  useEffect(() => {
+    if (isStoreReady && lastResult) {
+      setResultsState(lastResult)
+    }
+  }, [isStoreReady, lastResult])
+
+  const setResults = useCallback((prompts: GeneratedPrompt[]) => {
+    setResultsState(prompts)
+    setLastResult(prompts)
+  }, [setLastResult])
+
   const [loading, setLoading] = useState(false)
   const [improvingId, setImprovingId] = useState<string | null>(null)
   const [duplicateWarnings, setDuplicateWarnings] = useState<DuplicateWarning[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const setAspectRatio = useCallback((value: AspectRatio) => {
-    setState((prev) => ({ ...prev, aspectRatio: value }))
-  }, [])
-
-  const setNiche = useCallback((value: string) => {
-    setState((prev) => ({ ...prev, niche: value }))
-  }, [])
-
-  const setStylePreset = useCallback((value: StylePresetKey) => {
-    setState((prev) => ({ ...prev, stylePreset: value }))
-  }, [])
-
-  const setCustomStyle = useCallback((value: string) => {
-    setState((prev) => ({ ...prev, customStyle: value }))
-  }, [])
-
-  const setCount = useCallback((value: VariationCount) => {
-    setState((prev) => ({ ...prev, count: value }))
-  }, [])
-
   const randomizeNiche = useCallback(() => {
-    const niche = getRandomNiche()
-    setState((prev) => ({ ...prev, niche }))
-  }, [])
+    const newNiche = getRandomNiche()
+    setNiche(newNiche)
+  }, [setNiche])
 
   const runDuplicateCheck = useCallback(async (prompts: GeneratedPrompt[]) => {
     const historyItems = await getHistoryItems()
@@ -88,7 +112,7 @@ export function useGenerator(): UseGeneratorReturn {
 
     const warnings: DuplicateWarning[] = []
     for (const p of prompts) {
-      const result = await checkDuplicate(p.content, existingContents)
+      const result = calculateSimilarity(p.content, existingContents)
       if (result && result.level !== 'low') {
         warnings.push({ promptId: p.id, result })
       }
@@ -97,68 +121,77 @@ export function useGenerator(): UseGeneratorReturn {
   }, [])
 
   const doGenerate = useCallback(async () => {
+    if (!activeConfig) {
+      showError(t('generator.errors.noActiveConfig'))
+      return
+    }
+
     setLoading(true)
     setError(null)
     setDuplicateWarnings([])
     try {
-      const prompts = await generatePrompts(state)
+      const prompts = await generatePrompts(state, activeConfig)
+      
+      // Run duplicate check before setting results to ensure warnings are ready
+      await runDuplicateCheck(prompts)
+      
       setResults(prompts)
-      runDuplicateCheck(prompts)
+      showGenerationSuccess()
+      
+      // Auto-save to history using new logging service
+      await Promise.all(prompts.map(p => logHistoryItem(p)))
     } catch (err) {
+      showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
       setError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
     } finally {
       setLoading(false)
     }
-  }, [state, t, runDuplicateCheck])
+  }, [state, t, runDuplicateCheck, activeConfig, showGenerationSuccess, showError, setResults])
 
   const generate = doGenerate
   const regenerate = doGenerate
 
   const improve = useCallback(async (id: string) => {
+    if (!activeConfig) {
+      showError(t('generator.errors.noActiveConfig'))
+      return
+    }
+
     const prompt = results.find((p) => p.id === id)
     if (!prompt) return
 
     setImprovingId(id)
     try {
-      const improved = await improvePrompt(prompt.content, state)
-      setResults((prev) =>
-        prev.map((p) => (p.id === id ? { ...improved, id: p.id } : p)),
-      )
+      const improved = await improvePrompt(prompt.content, state, activeConfig)
+      const newResults = results.map((p) => (p.id === id ? { ...improved, id: p.id } : p))
+      setResults(newResults)
+      showImproveSuccess()
+      
+      // Auto-save improved prompt to history
+      await logHistoryItem({
+        ...improved,
+        id: prompt.id,
+      })
     } catch (err) {
+      showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
       setError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
     } finally {
       setImprovingId(null)
     }
-  }, [results, state, t])
+  }, [results, state, t, activeConfig, showImproveSuccess, showError, setResults])
 
   const dismissDuplicateWarning = useCallback((promptId: string) => {
     setDuplicateWarnings((prev) => prev.filter((w) => w.promptId !== promptId))
   }, [])
 
-  const saveToHistory = useCallback(async (id: string) => {
-    const prompt = results.find((p) => p.id === id)
-    if (!prompt) return
-    try {
-      await saveHistoryItem({
-        id: prompt.id,
-        content: prompt.content,
-        aspectRatio: prompt.aspectRatio,
-        niche: prompt.niche,
-        stylePreset: prompt.stylePreset,
-        qualityScore: prompt.qualityScore,
-        createdAt: prompt.createdAt,
-        savedAt: Date.now(),
-      })
-    } catch {
-      // silently fail - history is optional
-    }
-  }, [results])
+
 
   const clear = useCallback(() => {
     setResults([])
+    setLastResult(null)
     setError(null)
     setDuplicateWarnings([])
-  }, [])
+  }, [setResults, setLastResult])
 
   return {
     state,
@@ -177,7 +210,7 @@ export function useGenerator(): UseGeneratorReturn {
     regenerate,
     improve,
     dismissDuplicateWarning,
-    saveToHistory,
     clear,
+    isConfigValid,
   }
 }

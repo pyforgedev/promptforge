@@ -1,7 +1,11 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sparkles, RefreshCw, Copy, X, RotateCcw, Wand2, AlertTriangle, History } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Sparkles, RefreshCw, Copy, X, RotateCcw, Wand2, AlertTriangle, Settings as SettingsIcon } from 'lucide-react'
 import { useGenerator } from '../hooks/useGenerator'
+import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { useToast } from '@/hooks/useToast'
+import { logHistoryItem } from '@/services/similarity/similarityService'
 import { AspectRatioSelect } from './AspectRatioSelect'
 import { NicheInput } from './NicheInput'
 import { StylePresetSelect } from './StylePresetSelect'
@@ -35,13 +39,17 @@ export const GeneratorForm = memo(function GeneratorForm() {
     regenerate,
     improve,
     dismissDuplicateWarning,
-    saveToHistory,
     clear,
+    isConfigValid,
   } = useGenerator()
+
+  const isReady = useAIConfigStore(state => state.isReady)
+  const { showCopySuccess } = useToast()
 
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content)
+      showCopySuccess()
     } catch {
       // fallback
     }
@@ -94,15 +102,37 @@ export const GeneratorForm = memo(function GeneratorForm() {
           </div>
 
           <div className="flex gap-3">
-            <Button onClick={generate} disabled={loading} size="lg" className="flex-1">
-              {loading ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              {loading ? t('generator.generating') : t('generator.generate')}
-            </Button>
-            {results.length > 0 && (
+            {!isReady ? (
+              <div className="flex w-full h-24 items-center justify-center rounded-lg border border-border bg-muted/20">
+                <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : !isConfigValid ? (
+              <div className="flex flex-col w-full gap-3 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                <div className="flex items-center gap-2 font-medium">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span>API Configuration Required</span>
+                </div>
+                <p className="text-sm opacity-90">
+                  Please configure your AI API key, endpoint, and model in settings to start generating prompts.
+                </p>
+                <Button asChild variant="outline" className="w-fit border-yellow-500/50 hover:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+                  <Link to="/settings">
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Go to Settings
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={generate} disabled={loading} size="lg" className="flex-1">
+                {loading ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-4 w-4" />
+                )}
+                {loading ? t('generator.generating') : t('generator.generate')}
+              </Button>
+            )}
+            {isConfigValid && results.length > 0 && (
               <>
                 <Button variant="outline" onClick={regenerate} disabled={loading} className="flex-1">
                   <RotateCcw className="mr-2 h-4 w-4" />
@@ -212,15 +242,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     )}
                     {t('generator.improve')}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => saveToHistory(prompt.id)}
-                    className="flex-1"
-                  >
-                    <History className="mr-2 h-4 w-4" />
-                    {t('generator.saveToHistory')}
-                  </Button>
+
                 </div>
                 <QualityRating score={prompt.qualityScore} />
               </CardContent>

@@ -53,7 +53,10 @@ export function useHistory(): UseHistoryReturn {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const load = async () => {
+      await refresh()
+    }
+    void load()
   }, [refresh])
 
   const setFilter = useCallback(<K extends keyof HistoryFilters>(key: K, value: HistoryFilters[K]) => {

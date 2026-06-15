@@ -43,7 +43,10 @@ export function usePrompts(): UsePromptsReturn {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const load = async () => {
+      await refresh()
+    }
+    void load()
   }, [refresh])
 
   const create = useCallback(async (input: CreatePromptInput) => {

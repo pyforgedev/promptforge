@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sun, Moon, Monitor, Menu, Sparkles } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
+import { useToast } from '@/hooks/useToast'
 import type { Theme } from '@/types'
 import {
   Select,
@@ -24,9 +25,16 @@ interface HeaderProps {
 export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
   const { t, i18n } = useTranslation()
   const { preferences, setTheme } = useAppContext()
+  const { showToast } = useToast()
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)
+    showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated successfully' }))
+  }
+
+  const handleThemeChange = (value: Theme) => {
+    setTheme(value)
+    showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated successfully' }))
   }
 
   return (
@@ -49,10 +57,10 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
 
       <div className="flex items-center gap-4">
         <Select
-          value={i18n.language}
+          value={i18n.language?.startsWith('id') ? 'id' : 'en'}
           onValueChange={(v) => changeLanguage(v)}
         >
-          <SelectTrigger className="w-28 h-8 px-2 text-xs" aria-label={t('common.selectLanguage')}>
+          <SelectTrigger className="w-[140px] h-8 px-3 text-xs" aria-label={t('common.selectLanguage')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -70,7 +78,7 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
               }`}
-              onClick={() => setTheme(value)}
+              onClick={() => handleThemeChange(value)}
               aria-label={t(label)}
               title={t(label)}
             >

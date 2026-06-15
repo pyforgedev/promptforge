@@ -1,10 +1,9 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 
 const Home = lazy(() => import('@/pages/Home'))
-const Dashboard = lazy(() => import('@/pages/Dashboard'))
 
 const GeneratorPage = lazy(() => import('@/pages/GeneratorPage'))
 const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
@@ -33,11 +32,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/dashboard',
-        element: (
-          <Suspense fallback={<LazyFallback />}>
-            <Dashboard />
-          </Suspense>
-        ),
+        element: <Navigate to="/templates" replace />,
       },
 
       {

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Home, LayoutDashboard, Settings, Sparkles, Wand2, FileText, Clock,
+  Home, Settings, Wand2, FileText, Clock,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
@@ -12,7 +12,6 @@ interface SidebarProps {
 
 const navItems = [
   { to: '/', icon: Home, label: 'nav.home' },
-  { to: '/dashboard', icon: LayoutDashboard, label: 'nav.dashboard' },
   { to: '/generator', icon: Wand2, label: 'nav.generator' },
   { to: '/history', icon: Clock, label: 'nav.history' },
   { to: '/templates', icon: FileText, label: 'nav.templates' },

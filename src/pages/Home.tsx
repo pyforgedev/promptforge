@@ -9,19 +9,19 @@ const features = [
     icon: FileText,
     title: 'home.featurePrompts',
     description: 'home.featurePromptsDesc',
-    to: '/dashboard',
+    to: '/templates',
   },
   {
     icon: Sparkles,
     title: 'home.featureGenerate',
     description: 'home.featureGenerateDesc',
-    to: '/generate',
+    to: '/generator',
   },
   {
     icon: Database,
     title: 'home.featureStorage',
     description: 'home.featureStorageDesc',
-    to: '/dashboard',
+    to: '/history',
   },
   {
     icon: Globe,
@@ -50,7 +50,7 @@ export default function Home() {
         <Button
           size="lg"
           className="mt-2 gap-2"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/templates')}
         >
           {t('home.getStarted')}
           <ArrowRight className="h-4 w-4" />

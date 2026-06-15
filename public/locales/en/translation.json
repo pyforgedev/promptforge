@@ -83,7 +83,8 @@
     "presetName": "Preset Name",
     "load": "Load",
     "exportPresets": "Export",
-    "importPresets": "Import"
+    "importPresets": "Import",
+    "noPresets": "No presets saved. Import or create one."
   },
   "history": {
     "pageTitle": "Prompt History",
