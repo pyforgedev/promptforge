@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Sparkles, Database, Globe, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 
 const features = [
   {
@@ -61,7 +61,7 @@ export default function Home() {
         {features.map(({ icon: Icon, title, description, to }) => (
           <Card
             key={title}
-            className="cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg"
+            className="cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-md"
             onClick={() => navigate(to)}
           >
             <CardHeader>

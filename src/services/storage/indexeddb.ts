@@ -1,17 +1,20 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Prompt } from '@/types'
+import type { HistoryItem } from '@/features/history/types'
 
 const DB_NAME = 'promptforge'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
+  history!: EntityTable<HistoryItem, 'id'>
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
 
   constructor() {
     super(DB_NAME)
     this.version(DB_VERSION).stores({
       prompts: 'id, name, category, createdAt',
+      history: 'id, aspectRatio, stylePreset, niche, createdAt, savedAt',
       settings: 'key',
     })
   }
@@ -42,6 +45,22 @@ export async function getSetting(key: string): Promise<unknown> {
 
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   await db.settings.put({ key, value })
+}
+
+export async function getHistoryItems(): Promise<HistoryItem[]> {
+  return db.history.orderBy('savedAt').reverse().toArray()
+}
+
+export async function saveHistoryItem(item: HistoryItem): Promise<string> {
+  return db.history.put(item)
+}
+
+export async function deleteHistoryItem(id: string): Promise<void> {
+  await db.history.delete(id)
+}
+
+export async function deleteAllHistory(): Promise<void> {
+  await db.history.clear()
 }
 
 export default db

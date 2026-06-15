@@ -1,8 +1,15 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sun, Moon, Monitor, Menu } from 'lucide-react'
+import { Sun, Moon, Monitor, Menu, Sparkles } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
 import type { Theme } from '@/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const themes: { value: Theme; icon: typeof Sun; label: string }[] = [
   { value: 'light', icon: Sun, label: 'theme.light' },
@@ -23,36 +30,42 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4">
-      <div className="flex items-center gap-3">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6 shadow-sm">
+      <div className="flex items-center gap-4">
         <button
-          className="rounded-md p-2 hover:bg-secondary md:hidden"
+          className="cursor-pointer rounded-md p-2 hover:bg-secondary md:hidden"
           onClick={onMenuToggle}
           aria-label={t('nav.home')}
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-semibold text-foreground">
-          {t('app.name')}
-        </h1>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold text-foreground">
+            {t('app.name')}
+          </h1>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <select
-          className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+      <div className="flex items-center gap-4">
+        <Select
           value={i18n.language}
-          onChange={(e) => changeLanguage(e.target.value)}
-          aria-label={t('common.selectLanguage')}
+          onValueChange={(v) => changeLanguage(v)}
         >
-          <option value="en">{t('language.en')}</option>
-          <option value="es">{t('language.es')}</option>
-        </select>
+          <SelectTrigger className="w-28 h-8 px-2 text-xs" aria-label={t('common.selectLanguage')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en">{t('language.en')}</SelectItem>
+            <SelectItem value="id">{t('language.id')}</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <div className="flex rounded-md border border-input">
+        <div className="flex rounded-md border border-border">
           {themes.map(({ value, icon: Icon, label }) => (
             <button
               key={value}
-              className={`rounded-md p-2 transition-colors duration-150 ${
+              className={`cursor-pointer rounded-md p-2 transition-colors duration-150 ${
                 preferences.theme === value
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-secondary hover:text-foreground'

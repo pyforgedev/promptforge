@@ -6,6 +6,9 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 const Home = lazy(() => import('@/pages/Home'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Generate = lazy(() => import('@/pages/Generate'))
+const GeneratorPage = lazy(() => import('@/pages/GeneratorPage'))
+const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
+const TemplatesPage = lazy(() => import('@/pages/TemplatesPage'))
 const Settings = lazy(() => import('@/pages/Settings'))
 
 function LazyFallback() {
@@ -41,6 +44,30 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LazyFallback />}>
             <Generate />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/generator',
+        element: (
+          <Suspense fallback={<LazyFallback />}>
+            <GeneratorPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/history',
+        element: (
+          <Suspense fallback={<LazyFallback />}>
+            <HistoryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/templates',
+        element: (
+          <Suspense fallback={<LazyFallback />}>
+            <TemplatesPage />
           </Suspense>
         ),
       },

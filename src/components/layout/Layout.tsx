@@ -15,7 +15,9 @@ export function Layout() {
           onClose={() => setSidebarOpen(false)}
         />
         <main className="flex-1 overflow-auto p-6 animate-fade-in">
-          <Outlet />
+          <div className="max-w-6xl mx-auto w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
