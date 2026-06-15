@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { z, type ZodSchema } from 'zod'
+import type { ZodSchema } from 'zod'
 import type { AIRequest, AIResponse } from '@/types'
 import type { AIConfig } from '@/features/settings/types'
 import { validateAIConfig } from '@/lib/validation'
@@ -146,7 +146,7 @@ class OpenAIAdapter implements ProviderAdapter {
             if (chunk) {
               onChunk(chunk)
             }
-          } catch (e) {
+          } catch {
             // Ignore parse errors on partial chunks
           }
         }
@@ -247,7 +247,7 @@ export async function generateStructured<T>(
     const parsed = JSON.parse(jsonStr)
     return schema.parse(parsed)
   } catch (error) {
-    throw new Error(`Failed to parse structured output from AI. Error: ${error instanceof Error ? error.message : String(error)}`)
+    throw new Error(`Failed to parse structured output from AI. Error: ${error instanceof Error ? error.message : String(error)}`, { cause: error })
   }
 }
 
@@ -282,7 +282,7 @@ export async function generateStructuredStream<T>(
         const parsed = JSON.parse(jsonStr)
         onPartial(parsed)
       }
-    } catch (e) {
+    } catch {
       // Ignore partial parse errors
     }
   })
@@ -292,6 +292,6 @@ export async function generateStructuredStream<T>(
     const parsed = JSON.parse(jsonStr)
     return schema.parse(parsed)
   } catch (error) {
-    throw new Error(`Failed to parse structured stream output from AI.`)
+    throw new Error(`Failed to parse structured stream output from AI.`, { cause: error })
   }
 }

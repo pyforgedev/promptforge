@@ -36,3 +36,5 @@
 ## Development Workflows
 - **Storage**: Use `dexie` for all persistence (Prompt History, API Presets, Custom Templates, User Preferences) to handle large history and scalability.
 - **UI/UX**: Target a modern, premium dark mode design with light glassmorphism. Desktop-first productivity, but mobile-friendly. Ensure smooth animations.
+- **Internationalization**: Always update all supported language files (English and Bahasa Indonesia) when adding or modifying UI strings. Ensure consistency across all locale resources.
+- **Feedback**: Always implement toast notifications (using `sonner`) for all data-modifying actions (create, update, delete, move, copy) to provide immediate user feedback.

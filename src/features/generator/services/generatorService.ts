@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import pLimit from 'p-limit'
-import { generateCompletion, generateStructured, generateStructuredStream } from '@/services/ai/aiService'
+import { generateStructured, generateStructuredStream } from '@/services/ai/aiService'
 import type { AIConfig } from '@/features/settings/types'
 import type { GeneratorOptions, GeneratedPrompt, QualityScore, StructuredPromptOutput } from '../types'
 
@@ -164,86 +164,48 @@ Return ONLY valid JSON matching this structure:
 Base requirements for the prompt:
 "${promptTemplate}"`
 
-      let output: StructuredPromptOutput | null = null
-
       try {
+        let genOutput: StructuredPromptOutput
         if (onPartialUpdate && config.provider !== 'gemini') { // Gemini adapter stream not implemented yet
-          output = await generateStructuredStream(
+          genOutput = await generateStructuredStream(
             structuredPromptMsg,
             structuredPromptSchema,
             config,
             (partial) => onPartialUpdate(i, partial)
           )
         } else {
-          output = await generateStructured(structuredPromptMsg, structuredPromptSchema, config)
+          genOutput = await generateStructured(structuredPromptMsg, structuredPromptSchema, config)
         }
-      } catch (error) {
-        console.warn(`Generation failed for item ${i}, using fallback.`, error)
+
+        const s = genOutput.qualityScore
+        const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
+
+        return {
+          id: uuidv4(),
+          content: genOutput.content,
+          aspectRatio,
+          niche: actualNiche,
+          stylePreset,
+          qualityScore: { ...s, overall },
+          createdAt: Date.now(),
+        } as GeneratedPrompt
+      } catch {
+        // Fallback to random generation on AI error
         const mockScore = generateMockQualityScore()
-        output = {
-          content: promptTemplate, // fallback to template
-          qualityScore: {
-            commercialPotential: mockScore.commercialPotential,
-            creativity: mockScore.creativity,
-            clarity: mockScore.clarity,
-            marketability: mockScore.marketability,
-            uniqueness: mockScore.uniqueness
-          }
-        }
+        return {
+          id: uuidv4(),
+          content: promptTemplate,
+          aspectRatio,
+          niche: actualNiche,
+          stylePreset,
+          qualityScore: mockScore,
+          createdAt: Date.now(),
+        } as GeneratedPrompt
       }
-
-      const s = output.qualityScore
-      const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
-
-      return {
-        id: uuidv4(),
-        content: output.content,
-        aspectRatio,
-        niche: actualNiche,
-        stylePreset,
-        qualityScore: { ...s, overall },
-        createdAt: Date.now(),
-      } as GeneratedPrompt
     })
   })
 
   return Promise.all(tasks)
-}
-
-function parseImprovedPrompt(rawOutput: string, originalPrompt: string): string {
-  // 1. Remove "New prompt:", "Improved prompt:", etc.
-  let text = rawOutput.replace(/^(?:new|improved|final|enhanced)\s*prompt:\s*/i, '').trim()
-
-  // 2. Extract content from backticks or quotes if they wrap the entire output
-  const wrapMatch = text.match(/^[`"'](.+)[`"']$/s)
-  if (wrapMatch?.[1]) {
-    text = wrapMatch[1].trim()
-  }
-
-  // 3. Extract text after common indicators if present (like "New prompt: `...`")
-  const patterns = [
-    /New prompt:\s*[`"']?([^`"']+)`?"?/i,
-    /Improved prompt:\s*[`"']?([^`"']+)`?"?/i,
-    /Final prompt:\s*[`"']?([^`"']+)`?"?/i,
-  ]
-
-  for (const pattern of patterns) {
-    const match = rawOutput.match(pattern)
-    if (match?.[1]) {
-      return match[1].trim()
-    }
-  }
-
-  // 4. If output contains reasoning (more than one sentence or starts with reasoning patterns), 
-  // try to find the prompt part. Usually prompts for AI art are long comma-separated strings.
-  if (text.toLowerCase().includes('clash') || text.toLowerCase().includes('drop') || text.includes('\n')) {
-    const lines = text.split('\n')
-    // Search for lines that look like a prompt (long, many commas, starts with keywords)
-    const promptLine = lines.find(l => l.includes(',') && l.length > 20)
-    if (promptLine) return promptLine.trim()
-  }
-
-  return text || originalPrompt
 }
 
 export async function improvePrompt(
@@ -270,49 +232,51 @@ Your task:
   }
 }`
 
-  let output: StructuredPromptOutput | null = null
-
   try {
+    let impOutput: StructuredPromptOutput
     if (onPartialUpdate && config.provider !== 'gemini') {
-      output = await generateStructuredStream(
+      impOutput = await generateStructuredStream(
         improvementPrompt,
         structuredPromptSchema,
         config,
         onPartialUpdate
       )
     } else {
-      output = await generateStructured(improvementPrompt, structuredPromptSchema, config)
+      impOutput = await generateStructured(improvementPrompt, structuredPromptSchema, config)
     }
-  } catch (error) {
-    console.warn(`Improvement failed, using fallback.`, error)
-    const mockScore = generateMockQualityScore()
-    output = {
-      content, // fallback to original
-      qualityScore: {
-        commercialPotential: mockScore.commercialPotential,
-        creativity: mockScore.creativity,
-        clarity: mockScore.clarity,
-        marketability: mockScore.marketability,
-        uniqueness: mockScore.uniqueness
-      }
+
+    const s = impOutput.qualityScore
+    const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
+
+    const aspectRatio = options.aspectRatio === 'random'
+      ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
+      : options.aspectRatio
+
+    return {
+      id: uuidv4(),
+      content: impOutput.content,
+      aspectRatio,
+      niche: options.niche || 'general',
+      stylePreset: options.stylePreset,
+      qualityScore: { ...s, overall },
+      createdAt: Date.now(),
     }
-  }
+  } catch {
+    // Fallback if AI fails
+    const s = generateMockQualityScore()
+    const aspectRatio = options.aspectRatio === 'random'
+      ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
+      : options.aspectRatio
 
-  const s = output.qualityScore
-  const overall = Math.round(((s.commercialPotential + s.creativity + s.clarity + s.marketability + s.uniqueness) / 5) * 10) / 10
-
-  const aspectRatio = options.aspectRatio === 'random'
-    ? (['1:1', '4:5', '3:4', '16:9', '9:16', '2:3', '3:2'] as const)[Math.floor(Math.random() * 7)]
-    : options.aspectRatio
-
-  return {
-    id: uuidv4(),
-    content: output.content,
-    aspectRatio,
-    niche: options.niche || 'general',
-    stylePreset: options.stylePreset,
-    qualityScore: { ...s, overall },
-    createdAt: Date.now(),
+    return {
+      id: uuidv4(),
+      content,
+      aspectRatio,
+      niche: options.niche || 'general',
+      stylePreset: options.stylePreset,
+      qualityScore: s,
+      createdAt: Date.now(),
+    }
   }
 }
 

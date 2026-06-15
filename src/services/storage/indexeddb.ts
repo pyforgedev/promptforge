@@ -1,15 +1,16 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Prompt } from '@/types'
-import type { HistoryItem } from '@/features/history/types'
+import type { HistoryItem, Folder } from '@/features/history/types'
 
 import { encrypt, decrypt } from '@/lib/crypto'
 
 const DB_NAME = 'promptforge'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
   history!: EntityTable<HistoryItem, 'id'>
+  folders!: EntityTable<Folder, 'id'>
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
   generatorState!: EntityTable<{ key: string; value: unknown }, 'key'>
 
@@ -17,9 +18,15 @@ class PromptForgeDB extends Dexie {
     super(DB_NAME)
     this.version(DB_VERSION).stores({
       prompts: 'id, name, category, createdAt',
-      history: 'id, aspectRatio, stylePreset, niche, createdAt, savedAt, content, qualityScore',
+      history: 'id, aspectRatio, stylePreset, niche, createdAt, savedAt, content, qualityScore, folderId, *tags',
+      folders: 'id, name, parentId, createdAt',
       settings: 'key',
       generatorState: 'key',
+    }).upgrade(trans => {
+      return trans.table('history').toCollection().modify(item => {
+        item.folderId = item.folderId || null
+        item.tags = item.tags || []
+      })
     })
   }
 }
@@ -81,10 +88,12 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
   return db.history.orderBy('savedAt').reverse().toArray()
 }
 
-export async function saveHistoryItem(item: Omit<HistoryItem, 'savedAt'> & Partial<Pick<HistoryItem, 'savedAt'>>): Promise<string> {
+export async function saveHistoryItem(item: Omit<HistoryItem, 'savedAt' | 'folderId' | 'tags'> & Partial<Pick<HistoryItem, 'savedAt' | 'folderId' | 'tags'>>): Promise<string> {
   const historyItem: HistoryItem = {
     ...item,
     savedAt: item.savedAt || Date.now(),
+    folderId: item.folderId || null,
+    tags: item.tags || [],
   } as HistoryItem
   
   console.log('Dexie: Saving history item', historyItem)
@@ -104,6 +113,30 @@ export async function deleteHistoryItem(id: string): Promise<void> {
 
 export async function deleteAllHistory(): Promise<void> {
   await db.history.clear()
+}
+
+// Folder helpers
+export async function getFolders(): Promise<Folder[]> {
+  return db.folders.toArray()
+}
+
+export async function saveFolder(folder: Folder): Promise<string> {
+  return db.folders.put(folder)
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  // Move prompts to root when folder is deleted
+  await db.history.where('folderId').equals(id).modify({ folderId: null })
+  await db.folders.delete(id)
+}
+
+export async function updateFolder(id: string, updates: Partial<Pick<Folder, 'name' | 'parentId'>>): Promise<void> {
+  await db.folders.update(id, updates)
+}
+
+export async function bulkUpdateHistoryFolder(ids: string[], folderId: string | null): Promise<void> {
+  if (!ids || ids.length === 0) return
+  await db.history.where('id').anyOf(ids).modify({ folderId })
 }
 
 export async function getGeneratorState(key: string): Promise<unknown> {

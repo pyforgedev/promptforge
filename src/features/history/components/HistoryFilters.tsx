@@ -13,6 +13,10 @@ import {
 import type { AspectRatio } from '@/features/generator/types'
 import type { HistoryFilters as HF } from '../types'
 
+import { useHistoryStore } from '@/store/useHistoryStore'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+
 interface HistoryFiltersProps {
   filters: HF
   onFilterChange: <K extends keyof HF>(key: K, value: HF[K]) => void
@@ -25,23 +29,38 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
   onReset,
 }: HistoryFiltersProps) {
   const { t } = useTranslation()
+  const { searchMode, setSearchMode } = useHistoryStore()
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-1 flex-col gap-1.5 min-w-[200px]">
-        <label className="text-xs font-medium text-muted-foreground">
-          {t('common.search')}
-        </label>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={filters.search}
-            onChange={(e) => onFilterChange('search', e.target.value)}
-            placeholder={t('history.searchPlaceholder')}
-            className="pl-8"
-          />
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-1 flex-col gap-1.5 min-w-[200px]">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t('common.search')}
+            </label>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="search-mode" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {searchMode === 'global' ? 'Global' : 'Local'}
+              </Label>
+              <Switch 
+                id="search-mode" 
+                checked={searchMode === 'global'}
+                onCheckedChange={(checked) => setSearchMode(checked ? 'global' : 'local')}
+                className="scale-75"
+              />
+            </div>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={filters.search}
+              onChange={(e) => onFilterChange('search', e.target.value)}
+              placeholder={searchMode === 'global' ? "Search everywhere..." : "Search in this folder..."}
+              className="pl-8"
+            />
+          </div>
         </div>
-      </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-muted-foreground">
@@ -93,6 +112,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
         <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
         {t('history.resetFilters')}
       </Button>
+      </div>
     </div>
   )
 })

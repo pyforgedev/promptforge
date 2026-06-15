@@ -1,20 +1,12 @@
-import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { AppPreferences, Theme } from '@/types'
 import { getSetting, saveSetting } from '@/services/storage/indexeddb'
-
-interface AppContextType {
-  preferences: AppPreferences
-  isReady: boolean
-  setTheme: (theme: Theme) => void
-  setLanguage: (language: string) => void
-}
+import { AppContext } from './AppContext'
 
 const defaultPreferences: AppPreferences = {
   theme: 'system',
   language: 'en',
 }
-
-export const AppContext = createContext<AppContextType | null>(null)
 
 const PREFERENCES_KEY = 'app-preferences'
 

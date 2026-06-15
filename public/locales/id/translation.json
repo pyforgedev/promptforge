@@ -101,7 +101,18 @@
     "totalPrompts": "Total Prompt Dihasilkan",
     "averageScore": "Rata-rata Skor Kualitas",
     "recentPrompts": "Prompt Terbaru",
-    "noRecentPrompts": "Belum ada prompt terbaru"
+    "noRecentPrompts": "Belum ada prompt terbaru",
+    "library": "Pustaka",
+    "newFolder": "Folder Baru",
+    "allPrompts": "Semua Prompt",
+    "local": "Lokal",
+    "global": "Global",
+    "rename": "Ganti Nama",
+    "delete": "Hapus",
+    "renameFolder": "Ganti Nama Folder",
+    "move": "Pindahkan",
+    "itemsSelected": "{{count}} item terpilih",
+    "itemSelected": "1 item terpilih"
   },
   "toast": {
     "copySuccess": "Prompt berhasil disalin!",
@@ -109,7 +120,13 @@
     "deleteAllSuccess": "Semua riwayat berhasil dihapus!",
     "generationSuccess": "Prompt berhasil dibuat!",
     "improveSuccess": "Prompt berhasil ditingkatkan!",
-    "error": "Kesalahan"
+    "error": "Kesalahan",
+    "folderCreated": "Folder berhasil dibuat",
+    "folderDeleted": "Folder berhasil dihapus",
+    "folderRenamed": "Folder berhasil diganti nama",
+    "itemsDeleted": "Berhasil menghapus {{count}} item",
+    "itemsMoved": "Berhasil memindahkan {{count}} item ke {{folder}}",
+    "itemDeleted": "Item berhasil dihapus"
   },
   "templates": {
     "pageTitle": "Template Prompt",

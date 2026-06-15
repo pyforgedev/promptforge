@@ -101,7 +101,18 @@
     "totalPrompts": "Total Prompts Generated",
     "averageScore": "Average Quality Score",
     "recentPrompts": "Recent Prompts",
-    "noRecentPrompts": "No recent prompts"
+    "noRecentPrompts": "No recent prompts",
+    "library": "Library",
+    "newFolder": "New Folder",
+    "allPrompts": "All Prompts",
+    "local": "Local",
+    "global": "Global",
+    "rename": "Rename",
+    "delete": "Delete",
+    "renameFolder": "Rename Folder",
+    "move": "Move",
+    "itemsSelected": "{{count}} items selected",
+    "itemSelected": "1 item selected"
   },
   "toast": {
     "copySuccess": "Prompt copied to clipboard!",
@@ -109,7 +120,13 @@
     "deleteAllSuccess": "All history deleted successfully!",
     "generationSuccess": "Prompt generated successfully!",
     "improveSuccess": "Prompt improved successfully!",
-    "error": "Error"
+    "error": "Error",
+    "folderCreated": "Folder created successfully",
+    "folderDeleted": "Folder deleted successfully",
+    "folderRenamed": "Folder renamed successfully",
+    "itemsDeleted": "Deleted {{count}} items",
+    "itemsMoved": "Moved {{count}} items to {{folder}}",
+    "itemDeleted": "Item deleted successfully"
   },
   "templates": {
     "pageTitle": "Prompt Templates",
