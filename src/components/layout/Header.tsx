@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sun, Moon, Monitor, Menu, Sparkles } from 'lucide-react'
+import { Sun, Moon, Monitor, Menu, Sparkles, Check } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
 import { useToast } from '@/hooks/useToast'
 import type { Theme } from '@/types'
@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 
 const themes: { value: Theme; icon: typeof Sun; label: string }[] = [
   { value: 'light', icon: Sun, label: 'theme.light' },
@@ -36,6 +43,8 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
     setTheme(value)
     showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated successfully' }))
   }
+
+  const ActiveThemeIcon = themes.find(t => t.value === preferences.theme)?.icon || Monitor
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6 shadow-sm">
@@ -64,28 +73,37 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="en">{t('language.en')}</SelectItem>
-            <SelectItem value="id">{t('language.id')}</SelectItem>
+            <SelectItem value="en" className={i18n.language?.startsWith('en') ? 'font-bold' : ''}>
+              {t('language.en')}
+            </SelectItem>
+            <SelectItem value="id" className={i18n.language?.startsWith('id') ? 'font-bold' : ''}>
+              {t('language.id')}
+            </SelectItem>
           </SelectContent>
         </Select>
 
-        <div className="flex rounded-md border border-border">
-          {themes.map(({ value, icon: Icon, label }) => (
-            <button
-              key={value}
-              className={`cursor-pointer rounded-md p-2 transition-colors duration-150 ${
-                preferences.theme === value
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-              }`}
-              onClick={() => handleThemeChange(value)}
-              aria-label={t(label)}
-              title={t(label)}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 w-8 px-0" aria-label="Toggle theme">
+              <ActiveThemeIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {themes.map(({ value, icon: Icon, label }) => (
+              <DropdownMenuItem
+                key={value}
+                onClick={() => handleThemeChange(value)}
+                className={`flex items-center gap-2 cursor-pointer ${
+                  preferences.theme === value ? 'font-bold text-primary bg-primary/10' : ''
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{t(label)}</span>
+                {preferences.theme === value && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

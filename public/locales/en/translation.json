@@ -97,7 +97,11 @@
     "deleteAll": "Delete All",
     "deleteAllTitle": "Delete All History",
     "deleteAllConfirmation": "Are you sure you want to delete all history? This action cannot be undone.",
-    "export": "Export TXT"
+    "export": "Export TXT",
+    "totalPrompts": "Total Prompts Generated",
+    "averageScore": "Average Quality Score",
+    "recentPrompts": "Recent Prompts",
+    "noRecentPrompts": "No recent prompts"
   },
   "toast": {
     "copySuccess": "Prompt copied to clipboard!",
@@ -141,6 +145,8 @@
     "results": "Generated Prompts",
     "promptNumber": "Prompt #{{number}}",
     "copy": "Copy",
+    "copyMidjourney": "Copy for Midjourney",
+    "copyDalle": "Copy for DALL-E",
     "copied": "Copied!",
     "qualityScore": "AI Quality Score",
     "qualityCommercial": "Commercial Potential",

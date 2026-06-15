@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Sparkles, Database, Globe, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
+import { QuickStats } from '@/features/history/components/QuickStats'
+import { RecentPrompts } from '@/features/history/components/RecentPrompts'
 
 const features = [
   {
@@ -50,12 +52,16 @@ export default function Home() {
         <Button
           size="lg"
           className="mt-2 gap-2"
-          onClick={() => navigate('/templates')}
+          onClick={() => navigate('/generator')}
         >
           {t('home.getStarted')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
+
+      <QuickStats />
+
+      <RecentPrompts />
 
       <div className="grid gap-4 w-full max-w-4xl px-4 sm:grid-cols-2">
         {features.map(({ icon: Icon, title, description, to }) => (

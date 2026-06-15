@@ -97,7 +97,11 @@
     "deleteAll": "Hapus Semua",
     "deleteAllTitle": "Hapus Semua Riwayat",
     "deleteAllConfirmation": "Apakah Anda yakin ingin menghapus semua riwayat? Tindakan ini tidak dapat dibatalkan.",
-    "export": "Ekspor TXT"
+    "export": "Ekspor TXT",
+    "totalPrompts": "Total Prompt Dihasilkan",
+    "averageScore": "Rata-rata Skor Kualitas",
+    "recentPrompts": "Prompt Terbaru",
+    "noRecentPrompts": "Belum ada prompt terbaru"
   },
   "toast": {
     "copySuccess": "Prompt berhasil disalin!",
@@ -141,6 +145,8 @@
     "results": "Prompt yang Dihasilkan",
     "promptNumber": "Prompt #{{number}}",
     "copy": "Salin",
+    "copyMidjourney": "Salin untuk Midjourney",
+    "copyDalle": "Salin untuk DALL-E",
     "copied": "Disalin!",
     "qualityScore": "Skor Kualitas AI",
     "qualityCommercial": "Potensi Komersial",

@@ -1,10 +1,12 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Star } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { QualityScore } from '../types'
 
 interface QualityRatingProps {
-  score: QualityScore
+  score?: QualityScore
+  isLoading?: boolean
 }
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -26,8 +28,29 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-export const QualityRating = memo(function QualityRating({ score }: QualityRatingProps) {
+export const QualityRating = memo(function QualityRating({ score, isLoading }: QualityRatingProps) {
   const { t } = useTranslation()
+
+  if (isLoading || !score) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Skeleton className="h-4 w-4 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="ml-auto h-6 w-12" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Skeleton className="h-3 w-36" />
+              <Skeleton className="h-2 flex-1" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">

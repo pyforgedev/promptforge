@@ -168,7 +168,7 @@ export function useGenerator(): UseGeneratorReturn {
             ...(partialData.qualityScore !== undefined ? {
               qualityScore: {
                 ...newResults[index].qualityScore,
-                ...partialData.qualityScore as any
+                ...partialData.qualityScore as Record<string, number>
               }
             } : {})
           }
@@ -235,7 +235,7 @@ export function useGenerator(): UseGeneratorReturn {
             ...(partialData.qualityScore !== undefined ? {
               qualityScore: {
                 ...newResults[promptIndex].qualityScore,
-                ...partialData.qualityScore as any
+                ...partialData.qualityScore as Record<string, number>
               }
             } : {})
           }

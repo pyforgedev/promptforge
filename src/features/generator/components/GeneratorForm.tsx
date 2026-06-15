@@ -1,14 +1,14 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Sparkles, RefreshCw, Copy, X, RotateCcw, Wand2, AlertTriangle, Settings as SettingsIcon } from 'lucide-react'
+import { Sparkles, RefreshCw, X, RotateCcw, Wand2, AlertTriangle, Settings as SettingsIcon } from 'lucide-react'
 import { useGenerator } from '../hooks/useGenerator'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
-import { useToast } from '@/hooks/useToast'
 import { AspectRatioSelect } from './AspectRatioSelect'
 import { NicheInput } from './NicheInput'
 import { StylePresetSelect } from './StylePresetSelect'
 import { QualityRating } from './QualityRating'
+import { EnhancedCopyButton } from './EnhancedCopyButton'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -43,16 +43,6 @@ export const GeneratorForm = memo(function GeneratorForm() {
   } = useGenerator()
 
   const isReady = useAIConfigStore(state => state.isReady)
-  const { showCopySuccess } = useToast()
-
-  const handleCopy = async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content)
-      showCopySuccess()
-    } catch {
-      // fallback
-    }
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,18 +54,18 @@ export const GeneratorForm = memo(function GeneratorForm() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2">
             <AspectRatioSelect value={state.aspectRatio} onChange={setAspectRatio} />
-            <NicheInput
-              value={state.niche}
-              onChange={setNiche}
-              onRandomize={randomizeNiche}
-            />
             <StylePresetSelect
               value={state.stylePreset}
               customStyle={state.customStyle}
               onPresetChange={setStylePreset}
               onCustomStyleChange={setCustomStyle}
+            />
+            <NicheInput
+              value={state.niche}
+              onChange={setNiche}
+              onRandomize={randomizeNiche}
             />
           </div>
 
@@ -218,20 +208,16 @@ export const GeneratorForm = memo(function GeneratorForm() {
                   {prompt.content}
                 </p>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCopy(prompt.content)}
+                  <EnhancedCopyButton
+                    content={prompt.content}
+                    aspectRatio={prompt.aspectRatio}
                     className="flex-1"
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    {t('generator.copy')}
-                  </Button>
+                  />
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => improve(prompt.id)}
-                    disabled={improvingId === prompt.id}
+                    disabled={improvingId === prompt.id || loading}
                     className="flex-1"
                   >
                     {improvingId === prompt.id ? (
