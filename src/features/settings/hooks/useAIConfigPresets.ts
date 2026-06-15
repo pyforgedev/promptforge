@@ -10,35 +10,17 @@ import {
   deleteCustomModel,
 } from '../services/settingsService'
 import type { AIConfigPreset, AIConfig } from '../types'
+import { validateAIConfig } from '@/lib/validation'
 
 const CSRF_TOKEN = 'promptforge-csrf-token'
 
 function getCSRFToken(): string {
   let token = localStorage.getItem(CSRF_TOKEN)
   if (!token) {
-    token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    token = crypto.randomUUID()
     localStorage.setItem(CSRF_TOKEN, token)
   }
   return token
-}
-
-function validateAIConfig(config: AIConfig): string | null {
-  if (!config.apiKey || !config.apiKey.trim()) {
-    return 'API Key is required'
-  }
-  if (!config.endpoint || !config.endpoint.trim()) {
-    return 'Endpoint is required'
-  }
-  if (!config.model || !config.model.trim()) {
-    return 'Model is required'
-  }
-  if (!config.apiKey.startsWith('sk-')) {
-    return 'API Key must start with sk-'
-  }
-  if (!config.endpoint.startsWith('http')) {
-    return 'Endpoint must be a valid URL'
-  }
-  return null
 }
 
 function handleError(error: unknown): string {
@@ -131,6 +113,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
     setError(null)
     try {
       const config: AIConfig = {
+        provider: preset.provider,
         apiKey: preset.apiKey,
         endpoint: preset.endpoint,
         model: preset.model,
@@ -163,6 +146,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       if (data.presets && Array.isArray(data.presets)) {
         for (const p of data.presets) {
           await savePreset(p.name, {
+            provider: p.provider || 'openai',
             apiKey: p.apiKey,
             endpoint: p.endpoint,
             model: p.model,

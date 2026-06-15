@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { validateAIConfig } from '@/lib/validation'
 
 export default function Settings() {
   const { t, i18n } = useTranslation()
@@ -118,12 +119,9 @@ export default function Settings() {
   }
 
   const handleApplyConfig = async () => {
-    if (provider !== 'gemini' && !apiKey.startsWith('sk-') && provider !== 'custom') {
-      showToast('error', 'API Key must start with sk-')
-      return
-    }
-    if (!endpoint.startsWith('http')) {
-      showToast('error', 'Endpoint must be a valid URL')
+    const validationError = validateAIConfig({ provider, apiKey, endpoint, model })
+    if (validationError) {
+      showToast('error', validationError)
       return
     }
     

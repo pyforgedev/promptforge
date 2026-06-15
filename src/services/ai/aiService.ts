@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { AIRequest, AIResponse } from '@/types'
 import type { AIConfig } from '@/features/settings/types'
+import { validateAIConfig } from '@/lib/validation'
+import { AI_ENDPOINTS } from '@/lib/constants'
 
 // Provider Adapter Interface
 interface ProviderAdapter {
@@ -10,8 +12,9 @@ interface ProviderAdapter {
 // Official Gemini Adapter
 class GeminiAdapter implements ProviderAdapter {
   async generate(request: AIRequest, config: AIConfig): Promise<AIResponse> {
-    const baseUrl = config.endpoint.endsWith('/') ? config.endpoint.slice(0, -1) : config.endpoint
-    const url = `${baseUrl}/models/${config.model}:generateContent?key=${config.apiKey}`
+    const baseUrl = config.endpoint || AI_ENDPOINTS.gemini
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+    const url = `${cleanBaseUrl}/models/${config.model}:generateContent`
     
     const response = await axios.post(url, {
       contents: [{
@@ -20,6 +23,10 @@ class GeminiAdapter implements ProviderAdapter {
       generationConfig: {
         temperature: request.temperature || 0.7,
         maxOutputTokens: request.maxTokens || 2048,
+      }
+    }, {
+      headers: {
+        'x-goog-api-key': config.apiKey
       }
     })
 
@@ -52,9 +59,11 @@ class OpenAIAdapter implements ProviderAdapter {
       headers['X-Title'] = 'PromptForge'
     }
 
-    const url = config.endpoint.endsWith('/chat/completions') 
-      ? config.endpoint 
-      : `${config.endpoint.endsWith('/') ? config.endpoint.slice(0, -1) : config.endpoint}/chat/completions`
+    const baseUrl = config.endpoint || AI_ENDPOINTS.openai
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+    const url = cleanBaseUrl.endsWith('/chat/completions') 
+      ? cleanBaseUrl 
+      : `${cleanBaseUrl}/chat/completions`
 
     const response = await axios.post(
       url,
@@ -100,8 +109,9 @@ class ProviderFactory {
 }
 
 export async function sendPrompt(request: AIRequest, config: AIConfig): Promise<AIResponse> {
-  if (!config?.apiKey || !config?.endpoint || !config?.model) {
-    throw new Error('AI configuration is incomplete.')
+  const validationError = validateAIConfig(config)
+  if (validationError) {
+    throw new Error(validationError)
   }
 
   try {
@@ -113,7 +123,7 @@ export async function sendPrompt(request: AIRequest, config: AIConfig): Promise<
                        error.response?.data?.error ||
                        error.message || 
                        'Failed to connect to AI API.'
-      throw new Error(errorMsg)
+      throw new Error(errorMsg, { cause: error })
     }
     throw error
   }

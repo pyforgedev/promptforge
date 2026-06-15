@@ -1,8 +1,10 @@
 import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { AppPreferences, Theme } from '@/types'
+import { getSetting, saveSetting } from '@/services/storage/indexeddb'
 
 interface AppContextType {
   preferences: AppPreferences
+  isReady: boolean
   setTheme: (theme: Theme) => void
   setLanguage: (language: string) => void
 }
@@ -13,6 +15,8 @@ const defaultPreferences: AppPreferences = {
 }
 
 export const AppContext = createContext<AppContextType | null>(null)
+
+const PREFERENCES_KEY = 'app-preferences'
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement
@@ -30,22 +34,26 @@ function applyTheme(theme: Theme) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [preferences, setPreferences] = useState<AppPreferences>(() => {
-    const stored = localStorage.getItem('app-preferences')
-    if (stored) {
-      try {
-        return { ...defaultPreferences, ...JSON.parse(stored) }
-      } catch {
-        return defaultPreferences
-      }
-    }
-    return defaultPreferences
-  })
+  const [preferences, setPreferences] = useState<AppPreferences>(defaultPreferences)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    localStorage.setItem('app-preferences', JSON.stringify(preferences))
-    applyTheme(preferences.theme)
-  }, [preferences])
+    const load = async () => {
+      const stored = await getSetting(PREFERENCES_KEY)
+      if (stored) {
+        setPreferences({ ...defaultPreferences, ...(stored as AppPreferences) })
+      }
+      setIsReady(true)
+    }
+    void load()
+  }, [])
+
+  useEffect(() => {
+    if (isReady) {
+      void saveSetting(PREFERENCES_KEY, preferences)
+      applyTheme(preferences.theme)
+    }
+  }, [preferences, isReady])
 
   const setTheme = useCallback((theme: Theme) => {
     setPreferences((prev) => ({ ...prev, theme }))
@@ -56,7 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AppContext.Provider value={{ preferences, setTheme, setLanguage }}>
+    <AppContext.Provider value={{ preferences, isReady, setTheme, setLanguage }}>
       {children}
     </AppContext.Provider>
   )

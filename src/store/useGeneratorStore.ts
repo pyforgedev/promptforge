@@ -62,9 +62,9 @@ export const useGeneratorStore = create<GeneratorState>()(
         setItem: async (name, value) => {
           await withRetry(() => saveGeneratorState(name, JSON.parse(value)))
         },
-        removeItem: async (name) => {},
+        removeItem: async () => {},
       })),
-      onRehydrateStorage: (state) => {
+      onRehydrateStorage: () => {
         return (rehydratedState) => {
           if (rehydratedState) {
             rehydratedState.isReady = true

@@ -2,8 +2,10 @@ import Dexie, { type EntityTable } from 'dexie'
 import type { Prompt } from '@/types'
 import type { HistoryItem } from '@/features/history/types'
 
+import { encrypt, decrypt } from '@/lib/crypto'
+
 const DB_NAME = 'promptforge'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
@@ -53,21 +55,41 @@ export async function deletePrompt(id: string): Promise<void> {
 
 export async function getSetting(key: string): Promise<unknown> {
   const record = await db.settings.get(key)
-  return record?.value
+  if (!record) return undefined
+  
+  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+    try {
+      const decrypted = await decrypt(record.value as string)
+      return JSON.parse(decrypted)
+    } catch {
+      return record.value
+    }
+  }
+  return record.value
 }
 
 export async function saveSetting(key: string, value: unknown): Promise<void> {
-  await db.settings.put({ key, value })
+  let valToSave = value
+  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+    const json = JSON.stringify(value)
+    valToSave = await encrypt(json)
+  }
+  await db.settings.put({ key, value: valToSave })
 }
 
 export async function getHistoryItems(): Promise<HistoryItem[]> {
   return db.history.orderBy('savedAt').reverse().toArray()
 }
 
-export async function saveHistoryItem(item: HistoryItem): Promise<string> {
-  console.log('Dexie: Saving history item', item)
+export async function saveHistoryItem(item: Omit<HistoryItem, 'savedAt'> & Partial<Pick<HistoryItem, 'savedAt'>>): Promise<string> {
+  const historyItem: HistoryItem = {
+    ...item,
+    savedAt: item.savedAt || Date.now(),
+  } as HistoryItem
+  
+  console.log('Dexie: Saving history item', historyItem)
   try {
-    const id = await db.history.put(item)
+    const id = await db.history.put(historyItem)
     console.log('Dexie: Saved history item', id)
     return id
   } catch (error) {

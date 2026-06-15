@@ -1,12 +1,12 @@
-import type { AspectRatio, StylePresetKey } from '@/features/generator/types'
+import type { AspectRatio, StylePresetKey, QualityScore } from '@/features/generator/types'
 
 export interface HistoryItem {
   id: string
   content: string
-  aspectRatio: string
+  aspectRatio: AspectRatio
   niche: string
-  stylePreset: string
-  qualityScore: any
+  stylePreset: StylePresetKey
+  qualityScore: QualityScore
   createdAt: number
   savedAt: number
   metadata?: {
@@ -16,8 +16,8 @@ export interface HistoryItem {
 }
 
 export interface HistoryFilters {
-  aspectRatio: string
-  stylePreset: string
+  aspectRatio: 'all' | AspectRatio
+  stylePreset: 'all' | StylePresetKey
   minRating: number
   dateFrom: string
   dateTo: string

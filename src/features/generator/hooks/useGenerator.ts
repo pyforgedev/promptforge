@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -68,13 +68,13 @@ export function useGenerator(): UseGeneratorReturn {
     }
   }, [isStoreReady, hydrate])
 
-  const state = {
+  const state = useCallback(() => ({
     aspectRatio,
     niche,
     stylePreset,
     customStyle,
     count,
-  }
+  }), [aspectRatio, niche, stylePreset, customStyle, count])
 
   const isConfigValid = isAIReady && !!(
     activeConfig?.apiKey &&
@@ -82,11 +82,19 @@ export function useGenerator(): UseGeneratorReturn {
     activeConfig?.model
   )
 
-  const [results, setResultsState] = useState<GeneratedPrompt[]>([])
+  const [results, setResultsState] = useState<GeneratedPrompt[]>(() => {
+    // Synchronous init if store is already ready
+    // Note: Zustant persist hydration is usually async, but this is a safer approach
+    return [] 
+  })
   
+  // Use a ref to track if we've initialized results from store
+  const isInitialized = useRef(false)
+
   useEffect(() => {
-    if (isStoreReady && lastResult) {
+    if (isStoreReady && lastResult && !isInitialized.current) {
       setResultsState(lastResult)
+      isInitialized.current = true
     }
   }, [isStoreReady, lastResult])
 
@@ -130,7 +138,7 @@ export function useGenerator(): UseGeneratorReturn {
     setError(null)
     setDuplicateWarnings([])
     try {
-      const prompts = await generatePrompts(state, activeConfig)
+      const prompts = await generatePrompts(state(), activeConfig)
       
       // Run duplicate check before setting results to ensure warnings are ready
       await runDuplicateCheck(prompts)
@@ -162,7 +170,7 @@ export function useGenerator(): UseGeneratorReturn {
 
     setImprovingId(id)
     try {
-      const improved = await improvePrompt(prompt.content, state, activeConfig)
+      const improved = await improvePrompt(prompt.content, state(), activeConfig)
       const newResults = results.map((p) => (p.id === id ? { ...improved, id: p.id } : p))
       setResults(newResults)
       showImproveSuccess()
@@ -194,7 +202,7 @@ export function useGenerator(): UseGeneratorReturn {
   }, [setResults, setLastResult])
 
   return {
-    state,
+    state: state(),
     setAspectRatio,
     setNiche,
     setStylePreset,

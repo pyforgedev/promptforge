@@ -5,7 +5,6 @@ import { Sparkles, RefreshCw, Copy, X, RotateCcw, Wand2, AlertTriangle, Settings
 import { useGenerator } from '../hooks/useGenerator'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { useToast } from '@/hooks/useToast'
-import { logHistoryItem } from '@/services/similarity/similarityService'
 import { AspectRatioSelect } from './AspectRatioSelect'
 import { NicheInput } from './NicheInput'
 import { StylePresetSelect } from './StylePresetSelect'

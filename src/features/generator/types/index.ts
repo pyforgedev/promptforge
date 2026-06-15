@@ -46,9 +46,9 @@ export interface QualityScore {
 export interface GeneratedPrompt {
   id: string
   content: string
-  aspectRatio: string
+  aspectRatio: AspectRatio
   niche: string
-  stylePreset: string
+  stylePreset: StylePresetKey
   qualityScore: QualityScore
   createdAt: number
 }

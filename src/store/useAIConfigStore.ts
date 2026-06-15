@@ -52,16 +52,21 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
 
   setActiveConfig: async (config: AIConfig) => {
     try {
+      set({ isLoading: true })
       await saveSetting(ACTIVE_CONFIG_KEY, config)
-      set({ activeConfig: config })
+      set({ activeConfig: config, isLoading: false })
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to save active config' })
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to save active config',
+        isLoading: false
+      })
       throw error
     }
   },
 
   savePreset: async (preset: AIConfigPreset) => {
     try {
+      set({ isLoading: true })
       const currentPresets = get().presets
       const existingIndex = currentPresets.findIndex(p => p.id === preset.id)
       let newPresets: AIConfigPreset[]
@@ -74,9 +79,12 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       }
       
       await saveSetting(PRESETS_KEY, newPresets)
-      set({ presets: newPresets })
+      set({ presets: newPresets, isLoading: false })
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to save preset' })
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to save preset',
+        isLoading: false
+      })
       throw error
     }
   },
