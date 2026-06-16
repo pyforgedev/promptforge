@@ -56,4 +56,6 @@ export interface GeneratedPrompt {
   stylePreset: StylePresetKey
   qualityScore: QualityScore
   createdAt: number
+  tags: string[] // Added tags
+  folderId: string | null // Added folderId
 }

@@ -84,7 +84,7 @@ export const HistoryList = memo(function HistoryList({
       <EmptyState
         title={t('history.emptyTitle')}
         description={searchMode === 'local' ? "No prompts found in this folder. Start generating to fill it up!" : t('history.emptyDescription')}
-        icon="package-open"
+        // Removed icon prop
       />
     )
   }

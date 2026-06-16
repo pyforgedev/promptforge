@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { useGeneratorStore } from '@/store/useGeneratorStore'
-import { generatePrompts, getRandomNiche, improvePrompt } from '../services/generatorService'
+import { generatePrompts, improvePrompt, improveNicheInput } from '../services/generatorService'
+import { useIdeaQueue } from './useIdeaQueue'
 import { calculateSimilarity, logHistoryItem } from '@/services/similarity/similarityService'
 import type { AspectRatio, StylePresetKey, VariationCount, GeneratedPrompt } from '../types'
 import type { SimilarityResult } from '@/services/similarity/similarityService'
@@ -28,6 +29,11 @@ interface UseGeneratorReturn {
   setCustomStyle: (value: string) => void
   setCount: (value: VariationCount) => void
   randomizeNiche: () => void
+  isRandomizing: boolean
+  isQueueHydrating: boolean
+  isQueueEmpty: boolean
+  improveNiche: () => Promise<void>
+  isImprovingNiche: boolean
   results: GeneratedPrompt[]
   loading: boolean
   improvingId: string | null
@@ -43,7 +49,7 @@ interface UseGeneratorReturn {
 
 export function useGenerator(): UseGeneratorReturn {
   const { t } = useTranslation()
-  const { showGenerationSuccess, showImproveSuccess, showError } = useToast()
+  const { showToast, showGenerationSuccess, showImproveSuccess, showError } = useToast()
   const { activeConfig, isReady: isAIReady } = useAIConfigStore()
   const {
     aspectRatio,
@@ -82,13 +88,17 @@ export function useGenerator(): UseGeneratorReturn {
     activeConfig?.model
   )
 
+  const { getNextIdea, isHydrating: isQueueHydrating, isFetchingInitial, isRefilling, isQueueEmpty } = useIdeaQueue(
+    stylePreset,
+    customStyle,
+    activeConfig ?? null,
+    isConfigValid
+  )
+
   const [results, setResultsState] = useState<GeneratedPrompt[]>(() => {
-    // Synchronous init if store is already ready
-    // Note: Zustant persist hydration is usually async, but this is a safer approach
     return [] 
   })
   
-  // Use a ref to track if we've initialized results from store
   const isInitialized = useRef(false)
 
   useEffect(() => {
@@ -109,9 +119,32 @@ export function useGenerator(): UseGeneratorReturn {
   const [error, setError] = useState<string | null>(null)
 
   const randomizeNiche = useCallback(() => {
-    const newNiche = getRandomNiche()
-    setNiche(newNiche)
-  }, [setNiche])
+    const idea = getNextIdea()
+    if (idea) {
+      setNiche(idea)
+    } else if (!isConfigValid) {
+      showError(t('generator.errors.noActiveConfig'))
+    } else {
+      showToast('info', t('generator.queueRefilling'))
+    }
+  }, [getNextIdea, setNiche, isConfigValid, showError, showToast, t])
+
+  const isRandomizing = (isFetchingInitial || isRefilling) && isQueueEmpty
+
+  const [isImprovingNiche, setIsImprovingNiche] = useState(false)
+
+  const improveNiche = useCallback(async () => {
+    if (!niche.trim() || !activeConfig || !isConfigValid) return
+    setIsImprovingNiche(true)
+    try {
+      const improved = await improveNicheInput(niche, activeConfig)
+      setNiche(improved)
+    } catch (err) {
+      showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
+    } finally {
+      setIsImprovingNiche(false)
+    }
+  }, [niche, activeConfig, isConfigValid, setNiche, showError, t])
 
   const runDuplicateCheck = useCallback(async (prompts: GeneratedPrompt[]) => {
     const historyItems = await getHistoryItems()
@@ -153,7 +186,9 @@ export function useGenerator(): UseGeneratorReturn {
         uniqueness: 0,
         overall: 0
       },
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      tags: [], // Add missing tags
+      folderId: null // Add missing folderId
     }))
     
     setResultsState(initialPrompts)
@@ -187,7 +222,11 @@ export function useGenerator(): UseGeneratorReturn {
       showGenerationSuccess()
       
       // Auto-save to history using new logging service
-      await Promise.all(prompts.map(p => logHistoryItem(p)))
+      await Promise.all(prompts.map(p => logHistoryItem({
+        ...p,
+        tags: p.tags || [],
+        folderId: p.folderId || null,
+      })))
     } catch (err) {
       showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
       setError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
@@ -254,6 +293,8 @@ export function useGenerator(): UseGeneratorReturn {
       await logHistoryItem({
         ...improved,
         id: prompt.id,
+        tags: improved.tags || [],
+        folderId: improved.folderId || null,
       })
     } catch (err) {
       showError(err instanceof Error ? err.message : t('generator.errors.generationFailed'))
@@ -286,6 +327,11 @@ export function useGenerator(): UseGeneratorReturn {
     setCustomStyle,
     setCount,
     randomizeNiche,
+    isRandomizing,
+    isQueueHydrating,
+    isQueueEmpty,
+    improveNiche,
+    isImprovingNiche,
     results,
     loading,
     improvingId,

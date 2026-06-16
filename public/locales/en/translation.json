@@ -148,6 +148,9 @@
     "niche": "Idea / Niche",
     "nichePlaceholder": "Enter a niche or leave empty for random",
     "randomNiche": "Random niche",
+    "improveNiche": "Improve idea",
+    "improvingNiche": "Improving...",
+    "loadingIdeas": "Loading ideas...",
     "stylePreset": "Style Preset",
     "customStylePlaceholder": "Describe your custom style...",
     "generateCount": "Generate",
@@ -175,8 +178,10 @@
     "duplicateMedium": "Medium similarity — variations may be limited",
     "duplicateScore": "Similarity score: {{score}}",
     "errors": {
+      "noActiveConfig": "No active AI config. Please set up your API key in Settings.",
       "generationFailed": "Failed to generate prompts. Please try again."
     },
+    "queueRefilling": "Loading new ideas, please wait...",
     "aspectRatios": {
       "random": "Random",
       "1_1": "1:1",

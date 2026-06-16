@@ -23,7 +23,7 @@ import { bulkExport } from '@/services/export/historyExport'
 
 export default function HistoryPage() {
   const { t } = useTranslation()
-  const { showCopySuccess } = useToast()
+  const { showCopySuccess, showToast } = useToast()
   const {
     items,
     loading,

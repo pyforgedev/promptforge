@@ -7,13 +7,13 @@ import { AI_ENDPOINTS } from '@/lib/constants'
 
 // Provider Adapter Interface
 interface ProviderAdapter {
-  generate(request: AIRequest, config: AIConfig): Promise<AIResponse>
+  generate(request: AIRequest, config: AIConfig, signal?: AbortSignal): Promise<AIResponse>
   generateStream?(request: AIRequest, config: AIConfig, onChunk: (chunk: string) => void): Promise<void>
 }
 
 // Official Gemini Adapter
 class GeminiAdapter implements ProviderAdapter {
-  async generate(request: AIRequest, config: AIConfig): Promise<AIResponse> {
+  async generate(request: AIRequest, config: AIConfig, signal?: AbortSignal): Promise<AIResponse> {
     const baseUrl = config.endpoint || AI_ENDPOINTS.gemini
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
     const url = `${cleanBaseUrl}/models/${config.model}:generateContent`
@@ -29,7 +29,8 @@ class GeminiAdapter implements ProviderAdapter {
     }, {
       headers: {
         'x-goog-api-key': config.apiKey
-      }
+      },
+      signal,
     })
 
     if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
@@ -50,7 +51,7 @@ class GeminiAdapter implements ProviderAdapter {
 
 // Standard OpenAI (also handles OpenRouter & Custom) Adapter
 class OpenAIAdapter implements ProviderAdapter {
-  async generate(request: AIRequest, config: AIConfig): Promise<AIResponse> {
+  async generate(request: AIRequest, config: AIConfig, signal?: AbortSignal): Promise<AIResponse> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${config.apiKey}`,
@@ -75,7 +76,7 @@ class OpenAIAdapter implements ProviderAdapter {
         temperature: request.temperature || 0.7,
         max_tokens: request.maxTokens || 2048,
       },
-      { headers }
+      { headers, signal }
     )
 
     if (!response.data?.choices?.[0]?.message?.content) {
@@ -171,7 +172,7 @@ class ProviderFactory {
   }
 }
 
-export async function sendPrompt(request: AIRequest, config: AIConfig): Promise<AIResponse> {
+export async function sendPrompt(request: AIRequest, config: AIConfig, signal?: AbortSignal): Promise<AIResponse> {
   const validationError = validateAIConfig(config)
   if (validationError) {
     throw new Error(validationError)
@@ -179,7 +180,7 @@ export async function sendPrompt(request: AIRequest, config: AIConfig): Promise<
 
   try {
     const adapter = ProviderFactory.getAdapter(config.provider)
-    return await adapter.generate(request, config)
+    return await adapter.generate(request, config, signal)
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMsg = error.response?.data?.error?.message || 
@@ -202,13 +203,13 @@ export async function testConnection(config: AIConfig): Promise<boolean> {
   return true
 }
 
-export async function generateCompletion(prompt: string, config: AIConfig): Promise<string> {
+export async function generateCompletion(prompt: string, config: AIConfig, signal?: AbortSignal): Promise<string> {
   const response = await sendPrompt({
     prompt,
     model: config.model,
     temperature: 0.7,
     maxTokens: 2048,
-  }, config)
+  }, config, signal)
   return response.content
 }
 

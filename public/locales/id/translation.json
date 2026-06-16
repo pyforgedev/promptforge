@@ -148,6 +148,9 @@
     "niche": "Ide / Niche",
     "nichePlaceholder": "Masukkan niche atau biarkan kosong untuk acak",
     "randomNiche": "Niche acak",
+    "improveNiche": "Tingkatkan ide",
+    "improvingNiche": "Meningkatkan...",
+    "loadingIdeas": "Memuat ide...",
     "stylePreset": "Praseleksi Gaya",
     "customStylePlaceholder": "Jelaskan gaya kustom Anda...",
     "generateCount": "Hasilkan",
@@ -175,8 +178,10 @@
     "duplicateMedium": "Kemiripan sedang — variasi mungkin terbatas",
     "duplicateScore": "Skor kemiripan: {{score}}",
     "errors": {
+      "noActiveConfig": "Tidak ada konfigurasi AI aktif. Silakan atur API key di Pengaturan.",
       "generationFailed": "Gagal menghasilkan prompt. Silakan coba lagi."
     },
+    "queueRefilling": "Memuat ide baru, mohon tunggu...",
     "aspectRatios": {
       "random": "Acak",
       "1_1": "1:1",

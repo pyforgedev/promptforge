@@ -29,6 +29,11 @@ export const GeneratorForm = memo(function GeneratorForm() {
     setCustomStyle,
     setCount,
     randomizeNiche,
+    isRandomizing,
+    isQueueHydrating,
+    isQueueEmpty,
+    improveNiche,
+    isImprovingNiche,
     results,
     loading,
     improvingId,
@@ -66,6 +71,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
               value={state.niche}
               onChange={setNiche}
               onRandomize={randomizeNiche}
+              isRandomizing={isRandomizing}
+              isQueueHydrating={isQueueHydrating}
+              isQueueEmpty={isQueueEmpty}
+              onImprove={improveNiche}
+              isImproving={isImprovingNiche}
+              isConfigValid={isConfigValid}
             />
           </div>
 

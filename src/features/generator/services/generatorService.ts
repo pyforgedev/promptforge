@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import pLimit from 'p-limit'
-import { generateStructured, generateStructuredStream } from '@/services/ai/aiService'
+import { generateStructured, generateStructuredStream, generateCompletion } from '@/services/ai/aiService'
 import type { AIConfig } from '@/features/settings/types'
-import type { GeneratorOptions, GeneratedPrompt, QualityScore, StructuredPromptOutput } from '../types'
+import type { GeneratorOptions, GeneratedPrompt, QualityScore, StructuredPromptOutput, StylePresetKey } from '../types'
 
 const qualityScoreSchema = z.object({
   commercialPotential: z.number().min(0).max(10),
@@ -188,6 +188,8 @@ Base requirements for the prompt:
           stylePreset,
           qualityScore: { ...s, overall },
           createdAt: Date.now(),
+          tags: [],
+          folderId: null,
         } as GeneratedPrompt
       } catch {
         // Fallback to random generation on AI error
@@ -200,6 +202,8 @@ Base requirements for the prompt:
           stylePreset,
           qualityScore: mockScore,
           createdAt: Date.now(),
+          tags: [],
+          folderId: null,
         } as GeneratedPrompt
       }
     })
@@ -260,6 +264,8 @@ Your task:
       stylePreset: options.stylePreset,
       qualityScore: { ...s, overall },
       createdAt: Date.now(),
+      tags: [],
+      folderId: null,
     }
   } catch {
     // Fallback if AI fails
@@ -276,10 +282,79 @@ Your task:
       stylePreset: options.stylePreset,
       qualityScore: s,
       createdAt: Date.now(),
+      tags: [],
+      folderId: null,
     }
   }
 }
 
-export function getRandomNiche(): string {
-  return generateRandomNiche()
+export async function fetchNicheIdeas(
+  stylePreset: StylePresetKey,
+  customStyle: string,
+  config: AIConfig,
+  usedIdeas: string[] = [],
+  signal?: AbortSignal
+): Promise<string[]> {
+  let styleContext: string
+  if (stylePreset === 'none' || stylePreset === 'random') {
+    styleContext = 'These should be broad, covering diverse categories suitable for general stock photography.'
+  } else if (stylePreset === 'custom') {
+    styleContext = customStyle.trim()
+      ? `These should be relevant to this style: ${customStyle}. Focus on niches that suit this aesthetic.`
+      : 'These should be broad, covering diverse categories suitable for general stock photography.'
+  } else {
+    styleContext = `These should be specifically relevant to the '${stylePreset}' style/category for stock photography.`
+  }
+
+  const avoidList = usedIdeas.length > 0
+    ? `\nAvoid these already-used ideas and anything conceptually similar to them:\n${usedIdeas.slice(-20).join(", ")}`
+    : ''
+
+  const prompt = `Generate exactly 8 unique, creative niche ideas for stock photography prompts.
+${styleContext}${avoidList}
+Return ONLY a JSON array of 8 short niche strings (2-5 words each).
+Example: ["urban street fashion", "cozy home office", "organic farm harvest"]
+No explanations, no markdown, just the JSON array.`
+
+  try {
+    const raw = await generateCompletion(prompt, { ...config, }, signal)
+    const trimmed = raw.trim()
+
+    try {
+      const arrayMatch = trimmed.match(/\[[\s\S]*\]/)
+      if (arrayMatch) {
+        const parsed = JSON.parse(arrayMatch[0])
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(String).filter(Boolean)
+        }
+      }
+    } catch {
+      // fall through to line-split
+    }
+
+    const lines = trimmed.split(/[\n,]+/).map(s => s.replace(/^["'\s]+|["'\s]+$/g, '')).filter(Boolean)
+    if (lines.length > 0) return lines
+  } catch (err) {
+    if ((err as Error).name === 'AbortError' || (err as Error).name === 'CanceledError') throw err
+  }
+
+  return []
+}
+
+export async function improveNicheInput(
+  currentInput: string,
+  config: AIConfig
+): Promise<string> {
+  const prompt = `Improve this stock photography niche/idea to be more vivid, specific, and optimized for generating high-quality stock images.
+Original: "${currentInput}"
+Return ONLY the improved niche text (2-8 words, no quotes, no explanation).
+Make it more descriptive and commercially appealing while keeping the core concept.`
+
+  try {
+    const result = await generateCompletion(prompt, { ...config, })
+    const trimmed = result.trim().replace(/^["']+|["']+$/g, '')
+    return trimmed || currentInput
+  } catch {
+    return currentInput
+  }
 }

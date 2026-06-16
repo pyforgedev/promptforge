@@ -1,3 +1,4 @@
+
 import Dexie, { type EntityTable } from 'dexie'
 import type { Prompt } from '@/types'
 import type { HistoryItem, Folder } from '@/features/history/types'
@@ -7,12 +8,20 @@ import { encrypt, decrypt } from '@/lib/crypto'
 const DB_NAME = 'promptforge'
 const DB_VERSION = 5
 
+export interface IdeaCacheEntry {
+  cacheKey: string; // Primary key: `${niche}|${stylePreset}`
+  queue: string[];
+  used: string[];
+  lastUpdated: number; // Timestamp
+}
+
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
   history!: EntityTable<HistoryItem, 'id'>
   folders!: EntityTable<Folder, 'id'>
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
   generatorState!: EntityTable<{ key: string; value: unknown }, 'key'>
+  idea_cache!: EntityTable<IdeaCacheEntry, 'cacheKey'> // New store for idea cache
 
   constructor() {
     super(DB_NAME)
@@ -22,11 +31,15 @@ class PromptForgeDB extends Dexie {
       folders: 'id, name, parentId, createdAt',
       settings: 'key',
       generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated', // Define schema for idea_cache
     }).upgrade(trans => {
-      return trans.table('history').toCollection().modify(item => {
+      trans.table('history').toCollection().modify(item => {
         item.folderId = item.folderId || null
         item.tags = item.tags || []
       })
+      // Add new stores to existing database versions
+      // For version 5, if upgrading from <5, it will add idea_cache.
+      // Dexie handles this by creating the new table if it doesn't exist.
     })
   }
 }
@@ -146,6 +159,26 @@ export async function getGeneratorState(key: string): Promise<unknown> {
 
 export async function saveGeneratorState(key: string, value: unknown): Promise<void> {
   await db.generatorState.put({ key, value })
+}
+
+export async function getIdeaCache(cacheKey: string): Promise<IdeaCacheEntry | undefined> {
+  return db.idea_cache.get(cacheKey)
+}
+
+export async function saveIdeaCache(entry: IdeaCacheEntry): Promise<string> {
+  return db.idea_cache.put(entry)
+}
+
+export async function deleteIdeaCache(cacheKey: string): Promise<void> {
+  await db.idea_cache.delete(cacheKey)
+}
+
+export async function clearExpiredIdeaCache(threshold: number): Promise<void> {
+  const expiredKeys = await db.idea_cache
+    .where('lastUpdated')
+    .below(Date.now() - threshold)
+    .primaryKeys()
+  await db.idea_cache.bulkDelete(expiredKeys)
 }
 
 export default db
