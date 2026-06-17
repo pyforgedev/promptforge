@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { QuickStats } from '@/features/history/components/QuickStats'
 import { RecentPrompts } from '@/features/history/components/RecentPrompts'
+import { AppLogo } from '@/components/common/AppLogo'
 
 const features = [
   {
@@ -40,9 +41,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center gap-12 py-12 md:py-20">
       <div className="flex flex-col items-center gap-4 text-center max-w-2xl px-4">
-        <div className="rounded-full bg-[var(--brand-primary)]/10 p-3">
-          <Sparkles className="h-8 w-8 text-[var(--brand-primary)]" />
-        </div>
+        <AppLogo size="lg" className="mb-2 h-16 md:h-24" />
         <h2 className="text-4xl font-bold tracking-tight text-[var(--text-primary)] md:text-5xl">
           {t('home.title')}
         </h2>

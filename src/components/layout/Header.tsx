@@ -1,8 +1,9 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sun, Moon, Monitor, Menu, Sparkles, Check } from 'lucide-react'
+import { Sun, Moon, Monitor, Menu, Check } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
 import { useToast } from '@/hooks/useToast'
+import { AppLogo } from '@/components/common/AppLogo'
 import type { Theme } from '@/types'
 import {
   Select,
@@ -25,11 +26,7 @@ const themes: { value: Theme; icon: typeof Sun; label: string }[] = [
   { value: 'system', icon: Monitor, label: 'theme.system' },
 ]
 
-interface HeaderProps {
-  onMenuToggle: () => void
-}
-
-export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
+export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
   const { t, i18n } = useTranslation()
   const { preferences, setTheme } = useAppContext()
   const { showToast } = useToast()
@@ -44,7 +41,7 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
     showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated successfully' }))
   }
 
-  const ActiveThemeIcon = themes.find(t => t.value === preferences.theme)?.icon || Monitor
+  const ActiveThemeIcon = themes.find(entry => entry.value === preferences.theme)?.icon || Monitor
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-overlay)] px-6 backdrop-blur-md">
@@ -57,7 +54,7 @@ export const Header = memo(function Header({ onMenuToggle }: HeaderProps) {
           <Menu className="h-5 w-5 text-[var(--text-primary)]" />
         </button>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-[var(--brand-primary)]" />
+          <AppLogo size="sm" />
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
             {t('app.name')}
           </h1>
