@@ -42,8 +42,9 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
         isLoading: false 
       })
     } catch (error) {
+      const debugMsg = error instanceof Error ? error.message : String(error)
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to load configs',
+        error: import.meta.env.DEV ? debugMsg : 'Failed to load configs',
         isLoading: false,
         isReady: true // Still ready even if error, just empty
       })
@@ -56,8 +57,9 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(ACTIVE_CONFIG_KEY, config)
       set({ activeConfig: config, isLoading: false })
     } catch (error) {
+      const debugMsg = error instanceof Error ? error.message : String(error)
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to save active config',
+        error: import.meta.env.DEV ? debugMsg : 'Failed to save active config',
         isLoading: false
       })
       throw error
@@ -81,8 +83,9 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(PRESETS_KEY, newPresets)
       set({ presets: newPresets, isLoading: false })
     } catch (error) {
+      const debugMsg = error instanceof Error ? error.message : String(error)
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to save preset',
+        error: import.meta.env.DEV ? debugMsg : 'Failed to save preset',
         isLoading: false
       })
       throw error
@@ -95,7 +98,8 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(PRESETS_KEY, newPresets)
       set({ presets: newPresets })
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to delete preset' })
+      const debugMsg = error instanceof Error ? error.message : String(error)
+      set({ error: import.meta.env.DEV ? debugMsg : 'Failed to delete preset' })
       throw error
     }
   }

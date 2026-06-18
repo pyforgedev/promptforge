@@ -8,10 +8,11 @@ import {
   deleteFolder,
   bulkUpdateHistoryFolder
 } from '@/services/storage/indexeddb'
-import type { HistoryItem, HistoryFilters, Folder } from '@/features/history/types'
+import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
+import type { HistoryFilters, Folder } from '@/features/history/types'
 
 interface HistoryState {
-  items: HistoryItem[]
+  items: PromptHistoryRecord[]
   folders: Folder[]
   selectedIds: string[]
   currentFolderId: string | null

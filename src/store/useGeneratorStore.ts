@@ -1,12 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { getGeneratorState, saveGeneratorState, withRetry } from '@/services/storage/indexeddb'
-import type { 
-  AspectRatio, 
-  StylePresetKey, 
-  VariationCount, 
-  GeneratedPrompt 
-} from '@/features/generator/types'
+import type { GeneratedPrompt } from '@/features/prompt-generator/types'
+
+type AspectRatio = string
+type StylePresetKey = string
+type VariationCount = number
 
 interface GeneratorState {
   aspectRatio: AspectRatio
@@ -16,7 +15,7 @@ interface GeneratorState {
   count: VariationCount
   lastResult: GeneratedPrompt[] | null
   isReady: boolean
-  
+
   setAspectRatio: (value: AspectRatio) => void
   setNiche: (value: string) => void
   setStylePreset: (value: StylePresetKey) => void
