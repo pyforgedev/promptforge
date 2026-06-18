@@ -97,8 +97,9 @@ export default function Settings() {
       setPresetName('')
       setPresetDialogOpen(false)
       showToast('success', t('toast.presetSaved', { defaultValue: 'Preset saved successfully' }))
-    } catch {
-      showToast('error', t('toast.saveFailed', { defaultValue: 'Failed to save preset' }))
+    } catch (err) {
+      const debugMsg = err instanceof Error ? err.message : String(err)
+      showToast('error', import.meta.env.DEV ? debugMsg : t('toast.saveFailed', { defaultValue: 'Failed to save preset' }))
     }
   }
 
@@ -129,8 +130,9 @@ export default function Settings() {
     try {
       await setActiveConfig({ provider, apiKey, endpoint, model })
       showToast('success', t('toast.configApplied', { defaultValue: 'Configuration applied successfully' }))
-    } catch {
-      showToast('error', t('toast.applyFailed', { defaultValue: 'Failed to apply configuration' }))
+    } catch (err) {
+      const debugMsg = err instanceof Error ? err.message : String(err)
+      showToast('error', import.meta.env.DEV ? debugMsg : t('toast.applyFailed', { defaultValue: 'Failed to apply configuration' }))
     } finally {
       setIsApplying(false)
     }
@@ -166,8 +168,9 @@ export default function Settings() {
       setImportText('')
       setImportOpen(false)
       showToast('success', t('toast.importSuccess', { defaultValue: 'Presets imported successfully' }))
-    } catch {
-      showToast('error', t('toast.importFailed', { defaultValue: 'Failed to import presets' }))
+    } catch (err) {
+      const debugMsg = err instanceof Error ? err.message : String(err)
+      showToast('error', import.meta.env.DEV ? debugMsg : t('toast.importFailed', { defaultValue: 'Failed to import presets' }))
     }
   }
 

@@ -24,10 +24,8 @@ function getCSRFToken(): string {
 }
 
 function handleError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message || 'An unexpected error occurred'
-  }
-  return 'An unexpected error occurred'
+  const debugMsg = error instanceof Error ? error.message : String(error)
+  return import.meta.env.DEV ? debugMsg : 'An unexpected error occurred'
 }
 
 interface UseAIConfigPresetsReturn {

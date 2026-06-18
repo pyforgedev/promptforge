@@ -36,7 +36,9 @@ export function usePrompts(): UsePromptsReturn {
       const data = await getAllPrompts()
       setPrompts(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load prompts')
+      setError(import.meta.env.DEV
+        ? (err instanceof Error ? err.message : String(err))
+        : 'Failed to load prompts')
     } finally {
       setLoading(false)
     }
@@ -57,7 +59,9 @@ export function usePrompts(): UsePromptsReturn {
       setPrompts((prev) => [prompt, ...prev])
       return prompt
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create prompt'
+      const message = import.meta.env.DEV
+        ? (err instanceof Error ? err.message : String(err))
+        : 'Failed to create prompt'
       setError(message)
       throw err
     } finally {
@@ -73,7 +77,9 @@ export function usePrompts(): UsePromptsReturn {
       setPrompts((prev) => prev.map((p) => (p.id === prompt.id ? prompt : p)))
       return prompt
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update prompt'
+      const message = import.meta.env.DEV
+        ? (err instanceof Error ? err.message : String(err))
+        : 'Failed to update prompt'
       setError(message)
       throw err
     } finally {
@@ -88,7 +94,9 @@ export function usePrompts(): UsePromptsReturn {
       await deletePrompt(id)
       setPrompts((prev) => prev.filter((p) => p.id !== id))
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete prompt'
+      const message = import.meta.env.DEV
+        ? (err instanceof Error ? err.message : String(err))
+        : 'Failed to delete prompt'
       setError(message)
       throw err
     } finally {
