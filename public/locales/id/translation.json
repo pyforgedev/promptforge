@@ -141,6 +141,12 @@
     "resetDefault": "Reset Default"
   },
   "generator": {
+    "pageTitle_v2": "Prompt Engine v2",
+    "pageDescription_v2": "Hasilkan prompt gambar yang dinamis dan berkualitas tinggi menggunakan mesin komposer canggih.",
+    "title_v2": "Komposer Prompt",
+    "niche_v2": "Ide Inti / Subjek",
+    "generate_v2": "Susun Prompt",
+    "generating": "Menghasilkan...",
     "pageTitle": "Generator Premium",
     "pageDescription": "Hasilkan prompt gambar stok berkualitas tinggi dengan AI",
     "title": "Generator Prompt",
@@ -157,12 +163,14 @@
     "prompt": "Prompt",
     "prompts": "Prompt",
     "generate": "Hasilkan Prompt",
-    "generating": "Menghasilkan...",
     "regenerate": "Hasilkan Ulang",
     "improve": "Tingkatkan",
     "saveToHistory": "Simpan ke Riwayat",
     "clear": "Bersihkan",
-    "results": "Prompt yang Dihasilkan",
+    "results": {
+      "generatingTitle": "Menyusun Prompt Anda...",
+      "generatingDescription": "AI sedang menganalisis ide Anda, menerapkan strategi kreatif, dan menilai hasilnya. Ini mungkin memakan waktu sejenak."
+    },
     "promptNumber": "Prompt #{{number}}",
     "copy": "Salin",
     "copyMidjourney": "Salin untuk Midjourney",
@@ -177,11 +185,99 @@
     "duplicateHigh": "Kemiripan tinggi terdeteksi — pertimbangkan untuk hasilkan ulang",
     "duplicateMedium": "Kemiripan sedang — variasi mungkin terbatas",
     "duplicateScore": "Skor kemiripan: {{score}}",
-    "errors": {
-      "noActiveConfig": "Tidak ada konfigurasi AI aktif. Silakan atur API key di Pengaturan.",
-      "generationFailed": "Gagal menghasilkan prompt. Silakan coba lagi."
-    },
     "queueRefilling": "Memuat ide baru, mohon tunggu...",
+    "form": {
+      "errors": {
+        "noActiveConfig": "Tidak ada konfigurasi AI aktif. Silakan atur API key di Pengaturan.",
+        "generationFailed": "Gagal menghasilkan prompt. Silakan coba lagi.",
+        "apiConfigRequired": {
+          "title": "Konfigurasi API Diperlukan",
+          "description": "Harap konfigurasikan kunci API AI, endpoint, dan model Anda di pengaturan untuk mulai menyusun prompt.",
+          "button": "Buka Pengaturan"
+        },
+        "LLM_TIMEOUT": {
+          "title": "Waktu Tunggu Generasi Habis",
+          "message": "Permintaan ke layanan AI habis waktu. Ini mungkin karena beban server yang tinggi. Silakan coba lagi sebentar."
+        },
+        "PARSE_FAILURE": {
+          "title": "Respons Tidak Valid",
+          "message": "AI mengembalikan respons yang tidak dapat dipahami. Periksa kompatibilitas model atau coba niche yang berbeda."
+        },
+        "PARTIAL_BATCH": {
+          "title": "Hasil Parsial",
+          "message": "AI menghasilkan lebih sedikit prompt dari yang diminta. Prompt yang ditampilkan di bawah ini mungkin masih dapat digunakan."
+        },
+        "PROVIDER_ERROR": {
+          "title": "Kesalahan Penyedia AI",
+          "message": "Terjadi kesalahan dengan layanan AI. Harap periksa kunci API dan konfigurasi Anda di pengaturan."
+        }
+      },
+      "usageContext": {
+        "label": "Konteks Penggunaan",
+        "description": "Bagaimana gambar ini akan dilisensikan",
+        "options": {
+          "commercial": "Komersial",
+          "editorial": "Editorial",
+          "conceptual": "Konseptual / Abstrak",
+          "abstract": "Abstrak Murni"
+        }
+      },
+      "targetPlatform": {
+        "label": "Generator Target",
+        "options": {
+          "both": "Kedua Platform",
+          "dalle3": "DALL-E 3 / GPT Image 2",
+          "nano_banana": "Nano Banana Pro / 2"
+        }
+      },
+      "includeDiversity": {
+        "label": "Representasi Beragam",
+        "description": "Dorong keberagaman usia, etnis, dan gender pada subjek manusia"
+      },
+      "allowTextSpace": {
+        "label": "Sisihkan Ruang Teks",
+        "description": "Tinggalkan ruang negatif yang cocok untuk overlay teks — meningkatkan nilai komersial"
+      },
+      "advancedOptions": {
+        "toggle": "Opsi Lanjutan",
+        "toggleClose": "Sembunyikan Opsi Lanjutan"
+      },
+      "targetMarket": {
+        "label": "Target Pasar",
+        "options": {
+          "global": "Global (Universal)",
+          "us": "Amerika Utara",
+          "eu": "Eropa",
+          "asia": "Asia Pasifik",
+          "latin_america": "Amerika Latin"
+        }
+      },
+      "moodPreference": {
+        "label": "Preferensi Suasana (opsional)",
+        "placeholder": "mis. tenang, dramatis, energik, ceria…"
+      },
+      "category": {
+        "label": "Kategori Niche",
+        "placeholder": "Pilih kategori",
+        "options": {
+          "technology": "Teknologi",
+          "business": "Bisnis & Keuangan",
+          "nature": "Alam & Hewan",
+          "lifestyle": "Gaya Hidup & Orang",
+          "healthcare": "Kesehatan & Medis",
+          "food": "Makanan & Minuman",
+          "travel": "Perjalanan & Tempat",
+          "education": "Pendidikan",
+          "abstract": "Abstrak & Latar Belakang",
+          "people": "Orang & Potret",
+          "architecture": "Arsitektur & Interior",
+          "other": "Lainnya / Tidak Berkategori"
+        }
+      },
+      "niche": {
+        "placeholder": "mis., Seorang programmer bekerja larut malam, cakrawala kota futuristik, sebuah keluarga menikmati piknik di taman yang cerah..."
+      }
+    },
     "aspectRatios": {
       "random": "Acak",
       "1_1": "1:1",
@@ -208,5 +304,66 @@
       "nature": "Alam",
       "realEstate": "Properti"
     }
+  },
+  "promptCard": {
+    "variantLabel": "Varian {{index}} dari {{total}}",
+    "legacyBadge": "Lama",
+    "copyPrompt": "Salin teks prompt",
+    "favorite": "Favorit",
+    "unfavorite": "Batal Favorit",
+    "favorited": "Prompt ditambahkan ke favorit",
+    "unfavorited": "Prompt dihapus dari favorit",
+    "regenerateVariant": "Hasilkan ulang varian ini",
+    "platform": {
+      "dalle3": "DALL-E 3",
+      "nano_banana": "Nano Banana"
+    },
+    "score": {
+      "title": "Skor Adobe Stock",
+      "subtitle": "Tinjauan komersial simulasi",
+      "warnings": "Peringatan",
+      "suggestions": "Saran",
+      "breakdown": {
+        "commercialViability": "Viabilitas Komersial",
+        "technicalQuality": "Kualitas Teknis",
+        "compositionStrength": "Kekuatan Komposisi",
+        "marketDiversity": "Keragaman Pasar"
+      }
+    },
+    "segments": {
+      "title": "Segmen Fotografi",
+      "unavailable": "Segmen tidak tersedia untuk prompt lama.",
+      "subject": "Subjek",
+      "composition": "Komposisi",
+      "lighting": "Pencahayaan",
+      "mood": "Suasana",
+      "style": "Gaya",
+      "technical": "Teknis",
+      "colorPalette": "Palet Warna",
+      "environment": "Lingkungan"
+    },
+    "negative": {
+      "title": "Prompt Negatif",
+      "description": "Deskriptor ini dikirim ke AI untuk menekan elemen visual yang tidak diinginkan.",
+      "copy": "Salin prompt negatif"
+    },
+    "keywords": {
+      "title": "Kata Kunci Stok",
+      "copyAll": "Salin semua kata kunci"
+    },
+    "copied": "Disalin!",
+    "copySegment": "Salin {{segment}}"
+  },
+  "batchActionBar": {
+    "title": "{{count}} prompt dihasilkan",
+    "nicheLabel": "Untuk niche",
+    "export": "Ekspor",
+    "exportCSV": "Ekspor CSV",
+    "exportJSON": "Ekspor JSON",
+    "saveAll": "Simpan Semua ke Riwayat",
+    "save": "Simpan",
+    "saved": "Batch tersimpan ke riwayat",
+    "saveError": "Gagal menyimpan batch",
+    "exported": "Berhasil diekspor"
   }
 }

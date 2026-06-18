@@ -141,6 +141,12 @@
     "resetDefault": "Reset Default"
   },
   "generator": {
+    "pageTitle_v2": "Prompt Engine v2",
+    "pageDescription_v2": "Generate dynamic, high-quality image prompts using the advanced composer engine.",
+    "title_v2": "Prompt Composer",
+    "niche_v2": "Core Idea / Subject",
+    "generate_v2": "Compose Prompts",
+    "generating": "Generating...",
     "pageTitle": "Premium Generator",
     "pageDescription": "Generate high-quality stock image prompts with AI",
     "title": "Prompt Generator",
@@ -157,12 +163,14 @@
     "prompt": "Prompt",
     "prompts": "Prompts",
     "generate": "Generate Prompt",
-    "generating": "Generating...",
     "regenerate": "Regenerate",
     "improve": "Improve",
     "saveToHistory": "Save to History",
     "clear": "Clear",
-    "results": "Generated Prompts",
+    "results": {
+      "generatingTitle": "Composing Your Prompts...",
+      "generatingDescription": "The AI is analyzing your idea, applying creative strategies, and scoring the results. This may take a moment."
+    },
     "promptNumber": "Prompt #{{number}}",
     "copy": "Copy",
     "copyMidjourney": "Copy for Midjourney",
@@ -177,11 +185,99 @@
     "duplicateHigh": "High similarity detected — consider regenerating for more variety",
     "duplicateMedium": "Medium similarity — variations may be limited",
     "duplicateScore": "Similarity score: {{score}}",
-    "errors": {
-      "noActiveConfig": "No active AI config. Please set up your API key in Settings.",
-      "generationFailed": "Failed to generate prompts. Please try again."
-    },
     "queueRefilling": "Loading new ideas, please wait...",
+    "form": {
+      "errors": {
+        "noActiveConfig": "No active AI config. Please set up your API key in Settings.",
+        "generationFailed": "Failed to generate prompts. Please try again.",
+        "apiConfigRequired": {
+          "title": "API Configuration Required",
+          "description": "Please configure your AI API key, endpoint, and model in settings to start composing prompts.",
+          "button": "Go to Settings"
+        },
+        "LLM_TIMEOUT": {
+          "title": "Generation Timeout",
+          "message": "The request to the AI service timed out. This might be due to high server load. Please try again in a moment."
+        },
+        "PARSE_FAILURE": {
+          "title": "Invalid Response",
+          "message": "The AI returned a response that could not be understood. Check the model compatibility or try a different niche."
+        },
+        "PARTIAL_BATCH": {
+          "title": "Partial Results",
+          "message": "The AI generated fewer prompts than requested. The prompts shown below may still be usable."
+        },
+        "PROVIDER_ERROR": {
+          "title": "AI Provider Error",
+          "message": "An error occurred with the AI service. Please check your API key and configuration in settings."
+        }
+      },
+      "usageContext": {
+        "label": "Usage Context",
+        "description": "How these images will be licensed",
+        "options": {
+          "commercial": "Commercial",
+          "editorial": "Editorial",
+          "conceptual": "Conceptual / Abstract",
+          "abstract": "Pure Abstract"
+        }
+      },
+      "targetPlatform": {
+        "label": "Target Generator",
+        "options": {
+          "both": "Both Platforms",
+          "dalle3": "DALL-E 3 / GPT Image 2",
+          "nano_banana": "Nano Banana Pro / 2"
+        }
+      },
+      "includeDiversity": {
+        "label": "Diverse Representation",
+        "description": "Encourage age, ethnicity, and gender diversity in human subjects"
+      },
+      "allowTextSpace": {
+        "label": "Reserve Copy Space",
+        "description": "Leave negative space suitable for text overlay — increases commercial value"
+      },
+      "advancedOptions": {
+        "toggle": "Advanced Options",
+        "toggleClose": "Hide Advanced Options"
+      },
+      "targetMarket": {
+        "label": "Target Market",
+        "options": {
+          "global": "Global (Universal)",
+          "us": "North America",
+          "eu": "Europe",
+          "asia": "Asia Pacific",
+          "latin_america": "Latin America"
+        }
+      },
+      "moodPreference": {
+        "label": "Mood Preference (optional)",
+        "placeholder": "e.g. calm, dramatic, energetic, playful…"
+      },
+      "category": {
+        "label": "Niche Category",
+        "placeholder": "Select a category",
+        "options": {
+          "technology": "Technology",
+          "business": "Business & Finance",
+          "nature": "Nature & Animals",
+          "lifestyle": "Lifestyle & People",
+          "healthcare": "Healthcare & Medical",
+          "food": "Food & Drink",
+          "travel": "Travel & Places",
+          "education": "Education",
+          "abstract": "Abstract & Backgrounds",
+          "people": "People & Portraits",
+          "architecture": "Architecture & Interiors",
+          "other": "Other / Uncategorized"
+        }
+      },
+      "niche": {
+        "placeholder": "e.g., A programmer working late at night, a futuristic city skyline, a family enjoying a picnic in a sunny park..."
+      }
+    },
     "aspectRatios": {
       "random": "Random",
       "1_1": "1:1",
@@ -208,5 +304,66 @@
       "nature": "Nature",
       "realEstate": "Real Estate"
     }
+  },
+  "promptCard": {
+    "variantLabel": "Variant {{index}} of {{total}}",
+    "legacyBadge": "Legacy",
+    "copyPrompt": "Copy prompt text",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "favorited": "Prompt favorited",
+    "unfavorited": "Prompt unfavorited",
+    "regenerateVariant": "Regenerate this variant",
+    "platform": {
+      "dalle3": "DALL-E 3",
+      "nano_banana": "Nano Banana"
+    },
+    "score": {
+      "title": "Adobe Stock Score",
+      "subtitle": "Simulated commercial review",
+      "warnings": "Warnings",
+      "suggestions": "Suggestions",
+      "breakdown": {
+        "commercialViability": "Commercial Viability",
+        "technicalQuality": "Technical Quality",
+        "compositionStrength": "Composition Strength",
+        "marketDiversity": "Market Diversity"
+      }
+    },
+    "segments": {
+      "title": "Photography Segments",
+      "unavailable": "Segments not available for legacy prompts.",
+      "subject": "Subject",
+      "composition": "Composition",
+      "lighting": "Lighting",
+      "mood": "Mood",
+      "style": "Style",
+      "technical": "Technical",
+      "colorPalette": "Color Palette",
+      "environment": "Environment"
+    },
+    "negative": {
+      "title": "Negative Prompt",
+      "description": "These descriptors are sent to the AI to suppress unwanted visual elements.",
+      "copy": "Copy negative prompt"
+    },
+    "keywords": {
+      "title": "Stock Keywords",
+      "copyAll": "Copy all keywords"
+    },
+    "copied": "Copied!",
+    "copySegment": "Copy {{segment}}"
+  },
+  "batchActionBar": {
+    "title": "{{count}} prompts generated",
+    "nicheLabel": "For niche",
+    "export": "Export",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON",
+    "saveAll": "Save All to History",
+    "save": "Save",
+    "saved": "Batch saved to history",
+    "saveError": "Failed to save batch",
+    "exported": "Exported successfully"
   }
 }
