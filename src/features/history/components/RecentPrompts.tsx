@@ -1,16 +1,28 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useLiveQuery } from 'dexie-react-hooks'
 import db from '@/services/storage/indexeddb'
-import { EnhancedCopyButton } from '@/features/generator/components/EnhancedCopyButton'
+import { Button } from '@/components/ui/button'
+import { Copy, Check } from 'lucide-react'
+import { toast } from 'sonner'
+import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 
 export const RecentPrompts = memo(function RecentPrompts() {
   const { t } = useTranslation()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
   const recentItems = useLiveQuery(
-    () => db.history.orderBy('createdAt').reverse().limit(3).toArray(),
+    () => db.prompt_history.orderBy('createdAt').reverse().limit(3).toArray(),
     []
   )
+
+  const handleCopy = async (item: PromptHistoryRecord) => {
+    await navigator.clipboard.writeText(item.fullPrompt)
+    setCopiedId(item.id)
+    toast.success(t('promptCard.copied'))
+    setTimeout(() => setCopiedId(null), 1500)
+  }
 
   if (!recentItems || recentItems.length === 0) {
     return (
@@ -30,23 +42,31 @@ export const RecentPrompts = memo(function RecentPrompts() {
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="px-2 py-1 bg-secondary rounded-full font-medium">
-                  {item.aspectRatio}
+                  {item.variationAnchors.primaryVariation}
                 </span>
                 <span className="px-2 py-1 bg-secondary rounded-full font-medium">
-                  {item.niche}
+                  {item.variationAnchors.compositionStyle}
                 </span>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <p className="text-sm line-clamp-3 leading-relaxed">
-                {item.content}
+                {item.fullPrompt}
               </p>
               <div className="flex justify-end mt-2">
-                <EnhancedCopyButton
-                  content={item.content}
-                  aspectRatio={item.aspectRatio}
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-48"
-                />
+                  onClick={() => handleCopy(item)}
+                >
+                  {copiedId === item.id ? (
+                    <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {copiedId === item.id ? t('promptCard.copied') : t('generator.copy')}
+                </Button>
               </div>
             </CardContent>
           </Card>

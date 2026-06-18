@@ -7,13 +7,13 @@ import { Image, Star } from 'lucide-react'
 
 export const QuickStats = memo(function QuickStats() {
   const { t } = useTranslation()
-  const items = useLiveQuery(() => db.history.toArray(), [])
+  const items = useLiveQuery(() => db.prompt_history.toArray(), [])
 
   const totalPrompts = items?.length ?? 0
   
   let averageScore = 0
   if (items && items.length > 0) {
-    const totalScore = items.reduce((acc, item) => acc + item.qualityScore.overall, 0)
+    const totalScore = items.reduce((acc, item) => acc + (item.adobeScore?.total ?? 0), 0)
     averageScore = totalScore / items.length
   }
 

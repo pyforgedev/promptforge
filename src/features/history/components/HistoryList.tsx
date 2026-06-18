@@ -9,21 +9,21 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
-import type { HistoryItem } from '../types'
+import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 
 interface HistoryListProps {
-  items: HistoryItem[]
+  items: PromptHistoryRecord[]
   loading: boolean
   error: string | null
   onCopy: (content: string) => void
   onDelete: (id: string) => void
 }
 
-function formatDate(timestamp: number): string {
+function formatDate(date: Date): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(timestamp)
+  }).format(date instanceof Date ? date : new Date(date))
 }
 
 export const HistoryList = memo(function HistoryList({
@@ -39,15 +39,12 @@ export const HistoryList = memo(function HistoryList({
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      // Folder logic
       if (searchMode === 'local' && item.folderId !== currentFolderId) return false
-      
-      // Filter logic
-      if (filters.aspectRatio && filters.aspectRatio !== 'all' && item.aspectRatio !== filters.aspectRatio) return false
-      if (filters.minRating > 0 && (item.qualityScore?.overall ?? 0) < filters.minRating) return false
+
+      if (filters.minRating > 0 && (item.adobeScore?.total ?? 0) < filters.minRating) return false
       if (filters.search) {
         const q = filters.search.toLowerCase()
-        if (!item.content.toLowerCase().includes(q) && !item.niche.toLowerCase().includes(q)) {
+        if (!item.fullPrompt.toLowerCase().includes(q) && !item.niche.toLowerCase().includes(q) && !item.category.toLowerCase().includes(q)) {
           return false
         }
       }
@@ -57,7 +54,6 @@ export const HistoryList = memo(function HistoryList({
 
   const handleCopy = async (content: string) => {
     await onCopy(content)
-    // Toast already handled by onCopy in HistoryPage
   }
 
   const handleDelete = async (id: string) => {
@@ -84,7 +80,6 @@ export const HistoryList = memo(function HistoryList({
       <EmptyState
         title={t('history.emptyTitle')}
         description={searchMode === 'local' ? "No prompts found in this folder. Start generating to fill it up!" : t('history.emptyDescription')}
-        // Removed icon prop
       />
     )
   }
@@ -93,7 +88,7 @@ export const HistoryList = memo(function HistoryList({
     <div className="flex flex-col gap-3">
       {filteredItems.map((item) => {
         const isSelected = selectedIds.includes(item.id)
-        
+
         return (
           <Card 
             key={item.id} 
@@ -117,28 +112,28 @@ export const HistoryList = memo(function HistoryList({
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 fill-primary text-primary" />
                   <span className="text-sm font-bold text-primary">
-                    {item.qualityScore?.overall.toFixed(1) ?? 'N/A'}
+                    {item.adobeScore?.total.toFixed(1) ?? 'N/A'}
                   </span>
                   <CardTitle className="text-sm text-muted-foreground font-normal font-mono">
-                    {item.aspectRatio} | {item.niche}
+                    {item.category} | {item.niche}
                   </CardTitle>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground font-inter">
                   <Clock className="h-3 w-3" />
-                  {formatDate(item.savedAt)}
+                  {formatDate(item.createdAt)}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pl-10">
               <p className="text-sm text-foreground leading-relaxed line-clamp-3 font-mono">
-                {item.content}
+                {item.fullPrompt}
               </p>
               <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs font-inter cursor-pointer hover:bg-white/5"
-                  onClick={() => handleCopy(item.content)}
+                  onClick={() => handleCopy(item.fullPrompt)}
                 >
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
                   {t('generator.copy')}
