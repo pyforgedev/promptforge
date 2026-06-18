@@ -71,29 +71,3 @@ export function calculateSimilarity(
 
   return { level, score: Math.round(maxScore * 100) / 100, matches: bestMatches }
 }
-
-export const checkDuplicate = calculateSimilarity
-
-import { saveHistoryItem, getHistoryItems } from '@/services/storage/indexeddb'
-import type { HistoryItem } from '@/features/history/types'
-
-export async function logHistoryItem(item: Omit<HistoryItem, 'savedAt'>): Promise<void> {
-  try {
-    const history = await getHistoryItems()
-    const contents = history.map(h => h.content)
-    
-    const similarity = calculateSimilarity(item.content, contents)
-    
-    await saveHistoryItem({
-      ...item,
-      savedAt: Date.now(),
-      metadata: {
-        similarity: similarity.score,
-        similarityLevel: similarity.level
-      }
-    })
-  } catch (error) {
-    console.error('Failed to log history item:', error)
-    throw error
-  }
-}

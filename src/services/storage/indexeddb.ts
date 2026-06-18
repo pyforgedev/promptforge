@@ -1,12 +1,13 @@
 
 import Dexie, { type EntityTable } from 'dexie'
+import { v4 as uuidv4 } from 'uuid'
 import type { Prompt } from '@/types'
-import type { HistoryItem, Folder } from '@/features/history/types'
+import type { Folder } from '@/features/history/types'
+import type { GeneratedPrompt, GeneratedPromptBatch, GeneratorInput } from '@/features/prompt-generator/types'
 
 import { encrypt, decrypt } from '@/lib/crypto'
 
 const DB_NAME = 'promptforge'
-const DB_VERSION = 5
 
 export interface IdeaCacheEntry {
   cacheKey: string; // Primary key: `${niche}|${stylePreset}`
@@ -15,31 +16,134 @@ export interface IdeaCacheEntry {
   lastUpdated: number; // Timestamp
 }
 
+// Represents a single prompt record in the new, normalized schema.
+export interface PromptHistoryRecord extends Omit<GeneratedPrompt, 'generatorInput' | 'prompts'> {
+  folderId: string | null
+  niche: string
+  category: string
+}
+
+// Note: This interface is intentionally empty as it extends an Omit type.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface PromptBatchRecord extends Omit<GeneratedPromptBatch, 'prompts'> {
+  // batchId is the primary key
+}
+
+
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
-  history!: EntityTable<HistoryItem, 'id'>
+  history!: EntityTable<Record<string, unknown>, 'id'>
+  prompt_history!: EntityTable<PromptHistoryRecord, 'id'>
+  prompt_batches!: EntityTable<PromptBatchRecord, 'batchId'>
   folders!: EntityTable<Folder, 'id'>
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
   generatorState!: EntityTable<{ key: string; value: unknown }, 'key'>
-  idea_cache!: EntityTable<IdeaCacheEntry, 'cacheKey'> // New store for idea cache
+  idea_cache!: EntityTable<IdeaCacheEntry, 'cacheKey'>
 
   constructor() {
     super(DB_NAME)
-    this.version(DB_VERSION).stores({
+    
+    // Version 5 Schema (pre-refactor)
+    this.version(5).stores({
       prompts: 'id, name, category, createdAt',
       history: 'id, aspectRatio, stylePreset, niche, createdAt, savedAt, content, qualityScore, folderId, *tags',
       folders: 'id, name, parentId, createdAt',
       settings: 'key',
       generatorState: 'key',
-      idea_cache: 'cacheKey, lastUpdated', // Define schema for idea_cache
-    }).upgrade(trans => {
-      trans.table('history').toCollection().modify(item => {
-        item.folderId = item.folderId || null
-        item.tags = item.tags || []
-      })
-      // Add new stores to existing database versions
-      // For version 5, if upgrading from <5, it will add idea_cache.
-      // Dexie handles this by creating the new table if it doesn't exist.
+      idea_cache: 'cacheKey, lastUpdated',
+    })
+
+    // Version 6 Schema (Prompt Engine Refactor)
+    this.version(6).stores({
+      // New tables for normalized prompt generation history
+      prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+
+      // Deprecated table
+      history: null, // Drop the old 'history' table
+      
+      // Unchanged tables
+      prompts: 'id, name, category, createdAt',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+    }).upgrade(async (trans) => {
+      console.log('Upgrading Dexie schema to version 6...')
+      const oldHistoryTable = trans.table('history')
+      const newHistoryTable = trans.table('prompt_history')
+      const newBatchesTable = trans.table('prompt_batches')
+
+      const legacyItems = await oldHistoryTable.toArray()
+      if (legacyItems.length === 0) {
+        console.log('No legacy history items to migrate.')
+        return
+      }
+
+      console.log(`Found ${legacyItems.length} legacy items to migrate.`)
+
+      const newHistoryRecords: PromptHistoryRecord[] = []
+      const newBatchRecords: PromptBatchRecord[] = []
+
+      for (const item of legacyItems) {
+        const batchId = uuidv4()
+        const createdAt = new Date(item.savedAt || item.createdAt || Date.now())
+
+        const niche = item.niche || 'Unknown'
+        const category = 'other'
+
+        // Create a mock GeneratorInput based on the old data
+        const generatorInput: GeneratorInput = {
+          niche,
+          category,
+          batchSize: 1,
+          usageContext: 'commercial',
+          targetMarket: 'global',
+          targetPlatform: 'dalle3',
+          includeDiversity: true,
+          allowTextSpace: false,
+        }
+
+        // Create a batch record for this single legacy prompt
+        newBatchRecords.push({
+          batchId,
+          generatorInput,
+          generatedAt: createdAt,
+        })
+        
+        // Create the new history record, marking it as legacy
+        newHistoryRecords.push({
+          id: item.id,
+          batchId,
+          variantIndex: 1,
+          segments: { subject: '', composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
+          negativePrompt: '',
+          platformVariants: { dalle3: item.content, nano_banana: item.content },
+          fullPrompt: item.content,
+          commercialKeywords: item.tags || [],
+          adobeScore: {
+            total: item.qualityScore || 0,
+            breakdown: { commercialViability: 0, technicalQuality: 0, compositionStrength: 0, marketDiversity: 0 },
+            warnings: ['Legacy prompt, score is estimated.'],
+            suggestions: [],
+          },
+          variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
+          createdAt,
+          isFavorite: false,
+          legacy: true,
+          niche,
+          category,
+          folderId: null,
+        })
+      }
+      
+      console.log(`Migrating ${newBatchRecords.length} new batch records...`)
+      await newBatchesTable.bulkAdd(newBatchRecords)
+      
+      console.log(`Migrating ${newHistoryRecords.length} new history records...`)
+      await newHistoryTable.bulkAdd(newHistoryRecords)
+      
+      console.log('Migration to version 6 complete.')
     })
   }
 }
@@ -97,38 +201,70 @@ export async function saveSetting(key: string, value: unknown): Promise<void> {
   await db.settings.put({ key, value: valToSave })
 }
 
-export async function getHistoryItems(): Promise<HistoryItem[]> {
-  return db.history.orderBy('savedAt').reverse().toArray()
+// === HISTORY REFACTOR - Functions below need updating or removal ===
+
+export async function saveGeneratedPromptBatch(batch: GeneratedPromptBatch): Promise<string> {
+  const { batchId, generatorInput, generatedAt, prompts } = batch
+
+  const batchRecord: PromptBatchRecord = {
+    batchId,
+    generatorInput,
+    generatedAt,
+  }
+
+  const historyRecords: PromptHistoryRecord[] = prompts.map((prompt: GeneratedPrompt) => {
+    const { id, variantIndex, batchId: pbId, segments, negativePrompt, platformVariants, fullPrompt, commercialKeywords, adobeScore, variationAnchors, createdAt, isFavorite, userNotes, legacy } = prompt
+    return {
+      id, variantIndex, batchId: pbId, segments, negativePrompt, platformVariants, fullPrompt, commercialKeywords, adobeScore, variationAnchors, createdAt, isFavorite, userNotes, legacy,
+      folderId: null,
+      niche: generatorInput.niche,
+      category: generatorInput.category ?? 'other',
+    }
+  })
+
+  await db.prompt_batches.put(batchRecord)
+  await db.prompt_history.bulkAdd(historyRecords)
+
+  return batchId
 }
 
-export async function saveHistoryItem(item: Omit<HistoryItem, 'savedAt' | 'folderId' | 'tags'> & Partial<Pick<HistoryItem, 'savedAt' | 'folderId' | 'tags'>>): Promise<string> {
-  const historyItem: HistoryItem = {
+export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt'>): Promise<string> {
+  const record: PromptHistoryRecord = {
     ...item,
-    savedAt: item.savedAt || Date.now(),
-    folderId: item.folderId || null,
-    tags: item.tags || [],
-  } as HistoryItem
-  
-  console.log('Dexie: Saving history item', historyItem)
-  try {
-    const id = await db.history.put(historyItem)
-    console.log('Dexie: Saved history item', id)
-    return id
-  } catch (error) {
-    console.error('Dexie: Failed to save history item', error)
-    throw error
+    createdAt: new Date(),
   }
+  return db.prompt_history.put(record)
+}
+
+export async function getHistoryItems(): Promise<PromptHistoryRecord[]> {
+  return db.prompt_history.toArray()
 }
 
 export async function deleteHistoryItem(id: string): Promise<void> {
-  await db.history.delete(id)
+  await db.prompt_history.delete(id)
 }
 
 export async function deleteAllHistory(): Promise<void> {
-  await db.history.clear()
+  await db.prompt_history.clear()
 }
 
-// Folder helpers
+export async function togglePromptFavorite(id: string): Promise<boolean> {
+  const record = await db.prompt_history.get(id)
+  if (!record) return false
+  const next = !record.isFavorite
+  await db.prompt_history.update(id, { isFavorite: next })
+  return next
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  await db.folders.delete(id)
+}
+
+export async function bulkUpdateHistoryFolder(ids: string[], folderId: string | null): Promise<void> {
+  await db.prompt_history.where('id').anyOf(ids).modify({ folderId })
+}
+
+// Folder helpers - These now operate on prompt_history
 export async function getFolders(): Promise<Folder[]> {
   return db.folders.toArray()
 }
@@ -137,19 +273,8 @@ export async function saveFolder(folder: Folder): Promise<string> {
   return db.folders.put(folder)
 }
 
-export async function deleteFolder(id: string): Promise<void> {
-  // Move prompts to root when folder is deleted
-  await db.history.where('folderId').equals(id).modify({ folderId: null })
-  await db.folders.delete(id)
-}
-
 export async function updateFolder(id: string, updates: Partial<Pick<Folder, 'name' | 'parentId'>>): Promise<void> {
   await db.folders.update(id, updates)
-}
-
-export async function bulkUpdateHistoryFolder(ids: string[], folderId: string | null): Promise<void> {
-  if (!ids || ids.length === 0) return
-  await db.history.where('id').anyOf(ids).modify({ folderId })
 }
 
 export async function getGeneratorState(key: string): Promise<unknown> {
@@ -182,3 +307,4 @@ export async function clearExpiredIdeaCache(threshold: number): Promise<void> {
 }
 
 export default db
+

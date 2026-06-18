@@ -1,36 +1,34 @@
-import type { HistoryItem } from '@/features/history/types'
+import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import { toast } from 'sonner'
 
-export function exportToTxt(items: HistoryItem[]): string {
+export function exportToTxt(items: PromptHistoryRecord[]): string {
   return items
     .map((item, i) => [
       `Prompt #${i + 1}`,
-      `Aspect Ratio: ${item.aspectRatio}`,
       `Niche: ${item.niche}`,
-      `Style: ${item.stylePreset}`,
-      `Score: ${item.qualityScore?.overall ?? 'N/A'}/10`,
-      `Date: ${new Date(item.savedAt).toLocaleString()}`,
+      `Category: ${item.category}`,
+      `Score: ${item.adobeScore?.total ?? 'N/A'}/100`,
+      `Date: ${new Date(item.createdAt).toLocaleString()}`,
       `---`,
-      item.content,
+      item.fullPrompt,
       `==========`,
     ].join('\n'))
     .join('\n\n')
 }
 
-export function exportToJson(items: HistoryItem[]): string {
+export function exportToJson(items: PromptHistoryRecord[]): string {
   return JSON.stringify(items, null, 2)
 }
 
-export function exportToCsv(items: HistoryItem[]): string {
-  const headers = ['id', 'content', 'aspectRatio', 'niche', 'stylePreset', 'qualityScore', 'savedAt']
+export function exportToCsv(items: PromptHistoryRecord[]): string {
+  const headers = ['id', 'content', 'niche', 'category', 'score', 'createdAt']
   const rows = items.map(item => [
     item.id,
-    `"${item.content.replace(/"/g, '""')}"`,
-    item.aspectRatio,
+    `"${item.fullPrompt.replace(/"/g, '""')}"`,
     item.niche,
-    item.stylePreset,
-    item.qualityScore?.overall ?? '',
-    new Date(item.savedAt).toISOString()
+    item.category,
+    item.adobeScore?.total?.toString() ?? '',
+    new Date(item.createdAt).toISOString()
   ])
   return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
 }
@@ -47,7 +45,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url)
 }
 
-export async function bulkExport(items: HistoryItem[], format: 'txt' | 'json' | 'csv') {
+export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | 'json' | 'csv') {
   const promise = new Promise((resolve) => {
     setTimeout(() => {
       let content = ''
