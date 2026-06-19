@@ -127,6 +127,15 @@ ${JSON.stringify(variationMatrix, null, 2)}
 PHOTOGRAPHY DIMENSION REFERENCE (use these as vocabulary):
 ${JSON.stringify(PHOTOGRAPHY_DIMENSIONS_REFERENCE, null, 2)}
 
+${input.basePromptReference ? `REFERENCE PROMPT (use as creative anchor only):
+The following is an existing prompt the user likes. Do NOT copy or \
+paraphrase it. Use it as a creative reference point — understand its \
+subject, mood, and style, then generate fresh and varied prompts \
+inspired by that direction.
+---
+${input.basePromptReference}
+---
+` : ''}
 CRITICAL RULES:
 1. Each prompt uses a DISTINCT primary variation pivot as assigned in the matrix
 2. No two prompts should feel like minor rewrites of each other — they should represent \

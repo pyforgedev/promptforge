@@ -256,6 +256,11 @@
         "label": "Mood Preference (optional)",
         "placeholder": "e.g. calm, dramatic, energetic, playful…"
       },
+      "basePromptReference": {
+        "label": "Base Prompt / Reference (optional)",
+        "description": "Provide an existing prompt as creative inspiration. The AI will generate fresh, varied prompts anchored to this reference without copying it.",
+        "placeholder": "Paste or select a template as reference..."
+      },
       "category": {
         "label": "Niche Category",
         "placeholder": "Select a category",

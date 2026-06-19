@@ -14,8 +14,10 @@ interface PromptGeneratorStoreState {
   batch: GeneratedPromptBatch | null
   isGenerating: boolean
   error: PromptGeneratorError | null
+  advancedOptionsOpen: boolean
 
   setInput: (input: Partial<GeneratorInput>) => void
+  setAdvancedOptionsOpen: (open: boolean) => void
   generatePrompts: () => Promise<void>
   clearBatch: () => void
   resetInput: () => void
@@ -28,9 +30,13 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
       batch: null,
       isGenerating: false,
       error: null,
+      advancedOptionsOpen: false,
 
       setInput: (partial) =>
         set((state) => ({ input: { ...state.input, ...partial } })),
+      
+      setAdvancedOptionsOpen: (open) =>
+        set({ advancedOptionsOpen: open }),
 
       generatePrompts: async () => {
         if (get().isGenerating) return
@@ -70,7 +76,10 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
     {
       name: 'prompt-generator-v2',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ input: state.input }),
+      partialize: (state) => ({
+        input: { ...state.input, basePromptReference: undefined },
+        batch: state.batch,
+      }),
     },
   ),
 )

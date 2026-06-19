@@ -256,6 +256,11 @@
         "label": "Preferensi Suasana (opsional)",
         "placeholder": "mis. tenang, dramatis, energik, ceria…"
       },
+      "basePromptReference": {
+        "label": "Prompt Dasar / Referensi (opsional)",
+        "description": "Berikan prompt yang ada sebagai inspirasi kreatif. AI akan menghasilkan prompt baru dan bervariasi yang berakar pada referensi ini tanpa menyalinnya.",
+        "placeholder": "Tempel atau pilih template sebagai referensi..."
+      },
       "category": {
         "label": "Kategori Niche",
         "placeholder": "Pilih kategori",

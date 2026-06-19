@@ -2,7 +2,7 @@
 // This is the new, refactored Generator Form for the Prompt Engine V2.
 // It connects exclusively to usePromptGeneratorStore and is decoupled from result display.
 
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Sparkles, RefreshCw, AlertTriangle, Settings as SettingsIcon, ChevronDown, ChevronUp } from 'lucide-react'
@@ -28,16 +28,19 @@ import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatfor
 
 export const GeneratorForm = memo(function GeneratorForm() {
   const { t } = useTranslation()
-  const [advancedOpen, setAdvancedOpen] = useState(false)
+  // advancedOptionsOpen is managed in the store so external actions
+  // (e.g. "Use as Reference" from templates) can open the panel
 
   // Component state from the new Zustand store
-  const { input, setInput, generatePrompts, isGenerating, error } = usePromptGeneratorStore(
+  const { input, setInput, generatePrompts, isGenerating, error, advancedOptionsOpen, setAdvancedOptionsOpen } = usePromptGeneratorStore(
     useShallow((state) => ({
       input: state.input,
       setInput: state.setInput,
       generatePrompts: state.generatePrompts,
       isGenerating: state.isGenerating,
       error: state.error,
+      advancedOptionsOpen: state.advancedOptionsOpen,
+      setAdvancedOptionsOpen: state.setAdvancedOptionsOpen,
     })),
   )
 
@@ -184,15 +187,15 @@ export const GeneratorForm = memo(function GeneratorForm() {
         <div>
           <button
             type="button"
-            onClick={() => setAdvancedOpen((o) => !o)}
+            onClick={() => setAdvancedOptionsOpen(!advancedOptionsOpen)}
             className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {advancedOptionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {t('generator.form.advancedOptions.toggle')}
           </button>
 
           <AnimatePresence>
-            {advancedOpen && (
+            {advancedOptionsOpen && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -226,6 +229,22 @@ export const GeneratorForm = memo(function GeneratorForm() {
                       placeholder={t('generator.form.moodPreference.placeholder')}
                     />
                   </div>
+                </div>
+                {/* Base Prompt Reference */}
+                <div className="flex flex-col gap-1.5 pt-4">
+                  <Label htmlFor="basePromptReference">
+                    {t('generator.form.basePromptReference.label')}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t('generator.form.basePromptReference.description')}
+                  </p>
+                  <Textarea
+                    id="basePromptReference"
+                    value={input.basePromptReference ?? ''}
+                    onChange={(e) => setInput({ basePromptReference: e.target.value || undefined })}
+                    placeholder={t('generator.form.basePromptReference.placeholder')}
+                    className="min-h-[80px]"
+                  />
                 </div>
               </motion.div>
             )}
