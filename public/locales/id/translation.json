@@ -357,7 +357,10 @@
       "copyAll": "Salin semua kata kunci"
     },
     "copied": "Disalin!",
-    "copySegment": "Salin {{segment}}"
+    "copySegment": "Salin {{segment}}",
+    "saveAsTemplate": "Simpan sebagai Template",
+    "saveAsTemplateTitle": "Simpan Prompt sebagai Template",
+    "savedAsTemplate": "Prompt disimpan sebagai template!"
   },
   "batchActionBar": {
     "title": "{{count}} prompt dihasilkan",

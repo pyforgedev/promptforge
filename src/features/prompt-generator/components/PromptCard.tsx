@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Check, Heart, RotateCcw, Loader2, ChevronDown, Tag } from 'lucide-react'
+import { Copy, Check, Heart, RotateCcw, Loader2, ChevronDown, Tag, Bookmark } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -93,6 +93,7 @@ interface PromptCardProps {
   totalInBatch: number
   onRegenerate?: (variantIndex: number) => Promise<void>
   onToggleFavorite?: (id: string) => Promise<void>
+  onSaveAsTemplate?: (prompt: GeneratedPrompt) => void
 }
 
 export function PromptCard({
@@ -100,6 +101,7 @@ export function PromptCard({
   totalInBatch,
   onRegenerate,
   onToggleFavorite,
+  onSaveAsTemplate,
 }: PromptCardProps) {
   const { t } = useTranslation()
 
@@ -239,21 +241,35 @@ export function PromptCard({
       <KeywordsPanel keywords={prompt.commercialKeywords} />
 
       <div className="flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleFavorite}
-          className={cn(
-            'gap-1.5 text-xs',
-            isFavorite ? 'text-rose-400 hover:text-rose-300' : 'text-muted-foreground',
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleFavorite}
+            className={cn(
+              'gap-1.5 text-xs',
+              isFavorite ? 'text-rose-400 hover:text-rose-300' : 'text-muted-foreground',
+            )}
+          >
+            <Heart
+              className="h-3.5 w-3.5"
+              fill={isFavorite ? 'currentColor' : 'none'}
+            />
+            {isFavorite ? t('promptCard.unfavorite') : t('promptCard.favorite')}
+          </Button>
+
+          {onSaveAsTemplate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onSaveAsTemplate(prompt)}
+              className="gap-1.5 text-xs text-muted-foreground"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {t('promptCard.saveAsTemplate')}
+            </Button>
           )}
-        >
-          <Heart
-            className="h-3.5 w-3.5"
-            fill={isFavorite ? 'currentColor' : 'none'}
-          />
-          {isFavorite ? t('promptCard.unfavorite') : t('promptCard.favorite')}
-        </Button>
+        </div>
 
         {onRegenerate && (
           <Button

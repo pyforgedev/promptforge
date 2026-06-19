@@ -2,7 +2,7 @@
 // This component renders the output of the V2 generator.
 // It listens to the usePromptGeneratorStore for the batch, loading, and error states.
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -13,10 +13,13 @@ import { GenerationService } from '../services/generationService'
 
 import { PromptCard } from './PromptCard'
 import { BatchActionBar } from './BatchActionBar'
+import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 import { Loader2, ServerCrash, AlertCircle } from 'lucide-react'
+import type { GeneratedPrompt } from '../types'
 
 export function PromptResultsDisplay() {
   const { t } = useTranslation()
+  const [templatePrompt, setTemplatePrompt] = useState<GeneratedPrompt | null>(null)
   const { batch, isGenerating, error } = usePromptGeneratorStore(
     useShallow((state) => ({
       batch: state.batch,
@@ -33,18 +36,6 @@ export function PromptResultsDisplay() {
     const { error } = await service.toggleFavorite(id)
     if (error) throw new Error(error.message)
   }, [activeConfig])
-
-  const handleSaveAll = useCallback(() => {
-    if (!batch) return
-    const service = new GenerationService(activeConfig!)
-    service.saveBatch(batch).then(({ error: saveErr }) => {
-      if (saveErr) {
-        toast.error(t('batchActionBar.saveError'))
-      } else {
-        toast.success(t('batchActionBar.saved'))
-      }
-    })
-  }, [batch, activeConfig, t])
 
   const handleExportCSV = useCallback(() => {
     if (!batch) return
@@ -72,6 +63,10 @@ export function PromptResultsDisplay() {
     URL.revokeObjectURL(url)
     toast.success(t('batchActionBar.exported'))
   }, [batch, t])
+
+  const handleSaveAsTemplate = useCallback((prompt: GeneratedPrompt) => {
+    setTemplatePrompt(prompt)
+  }, [])
 
   const handleExportJSON = useCallback(() => {
     if (!batch) return
@@ -115,30 +110,38 @@ export function PromptResultsDisplay() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <AnimatePresence>
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col gap-6"
-        >
-          <BatchActionBar
-            onSaveAll={handleSaveAll}
-            onExportCSV={handleExportCSV}
-            onExportJSON={handleExportJSON}
-          />
-          {batch.prompts.map((prompt) => (
-            <PromptCard
-              key={prompt.id}
-              prompt={prompt}
-              totalInBatch={batch.prompts.length}
-              onToggleFavorite={handleToggleFavorite}
+    <>
+      <div className="flex flex-col gap-6">
+        <AnimatePresence>
+          <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col gap-6"
+          >
+            <BatchActionBar
+              onExportCSV={handleExportCSV}
+              onExportJSON={handleExportJSON}
             />
-          ))}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+            {batch.prompts.map((prompt) => (
+              <PromptCard
+                key={prompt.id}
+                prompt={prompt}
+                totalInBatch={batch.prompts.length}
+                onToggleFavorite={handleToggleFavorite}
+                onSaveAsTemplate={handleSaveAsTemplate}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <SaveAsTemplateDialog
+        prompt={templatePrompt}
+        open={!!templatePrompt}
+        onOpenChange={(open) => { if (!open) setTemplatePrompt(null) }}
+      />
+    </>
   )
 }

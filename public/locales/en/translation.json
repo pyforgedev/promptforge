@@ -357,7 +357,10 @@
       "copyAll": "Copy all keywords"
     },
     "copied": "Copied!",
-    "copySegment": "Copy {{segment}}"
+    "copySegment": "Copy {{segment}}",
+    "saveAsTemplate": "Save as Template",
+    "saveAsTemplateTitle": "Save Prompt as Template",
+    "savedAsTemplate": "Prompt saved as template!"
   },
   "batchActionBar": {
     "title": "{{count}} prompts generated",
