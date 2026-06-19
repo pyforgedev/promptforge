@@ -138,7 +138,12 @@
     "deleteConfirmation": "Apakah Anda yakin ingin menghapus template ini? Tindakan ini tidak dapat dibatalkan.",
     "import": "Impor",
     "export": "Ekspor",
-    "resetDefault": "Reset Default"
+    "resetDefault": "Reset Default",
+    "useAsReference": "Gunakan sebagai Referensi di Generator",
+    "referenceToast": "Template dimuat sebagai referensi — siap untuk menyusun prompt!",
+    "searchPlaceholder": "Cari template berdasarkan nama atau konten...",
+    "noResultsTitle": "Tidak ada template yang sesuai dengan pencarian Anda",
+    "noResultsDescription": "Coba sesuaikan pencarian atau filter Anda."
   },
   "generator": {
     "pageTitle_v2": "Prompt Engine v2",

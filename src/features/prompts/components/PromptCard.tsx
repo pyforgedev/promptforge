@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, Clock } from 'lucide-react'
+import { Pencil, Trash2, Clock, Sparkles } from 'lucide-react'
 import type { Prompt } from '@/types'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +15,7 @@ interface PromptCardProps {
   prompt: Prompt
   onEdit: (prompt: Prompt) => void
   onDelete: (id: string) => void
+  onUseAsReference?: (prompt: Prompt) => void
 }
 
 function formatDate(timestamp: number): string {
@@ -24,7 +25,7 @@ function formatDate(timestamp: number): string {
   }).format(timestamp)
 }
 
-export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
+export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, onUseAsReference }: PromptCardProps) {
   const { t } = useTranslation()
 
   return (
@@ -60,6 +61,17 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete }:
           {formatDate(prompt.updatedAt)}
         </div>
         <div className="flex gap-1">
+          {onUseAsReference && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => { e.stopPropagation(); onUseAsReference(prompt) }}
+              aria-label={t('templates.useAsReference')}
+              title={t('templates.useAsReference')}
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

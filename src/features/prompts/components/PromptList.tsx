@@ -10,6 +10,7 @@ interface PromptListProps {
   error: string | null
   onEdit: (prompt: Prompt) => void
   onDelete: (id: string) => void
+  onUseAsReference?: (prompt: Prompt) => void
 }
 
 export function PromptList({
@@ -18,6 +19,7 @@ export function PromptList({
   error,
   onEdit,
   onDelete,
+  onUseAsReference,
 }: PromptListProps) {
   const { t } = useTranslation()
 
@@ -48,6 +50,7 @@ export function PromptList({
           prompt={prompt}
           onEdit={onEdit}
           onDelete={onDelete}
+          onUseAsReference={onUseAsReference}
         />
       ))}
     </div>
