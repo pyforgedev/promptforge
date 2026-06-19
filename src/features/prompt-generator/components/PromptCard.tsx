@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Check, Heart, RotateCcw, Loader2, ChevronDown, Tag, Bookmark } from 'lucide-react'
+import { Copy, Check, Heart, RotateCcw, ChevronDown, Tag, Bookmark } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -36,7 +36,7 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
     <div className="border-t border-border/50">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <span className="flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5" />
@@ -64,7 +64,7 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
                     key={kw}
                     onClick={() => copyOne(kw, i)}
                     className={cn(
-                      'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                      'cursor-pointer rounded-full border px-2.5 py-0.5 text-xs transition-colors',
                       copiedIdx === i
                         ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
                         : 'border-border bg-muted/40 text-muted-foreground hover:border-primary/40 hover:text-foreground',
@@ -76,7 +76,7 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
               </div>
               <button
                 onClick={copyAll}
-                className="self-start text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="cursor-pointer self-start text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
               >
                 {t('promptCard.keywords.copyAll')}
               </button>
@@ -160,11 +160,13 @@ export function PromptCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card"
     >
       {isRegenerating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="absolute inset-0 z-10 flex flex-col gap-3 rounded-xl bg-card/80 p-4 backdrop-blur-sm">
+          <div className="h-4 w-3/4 animate-pulse rounded bg-border" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-border" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-border" />
         </div>
       )}
 
@@ -198,7 +200,7 @@ export function PromptCard({
               key={p.id}
               onClick={() => setActivePlatform(p.id)}
               className={cn(
-                'relative py-2 pr-4 text-xs font-medium transition-colors',
+                'relative cursor-pointer py-2 pr-4 text-xs font-medium transition-colors',
                 activePlatform === p.id
                   ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground',
@@ -220,7 +222,7 @@ export function PromptCard({
         <p className="select-text text-sm leading-relaxed text-foreground">{displayText}</p>
         <button
           onClick={handleCopy}
-          className="absolute right-3 top-3 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="absolute right-3 top-3 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={t('promptCard.copyPrompt')}
         >
           {copied ? (

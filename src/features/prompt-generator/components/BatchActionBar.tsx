@@ -21,7 +21,7 @@ export function BatchActionBar({
   const count = batch.prompts.length
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border bg-card/70 px-4 py-3 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border bg-card/70 px-4 py-3">
       <div className="flex flex-col">
         <p className="text-sm font-medium text-foreground">
           {t('batchActionBar.title', { count })}

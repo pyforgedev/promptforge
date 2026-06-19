@@ -76,7 +76,7 @@ export const FolderSidebar = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-6 w-6 rounded-md hover:bg-white/10"
+            className="h-6 w-6 rounded-md transition-colors hover:bg-white/10"
             onClick={handleCreateFolder}
           >
             <Plus className="h-4 w-4" />
@@ -89,7 +89,7 @@ export const FolderSidebar = () => {
             size="sm"
             className={cn(
               "h-7 text-xs gap-2 rounded-md transition-all cursor-pointer",
-              searchMode === 'local' ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60 hover:bg-white/5"
+              searchMode === 'local' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60 hover:bg-white/5"
             )}
             onClick={() => setSearchMode('local')}
           >
@@ -101,7 +101,7 @@ export const FolderSidebar = () => {
             size="sm"
             className={cn(
               "h-7 text-xs gap-2 rounded-md transition-all cursor-pointer",
-              searchMode === 'global' ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60 hover:bg-white/5"
+              searchMode === 'global' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60 hover:bg-white/5"
             )}
             onClick={() => setSearchMode('global')}
           >

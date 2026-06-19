@@ -29,7 +29,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
   const { t } = useTranslation()
 
   return (
-    <Card className="cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg">
+    <Card className="cursor-pointer transition-all duration-200 hover:border-primary/30">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg">{prompt.name}</CardTitle>
