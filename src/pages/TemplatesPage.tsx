@@ -252,7 +252,7 @@ export default function TemplatesPage() {
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
             >
               {t('common.delete')}
             </AlertDialogAction>

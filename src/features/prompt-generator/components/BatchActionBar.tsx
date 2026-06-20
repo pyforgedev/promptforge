@@ -21,12 +21,12 @@ export function BatchActionBar({
   const count = batch.prompts.length
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border bg-card/70 px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border-subtle bg-surface/70 px-4 py-3">
       <div className="flex flex-col">
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-label-ui font-medium text-primary">
           {t('batchActionBar.title', { count })}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-caption-ui text-muted-foreground">
           {t('batchActionBar.nicheLabel')}: <span className="font-semibold">{niche}</span>
         </p>
       </div>

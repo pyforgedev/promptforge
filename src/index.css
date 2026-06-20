@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -8,21 +8,55 @@
   --animate-in: fade-in 0.2s ease-out;
   --animate-out: fade-out 0.2s ease-in;
 
-  --brand-primary: #3B82F6;
-  --brand-primary-hover: #2563EB;
-  --brand-success: #10B981;
-  --brand-warning: #F59E0B;
+  --color-brand-primary: rgb(var(--brand-primary));
+  --color-brand-primary-hover: rgb(var(--brand-primary-hover));
+  --color-brand-success: rgb(var(--brand-success));
+  --color-brand-warning: rgb(var(--brand-warning));
+  --color-brand-danger: rgb(var(--brand-danger));
+  --color-text-on-brand: rgb(var(--text-on-brand));
 
-  --color-bg-app: var(--bg-app);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-surface-hover: var(--bg-surface-hover);
-  --color-bg-overlay: var(--bg-overlay);
+  --color-app: rgb(var(--bg-app));
+  --color-surface: rgb(var(--bg-surface));
+  --color-surface-hover: rgb(var(--bg-surface-hover));
+  --color-overlay: rgb(var(--bg-overlay));
 
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-strong: var(--border-strong);
+  --color-primary: rgb(var(--text-primary));
+  --color-secondary: rgb(var(--text-secondary));
+  --color-muted: rgb(var(--text-muted));
+
+  --color-border-subtle: rgb(var(--border-subtle));
+  --color-border-strong: rgb(var(--border-strong));
+  --color-border-danger: rgb(var(--border-danger));
+
+  /* Backwards compatibility aliases */
+  --color-bg-app: rgb(var(--bg-app));
+  --color-bg-surface: rgb(var(--bg-surface));
+  --color-bg-surface-hover: rgb(var(--bg-surface-hover));
+  --color-bg-overlay: rgb(var(--bg-overlay));
+  --color-text-primary: rgb(var(--text-primary));
+  --color-text-secondary: rgb(var(--text-secondary));
+  --color-text-muted: rgb(var(--text-muted));
+
+  /* Z-index layers — §1.3 */
+  --color-z-base: 0;
+  --color-z-sticky: 10;
+  --color-z-dropdown: 20;
+  --color-z-drawer: 30;
+  --color-z-modal: 40;
+  --color-z-toast: 50;
+
+  /* Motion tokens — §1.4 */
+  --color-motion-fast: 120ms;
+  --color-motion-base: 200ms;
+  --color-motion-slow: 320ms;
+
+  /* Radius tokens — §1.3 */
+  --color-radius-none: 0px;
+  --color-radius-sm: 6px;
+  --color-radius-md: 8px;
+  --color-radius-lg: 12px;
+  --color-radius-xl: 16px;
+  --color-radius-full: 9999px;
 }
 
 @keyframes fade-in {
@@ -35,42 +69,145 @@
   to { opacity: 0; }
 }
 
-:root, [data-theme="dark"] {
-  --bg-app: #0B0F19;
-  --bg-surface: #111827;
-  --bg-surface-hover: #1F2937;
-  --bg-overlay: rgba(17, 24, 39, 0.8);
-  
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #4B5563;
-  --border-subtle: #374151;
-  --border-strong: #4B5563;
+:root {
+  --brand-primary: 47 111 224;
+  --brand-primary-hover: 37 88 184;
+  --brand-success: 21 128 61;
+  --brand-warning: 180 83 9;
+  --brand-danger: 220 38 38;
+  --text-on-brand: 255 255 255;
 
-  --background: 217 33% 10%;
-  --foreground: 210 40% 98%;
-  --card: 217 33% 17%;
-  --card-foreground: 210 40% 98%;
-  --border: 217 33% 22%;
+  --bg-app: 250 250 250;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 241 242 244;
+  --bg-overlay: 255 255 255 / 0.8;
+  --text-primary: 17 19 23;
+  --text-secondary: 75 85 99;
+  --text-muted: 156 163 175;
+  --border-subtle: 229 231 235;
+  --border-strong: 209 213 219;
+  --border-danger: 252 165 165;
+
+  --background: 0 0% 98%;
+  --foreground: 220 15% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 15% 8%;
+  --border: 220 13% 91%;
 }
 
-[data-theme="light"] {
-  --bg-app: #F3F4F6;
-  --bg-surface: #FFFFFF;
-  --bg-surface-hover: #F9FAFB;
-  --bg-overlay: rgba(255, 255, 255, 0.8);
+[data-theme="dark"] {
+  --brand-primary: 91 141 248;
+  --brand-primary-hover: 122 163 250;
+  --brand-success: 34 197 94;
+  --brand-warning: 245 158 11;
+  --brand-danger: 239 68 68;
+  --text-on-brand: 255 255 255;
 
-  --text-primary: #111827;
-  --text-secondary: #4B5563;
-  --text-muted: #9CA3AF;
-  --border-subtle: #E5E7EB;
-  --border-strong: #D1D5DB;
+  --bg-app: 11 13 16;
+  --bg-surface: 21 24 28;
+  --bg-surface-hover: 30 34 39;
+  --bg-overlay: 21 24 28 / 0.8;
+  --text-primary: 243 244 246;
+  --text-secondary: 156 163 175;
+  --text-muted: 107 114 128;
+  --border-subtle: 42 46 52;
+  --border-strong: 58 63 70;
+  --border-danger: 127 29 29;
 
-  --background: 210 40% 98%;
-  --foreground: 220 13% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 13% 11%;
-  --border: 210 16% 94%;
+  --background: 216 19% 5%;
+  --foreground: 220 14% 96%;
+  --card: 216 14% 10%;
+  --card-foreground: 220 14% 96%;
+  --border: 216 11% 18%;
+}
+
+@utility text-display {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+@utility text-heading {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+@utility text-body-ui {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+@utility text-label-ui {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+@utility text-caption-ui {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+@utility text-body-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+@utility text-metric-score {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+}
+@utility overlay-glass {
+  background-color: rgb(var(--bg-surface) / 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgb(var(--border-strong));
+}
+
+/* Z-index utilities — §1.3 */
+@utility z-base {
+  z-index: 0;
+}
+@utility z-sticky {
+  z-index: 10;
+}
+@utility z-dropdown {
+  z-index: 20;
+}
+@utility z-drawer {
+  z-index: 30;
+}
+@utility z-modal {
+  z-index: 40;
+}
+@utility z-toast {
+  z-index: 50;
+}
+
+/* Radius utilities — §1.3 */
+@utility radius-sm {
+  border-radius: 6px;
+}
+@utility radius-md {
+  border-radius: 8px;
+}
+@utility radius-lg {
+  border-radius: 12px;
+}
+@utility radius-xl {
+  border-radius: 16px;
+}
+@utility radius-full {
+  border-radius: 9999px;
 }
 
 * {
@@ -81,5 +218,10 @@ body {
   background-color: var(--color-bg-app);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+}
+
+/* Lucide global icon styles — §6.1 */
+.lucide {
+  stroke-width: 1.75;
 }
 

@@ -50,7 +50,7 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="name" className="text-sm font-medium">
+        <label htmlFor="name" className="text-label-ui">
           {t('prompts.name')}
         </label>
         <Input
@@ -60,12 +60,12 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           aria-describedby={errors.name ? 'name-error' : undefined}
         />
         {errors.name && (
-          <p id="name-error" className="text-xs text-destructive">{errors.name.message}</p>
+          <p id="name-error" className="text-caption-ui text-brand-danger">{errors.name.message}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="category" className="text-sm font-medium">
+        <label htmlFor="category" className="text-label-ui">
           {t('prompts.category')}
         </label>
         <Input
@@ -75,29 +75,29 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           aria-describedby={errors.category ? 'category-error' : undefined}
         />
         {errors.category && (
-          <p id="category-error" className="text-xs text-destructive">{errors.category.message}</p>
+          <p id="category-error" className="text-caption-ui text-brand-danger">{errors.category.message}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="content" className="text-sm font-medium">
+        <label htmlFor="content" className="text-label-ui">
           {t('prompts.content')}
         </label>
         <textarea
           id="content"
           rows={8}
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-body-ui placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           {...register('content')}
           aria-invalid={!!errors.content}
           aria-describedby={errors.content ? 'content-error' : undefined}
         />
         {errors.content && (
-          <p id="content-error" className="text-xs text-destructive">{errors.content.message}</p>
+          <p id="content-error" className="text-caption-ui text-brand-danger">{errors.content.message}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="tags" className="text-sm font-medium">
+        <label htmlFor="tags" className="text-label-ui">
           {t('prompts.tags')}
         </label>
         <Input
@@ -108,7 +108,7 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           placeholder="tag1, tag2, tag3"
         />
         {errors.tags && (
-          <p className="text-xs text-destructive">{errors.tags.message}</p>
+          <p className="text-caption-ui text-brand-danger">{errors.tags.message}</p>
         )}
       </div>
 

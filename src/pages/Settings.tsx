@@ -196,7 +196,7 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">
+            <label className="text-label-ui text-primary">
               {t('settings.theme')}
             </label>
             <Select
@@ -215,7 +215,7 @@ export default function Settings() {
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">
+            <label className="text-label-ui text-primary">
               {t('settings.language')}
             </label>
             <Select
@@ -225,7 +225,7 @@ export default function Settings() {
                 i18n.changeLanguage(v)
               }}
             >
-              <SelectTrigger className="w-36 h-8 px-3 text-xs">
+              <SelectTrigger className="w-36 h-8 px-3 text-caption-ui">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -240,13 +240,13 @@ export default function Settings() {
       {/* AI Configuration */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle className="text-heading">
             {t('settings.aiConfig')}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="provider" className="text-sm font-medium text-foreground">
+            <label htmlFor="provider" className="text-label-ui text-primary">
               {t('settings.provider')}
             </label>
             <Select 
@@ -278,7 +278,7 @@ export default function Settings() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="api-key" className="text-sm font-medium text-foreground">
+            <label htmlFor="api-key" className="text-label-ui text-primary">
               {t('settings.apiKey')}
             </label>
             <Input
@@ -293,7 +293,7 @@ export default function Settings() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="endpoint" className="text-sm font-medium text-foreground">
+            <label htmlFor="endpoint" className="text-label-ui text-primary">
               {t('settings.endpoint')}
             </label>
             <Input
@@ -308,7 +308,7 @@ export default function Settings() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="model" className="text-sm font-medium text-foreground">
+            <label htmlFor="model" className="text-label-ui text-primary">
               {t('settings.model')}
             </label>
             <Select value={model} onValueChange={(v) => {
@@ -353,8 +353,8 @@ export default function Settings() {
             </Select>
           </div>
 
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 p-3">
-            <label className="text-sm font-medium text-foreground">
+          <div className="flex flex-col gap-2 rounded-md border border-border-subtle bg-surface-hover/50 p-3">
+            <label className="text-label-ui text-primary">
               {t('settings.addCustomModel')}
             </label>
             <div className="flex gap-2">
@@ -386,7 +386,7 @@ export default function Settings() {
                 {customModels.map((m) => (
                   <div
                     key={m}
-                    className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                    className="flex items-center gap-1 rounded-full bg-surface-hover px-3 py-1 text-caption-ui text-secondary"
                   >
                     <span>{m}</span>
                     <button
@@ -395,7 +395,7 @@ export default function Settings() {
                         setCustomModels(updated)
                         showToast('success', t('toast.modelRemoved', { defaultValue: 'Custom model removed' }))
                       }}
-                      className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                      className="ml-1 rounded-full p-0.5 hover:bg-surface-hover/50"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -414,9 +414,9 @@ export default function Settings() {
               {isTesting ? (
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               ) : testResult === 'success' ? (
-                <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                <CheckCircle2 className="mr-2 h-4 w-4 text-brand-success" />
               ) : testResult === 'error' ? (
-                <AlertCircle className="mr-2 h-4 w-4 text-destructive" />
+                <AlertCircle className="mr-2 h-4 w-4 text-brand-danger" />
               ) : null}
               {t('settings.testConnection', { defaultValue: 'Test Connection' })}
             </Button>
@@ -427,7 +427,7 @@ export default function Settings() {
 
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">
+            <label className="text-label-ui text-primary">
                 {t('settings.savedPresets')}
               </label>
               <div className="flex gap-2">
@@ -444,11 +444,11 @@ export default function Settings() {
                     setImportOpen(true)
                   }}
                 />
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => document.getElementById('import-file')?.click()}>
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-caption-ui" onClick={() => document.getElementById('import-file')?.click()}>
                   {t('settings.importPresets')}
                 </Button>
                 {presets.length > 0 && (
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={handleExport}>
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-caption-ui" onClick={handleExport}>
                     {t('settings.exportPresets')}
                   </Button>
                 )}
@@ -459,13 +459,13 @@ export default function Settings() {
                 {presets.map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
+                    className="flex items-center justify-between rounded-md border border-border-subtle bg-surface px-3 py-2"
                   >
                     <div>
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-label-ui font-medium text-primary">
                         {preset.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-caption-ui text-muted-foreground">
                         {preset.model}
                       </p>
                     </div>
@@ -496,8 +496,8 @@ export default function Settings() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border p-6 text-center">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border-subtle p-6 text-center">
+                <p className="text-body-ui text-muted-foreground">
                   {t('settings.noPresets', { defaultValue: 'No presets saved. Import or create one.' })}
                 </p>
               </div>
@@ -519,7 +519,7 @@ export default function Settings() {
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="preset-name" className="text-sm font-medium">
+              <label htmlFor="preset-name" className="text-label-ui text-primary">
                 {t('settings.presetName')}
               </label>
               <Input
@@ -556,7 +556,7 @@ export default function Settings() {
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
               placeholder='{"presets": [...]}'
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-body-ui placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
             />
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setImportOpen(false)}>
@@ -594,7 +594,7 @@ export default function Settings() {
                   }
                 }
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
             >
               {t('common.delete')}
             </AlertDialogAction>

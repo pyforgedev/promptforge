@@ -42,10 +42,10 @@ export default function Home() {
     <div className="flex flex-col items-center gap-12 py-12 md:py-20">
       <div className="flex flex-col items-center gap-4 text-center max-w-2xl px-4">
         <AppLogo size="lg" className="mb-2 h-16 md:h-24" />
-        <h2 className="text-4xl font-bold tracking-tight text-[var(--text-primary)] md:text-5xl">
+        <h2 className="text-display">
           {t('home.title')}
         </h2>
-        <p className="text-lg text-[var(--text-secondary)] max-w-md">
+        <p className="text-body-ui text-secondary max-w-md">
           {t('home.subtitle')}
         </p>
         <Button
@@ -66,17 +66,17 @@ export default function Home() {
         {features.map(({ icon: Icon, title, description, to }) => (
           <Card
             key={title}
-            className="cursor-pointer transition-all duration-200 hover:border-[var(--brand-primary)]/30"
+            className="cursor-pointer transition-all duration-200 hover:border-brand-primary/30"
             onClick={() => navigate(to)}
           >
             <CardHeader>
               <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-[var(--brand-primary)]/10 p-2">
-                  <Icon className="h-5 w-5 text-[var(--brand-primary)]" />
+                <div className="rounded-lg bg-brand-primary/10 p-2">
+                  <Icon className="h-5 w-5 text-brand-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-base text-[var(--text-primary)]">{t(title)}</CardTitle>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  <CardTitle className="text-heading text-primary">{t(title)}</CardTitle>
+                  <p className="mt-1 text-body-ui text-secondary">
                     {t(description)}
                   </p>
                 </div>

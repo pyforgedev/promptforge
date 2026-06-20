@@ -27,30 +27,30 @@ export const RecentPrompts = memo(function RecentPrompts() {
   if (!recentItems || recentItems.length === 0) {
     return (
       <div className="w-full max-w-4xl px-4 flex flex-col gap-4">
-        <h3 className="text-xl font-semibold">{t('history.recentPrompts')}</h3>
-        <p className="text-muted-foreground text-sm">{t('history.noRecentPrompts')}</p>
+        <h3 className="text-heading">{t('history.recentPrompts')}</h3>
+        <p className="text-body-ui text-secondary">{t('history.noRecentPrompts')}</p>
       </div>
     )
   }
 
   return (
     <div className="w-full max-w-4xl px-4 flex flex-col gap-4">
-      <h3 className="text-xl font-semibold">{t('history.recentPrompts')}</h3>
+      <h3 className="text-heading">{t('history.recentPrompts')}</h3>
       <div className="grid gap-4 sm:grid-cols-1">
         {recentItems.map(item => (
           <Card key={item.id}>
             <CardHeader className="pb-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="px-2 py-1 bg-secondary rounded-full font-medium">
+              <div className="flex items-center gap-2 text-caption-ui text-muted">
+                <span className="px-2 py-1 bg-surface-hover rounded-full">
                   {item.variationAnchors.primaryVariation}
                 </span>
-                <span className="px-2 py-1 bg-secondary rounded-full font-medium">
+                <span className="px-2 py-1 bg-surface-hover rounded-full">
                   {item.variationAnchors.compositionStyle}
                 </span>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              <p className="text-sm line-clamp-3 leading-relaxed">
+              <p className="text-body-ui line-clamp-3 leading-relaxed">
                 {item.fullPrompt}
               </p>
               <div className="flex justify-end mt-2">
@@ -61,7 +61,7 @@ export const RecentPrompts = memo(function RecentPrompts() {
                   onClick={() => handleCopy(item)}
                 >
                   {copiedId === item.id ? (
-                    <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-400" />
+                    <Check className="mr-1.5 h-3.5 w-3.5 text-brand-success" />
                   ) : (
                     <Copy className="mr-1.5 h-3.5 w-3.5" />
                   )}

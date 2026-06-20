@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Trash2, FolderInput, Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useHistoryStore } from '@/store/useHistoryStore'
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 export const BulkActionBar = () => {
   const { t } = useTranslation()
+  const shouldReduceMotion = useReducedMotion()
   const { showToast } = useToast()
   const { selectedIds, deselectAll, items, folders, bulkDelete, bulkMove } = useHistoryStore()
   const count = selectedIds.length
@@ -50,17 +51,17 @@ export const BulkActionBar = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: shouldReduceMotion ? 0 : 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          exit={{ y: shouldReduceMotion ? 0 : 100, opacity: 0 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-toast"
         >
-          <div className="flex items-center gap-4 px-6 py-3 rounded-full border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl ring-1 ring-white/20">
-            <span className="text-sm font-medium text-white/90">
+          <div className="overlay-glass flex items-center gap-4 px-6 py-3 rounded-full shadow-xl">
+            <span className="text-label-ui font-medium text-primary">
               {count === 1 ? t('history.itemSelected') : t('history.itemsSelected', { count })}
             </span>
             
-            <div className="h-4 w-px bg-white/10" />
+            <div className="h-4 w-px bg-border-strong" />
             
             <div className="flex items-center gap-1">
               <DropdownMenu>
@@ -68,13 +69,13 @@ export const BulkActionBar = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
+                    className="h-8 text-secondary hover:text-primary hover:bg-surface-hover cursor-pointer"
                   >
                     <Download className="mr-2 h-3.5 w-3.5" />
                     {t('history.export')}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/90 backdrop-blur-xl border-white/10">
+                <DropdownMenuContent align="end" className="overlay-glass border-strong">
                   <DropdownMenuItem onClick={() => handleExport('txt')} className="cursor-pointer">TXT</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">JSON</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">CSV</DropdownMenuItem>
@@ -86,13 +87,13 @@ export const BulkActionBar = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
+                    className="h-8 text-secondary hover:text-primary hover:bg-surface-hover cursor-pointer"
                   >
                     <FolderInput className="mr-2 h-3.5 w-3.5" />
                     {t('history.move')}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/90 backdrop-blur-xl border-white/10">
+                <DropdownMenuContent align="end" className="overlay-glass border-strong">
                   <DropdownMenuItem onClick={() => handleBulkMove(null)} className="cursor-pointer">
                     {t('history.allPrompts')}
                   </DropdownMenuItem>
@@ -107,7 +108,7 @@ export const BulkActionBar = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 text-destructive/80 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                className="h-8 text-brand-danger/80 hover:text-brand-danger hover:bg-brand-danger/10 cursor-pointer"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-3.5 w-3.5" />
@@ -115,12 +116,12 @@ export const BulkActionBar = () => {
               </Button>
             </div>
 
-            <div className="h-4 w-px bg-white/10" />
+            <div className="h-4 w-px bg-border-strong" />
 
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10 rounded-full cursor-pointer"
+                      className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 text-muted hover:text-primary hover:bg-surface-hover rounded-full cursor-pointer"
                       onClick={deselectAll}
                     >
                       <X className="h-4 w-4" />

@@ -124,7 +124,9 @@
     "move": "Pindahkan",
     "itemsSelected": "{{count}} item terpilih",
     "itemSelected": "1 item terpilih",
-    "loadMore": "Muat Lebih Banyak"
+    "loadMore": "Muat Lebih Banyak",
+    "deleteFolderTitle": "Hapus Folder",
+    "deleteFolderConfirmation": "Apakah Anda yakin ingin menghapus folder ini beserta semua isinya? Tindakan ini tidak dapat dibatalkan."
   },
   "toast": {
     "copySuccess": "Prompt berhasil disalin!",

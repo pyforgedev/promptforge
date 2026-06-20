@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Check, ChevronDown } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 
 interface NegativePromptPanelProps {
@@ -10,6 +10,7 @@ interface NegativePromptPanelProps {
 
 export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps) {
   const { t } = useTranslation()
+  const shouldReduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -24,7 +25,7 @@ export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps
     <div className="border-t border-border/50">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <span>{t('promptCard.negative.title')}</span>
         <ChevronDown
@@ -39,22 +40,22 @@ export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-4 pb-3">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-caption-ui text-muted-foreground">
                 {t('promptCard.negative.description')}
               </p>
-              <div className="relative rounded-md bg-muted/40 p-3">
-                <p className="pr-8 text-sm leading-relaxed text-foreground">{negativePrompt}</p>
+              <div className="relative rounded-md bg-surface-hover/50 p-3">
+                <p className="pr-8 text-body-ui leading-relaxed text-primary">{negativePrompt}</p>
                 <button
                   onClick={handleCopy}
-                  className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:text-primary"
                   aria-label={t('promptCard.negative.copy')}
                 >
                   {copied ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    <Check className="h-3.5 w-3.5 text-brand-success" />
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}

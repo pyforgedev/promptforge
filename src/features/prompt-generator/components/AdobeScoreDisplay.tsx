@@ -19,15 +19,15 @@ interface ScoreBadgeProps {
 export function AdobeScoreBadge({ score, className }: ScoreBadgeProps) {
   const color =
     score >= 80
-      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+      ? 'bg-brand-success/10 text-brand-success border-brand-success/20'
       : score >= 60
-        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/15 text-red-400 border-red-500/30'
+        ? 'bg-brand-warning/10 text-brand-warning border-brand-warning/20'
+        : 'bg-brand-danger/10 text-brand-danger border-brand-danger/20'
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums',
+        'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-caption-ui font-semibold tabular-nums',
         color,
         className,
       )}
@@ -48,21 +48,21 @@ function BreakdownBar({ label, value, max = 25 }: BreakdownBarProps) {
   const pct = Math.round((value / max) * 100)
   const barColor =
     pct >= 80
-      ? 'bg-emerald-500'
+      ? 'bg-brand-success'
       : pct >= 60
-        ? 'bg-amber-500'
-        : 'bg-red-500'
+        ? 'bg-brand-warning'
+        : 'bg-brand-danger'
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center justify-between text-caption-ui">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium tabular-nums text-foreground">
+        <span className="font-medium tabular-nums text-primary">
           {value}
           <span className="text-muted-foreground">/{max}</span>
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
         <div
           className={cn('h-full rounded-full transition-all', barColor)}
           style={{ width: `${pct}%` }}
@@ -86,12 +86,12 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <span className="text-2xl font-bold tabular-nums">{score.total}</span>
+            <span className="text-metric-score tabular-nums">{score.total}</span>
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold leading-none">
+              <span className="text-label-ui font-semibold leading-none">
                 {t('promptCard.score.title')}
               </span>
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-caption-ui font-normal text-muted-foreground">
                 {t('promptCard.score.subtitle')}
               </span>
             </div>
@@ -100,7 +100,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4 pt-1">
-          <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface-hover/50 p-3">
             <BreakdownBar
               label={t('promptCard.score.breakdown.commercialViability')}
               value={score.breakdown.commercialViability}
@@ -121,7 +121,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
 
           {score.warnings.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-red-400">
+              <p className="flex items-center gap-1.5 text-caption-ui font-semibold uppercase tracking-wide text-brand-danger">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {t('promptCard.score.warnings')}
               </p>
@@ -129,7 +129,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
                 {score.warnings.map((w, i) => (
                   <li
                     key={i}
-                    className="rounded-md bg-red-500/10 px-3 py-1.5 text-xs text-red-300"
+                    className="rounded-md bg-brand-danger/10 px-3 py-1.5 text-caption-ui text-brand-danger"
                   >
                     {w}
                   </li>
@@ -140,7 +140,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
 
           {score.suggestions.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-blue-400">
+              <p className="flex items-center gap-1.5 text-caption-ui font-semibold uppercase tracking-wide text-brand-primary">
                 <Lightbulb className="h-3.5 w-3.5" />
                 {t('promptCard.score.suggestions')}
               </p>
@@ -148,7 +148,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
                 {score.suggestions.map((s, i) => (
                   <li
                     key={i}
-                    className="rounded-md bg-blue-500/10 px-3 py-1.5 text-xs text-blue-300"
+                    className="rounded-md bg-brand-primary/10 px-3 py-1.5 text-caption-ui text-brand-primary"
                   >
                     {s}
                   </li>

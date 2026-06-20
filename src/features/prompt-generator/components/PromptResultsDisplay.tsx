@@ -5,7 +5,7 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -14,11 +14,13 @@ import { GenerationService } from '../services/generationService'
 import { PromptCard } from './PromptCard'
 import { BatchActionBar } from './BatchActionBar'
 import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
-import { Loader2, ServerCrash, AlertCircle } from 'lucide-react'
+import { ServerCrash, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { GeneratedPrompt } from '../types'
 
 export function PromptResultsDisplay() {
   const { t } = useTranslation()
+  const shouldReduceMotion = useReducedMotion()
   const [templatePrompt, setTemplatePrompt] = useState<GeneratedPrompt | null>(null)
   const { batch, isGenerating, error, toggleFavoriteInBatch } = usePromptGeneratorStore(
     useShallow((state) => ({
@@ -83,11 +85,43 @@ export function PromptResultsDisplay() {
   }, [batch, t])
 
   if (isGenerating && !batch) {
+    const batchSize = usePromptGeneratorStore.getState().input.batchSize || 3
+    const pulse = shouldReduceMotion ? 'bg-border-subtle' : 'animate-pulse bg-border-subtle'
     return (
-      <div className="flex flex-col items-center justify-center gap-4 text-center rounded-lg border-2 border-dashed border-border p-12 min-h-[300px]">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <h3 className="text-xl font-semibold">{t('generator.results.generatingTitle')}</h3>
-        <p className="text-muted-foreground max-w-sm">{t('generator.results.generatingDescription')}</p>
+      <div className="flex flex-col gap-6">
+        <AnimatePresence>
+          {Array.from({ length: batchSize }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.25, delay: i * 0.05 }}
+              className="relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface"
+            >
+              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
+                <div className={cn('h-4 w-32 rounded', pulse)} />
+                <div className={cn('h-5 w-16 rounded-full', pulse)} />
+              </div>
+              <div className="flex gap-4 border-b border-border/60 px-4 py-2">
+                <div className={cn('h-4 w-16 rounded', pulse)} />
+                <div className={cn('h-4 w-20 rounded', pulse)} />
+              </div>
+              <div className="space-y-3 px-4 py-4">
+                <div className={cn('h-4 w-full rounded', pulse)} />
+                <div className={cn('h-4 w-[92%] rounded', pulse)} />
+                <div className={cn('h-4 w-[85%] rounded', pulse)} />
+                <div className={cn('h-4 w-[70%] rounded', pulse)} />
+              </div>
+              <div className="flex items-center justify-between border-t border-border/60 px-4 py-2.5">
+                <div className="flex gap-2">
+                  <div className={cn('h-8 w-16 rounded-md', pulse)} />
+                  <div className={cn('h-8 w-20 rounded-md', pulse)} />
+                </div>
+                <div className={cn('h-8 w-24 rounded-md', pulse)} />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     )
   }
@@ -95,13 +129,13 @@ export function PromptResultsDisplay() {
   if (error && !batch) {
     const errorCode = error.code || 'PROVIDER_ERROR';
     return (
-      <div className="flex flex-col items-center justify-center gap-4 text-center rounded-lg border-2 border-dashed border-destructive/50 bg-destructive/5 p-12 min-h-[300px]">
+      <div className="flex flex-col items-center justify-center gap-4 text-center rounded-lg border-2 border-dashed border-brand-danger/50 bg-brand-danger/5 p-12 min-h-[300px]">
         {errorCode === 'PARTIAL_BATCH' ? (
-           <AlertCircle className="h-10 w-10 text-destructive" />
+           <AlertCircle className="h-10 w-10 text-brand-danger" />
         ) : (
-           <ServerCrash className="h-10 w-10 text-destructive" />
+           <ServerCrash className="h-10 w-10 text-brand-danger" />
         )}
-        <h3 className="text-xl font-semibold text-destructive">{t(`generator.form.errors.${errorCode}.title`)}</h3>
+        <h3 className="text-heading text-brand-danger">{t(`generator.form.errors.${errorCode}.title`)}</h3>
         <p className="text-muted-foreground max-w-sm">{error.message}</p>
       </div>
     )
@@ -119,7 +153,7 @@ export function PromptResultsDisplay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
               className="flex flex-col gap-6"
           >
             <BatchActionBar

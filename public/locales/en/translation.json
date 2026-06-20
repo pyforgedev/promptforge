@@ -124,7 +124,9 @@
     "move": "Move",
     "itemsSelected": "{{count}} items selected",
     "itemSelected": "1 item selected",
-    "loadMore": "Load More"
+    "loadMore": "Load More",
+    "deleteFolderTitle": "Delete Folder",
+    "deleteFolderConfirmation": "Are you sure you want to delete this folder and all its contents? This action cannot be undone."
   },
   "toast": {
     "copySuccess": "Prompt copied to clipboard!",

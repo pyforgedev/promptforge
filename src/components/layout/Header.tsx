@@ -44,18 +44,18 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
   const ActiveThemeIcon = themes.find(entry => entry.value === preferences.theme)?.icon || Monitor
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-overlay)] px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-sticky flex h-16 items-center justify-between border-b border-border-subtle bg-overlay/80 px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
         <button
-          className="cursor-pointer rounded-md p-2 hover:bg-[var(--bg-surface-hover)] md:hidden"
+          className="cursor-pointer rounded-md p-2 hover:bg-surface-hover md:hidden"
           onClick={onMenuToggle}
           aria-label={t('nav.home')}
         >
-          <Menu className="h-5 w-5 text-[var(--text-primary)]" />
+          <Menu className="h-5 w-5 text-primary" />
         </button>
         <div className="flex items-center gap-2">
           <AppLogo size="sm" />
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+          <h1 className="text-heading text-primary">
             {t('app.name')}
           </h1>
         </div>
@@ -66,7 +66,7 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
           value={i18n.language?.startsWith('id') ? 'id' : 'en'}
           onValueChange={(v) => changeLanguage(v)}
         >
-          <SelectTrigger className="w-[140px] h-8 px-3 text-xs" aria-label={t('common.selectLanguage')}>
+          <SelectTrigger className="w-[140px] h-8 px-3 text-caption-ui" aria-label={t('common.selectLanguage')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -91,7 +91,7 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
                 key={value}
                 onSelect={() => handleThemeChange(value)}
                 className={`flex items-center gap-2 cursor-pointer ${
-                  preferences.theme === value ? 'font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10' : ''
+                  preferences.theme === value ? 'font-bold text-brand-primary bg-brand-primary/10' : ''
                 }`}
               >
                 <Icon className="h-4 w-4" />

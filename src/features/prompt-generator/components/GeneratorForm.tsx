@@ -5,8 +5,8 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Sparkles, RefreshCw, AlertTriangle, Settings as SettingsIcon, ChevronDown, ChevronUp } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -28,6 +28,7 @@ import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatfor
 
 export const GeneratorForm = memo(function GeneratorForm() {
   const { t } = useTranslation()
+  const shouldReduceMotion = useReducedMotion()
   // advancedOptionsOpen is managed in the store so external actions
   // (e.g. "Use as Reference" from templates) can open the panel
 
@@ -57,7 +58,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
+        <CardTitle className="flex items-center gap-2 text-heading">
           <Sparkles className="h-6 w-6 text-primary" />
           {t('generator.title_v2')}
         </CardTitle>
@@ -105,6 +106,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
             <Label htmlFor="niche">{t('generator.niche_v2')}</Label>
             <Textarea
               id="niche"
+              autoFocus
               value={input.niche}
               onChange={(e) => setInput({ niche: e.target.value })}
               placeholder={t('generator.form.niche.placeholder')}
@@ -150,12 +152,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
               </Select>
             </div>
 
-             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+             <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
               <div className="flex flex-col gap-0.5">
                 <Label htmlFor="includeDiversity" className="cursor-pointer">
                   {t('generator.form.includeDiversity.label')}
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption-ui text-muted-foreground">
                   {t('generator.form.includeDiversity.description')}
                 </p>
               </div>
@@ -166,12 +168,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
               <div className="flex flex-col gap-0.5">
                 <Label htmlFor="allowTextSpace" className="cursor-pointer">
                   {t('generator.form.allowTextSpace.label')}
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption-ui text-muted-foreground">
                   {t('generator.form.allowTextSpace.description')}
                 </p>
               </div>
@@ -190,7 +192,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
             onClick={() => setAdvancedOptionsOpen(!advancedOptionsOpen)}
             aria-expanded={advancedOptionsOpen}
             aria-controls="advanced-options-panel"
-            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-label-ui font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             {advancedOptionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {t('generator.form.advancedOptions.toggle')}
@@ -203,7 +205,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
                 <div className="grid gap-4 sm:grid-cols-2 pt-4">
@@ -238,7 +240,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                   <Label htmlFor="basePromptReference">
                     {t('generator.form.basePromptReference.label')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                <p className="text-caption-ui text-muted-foreground">
                     {t('generator.form.basePromptReference.description')}
                   </p>
                   <Textarea
@@ -257,13 +259,13 @@ export const GeneratorForm = memo(function GeneratorForm() {
         {/* Action Button & Errors */}
         <div className="flex flex-col gap-4">
           {!isAIConfigReady ? (
-            <div className="flex flex-col w-full gap-3 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+            <div className="overlay-glass border-l-[3px] border-l-brand-warning flex flex-col w-full gap-3 p-4 rounded-r-lg text-brand-warning">
               <div className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="h-5 w-5" />
                 <span>{t('generator.form.errors.apiConfigRequired.title')}</span>
               </div>
-              <p className="text-sm opacity-90">{t('generator.form.errors.apiConfigRequired.description')}</p>
-              <Button asChild variant="outline" className="w-fit border-yellow-500/50 hover:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+              <p className="text-body-ui text-secondary">{t('generator.form.errors.apiConfigRequired.description')}</p>
+              <Button asChild variant="outline" className="w-fit border-brand-warning/30 text-brand-warning hover:bg-brand-warning/10 hover:text-brand-primary-hover">
                 <Link to="/settings">
                   <SettingsIcon className="mr-2 h-4 w-4" />
                   {t('generator.form.errors.apiConfigRequired.button')}
@@ -278,9 +280,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
           )}
 
           {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-               <p className="font-medium">{t(`generator.form.errors.${error.code}.title`)}</p>
-               <p className="opacity-90">{error.message}</p>
+            <div className="overlay-glass border-l-[3px] border-l-brand-danger p-4 rounded-r-lg text-sm flex flex-col gap-1">
+              <p className="flex items-center gap-1.5 font-medium text-brand-danger">
+                <AlertCircle className="h-4 w-4" />
+                {t(`generator.form.errors.${error.code}.title`)}
+              </p>
+              <p className="text-secondary">{error.message}</p>
             </div>
           )}
         </div>

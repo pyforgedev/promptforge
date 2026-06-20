@@ -10,7 +10,7 @@ export function LoadingSpinner({ size = 24, message }: LoadingSpinnerProps) {
     <div className="flex flex-col items-center justify-center gap-2 py-12">
       <Loader2 className="animate-spin text-primary" style={{ width: size, height: size }} />
       {message && (
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-body-ui text-muted">{message}</p>
       )}
     </div>
   )

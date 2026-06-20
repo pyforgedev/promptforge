@@ -32,14 +32,14 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
     <Card className="cursor-pointer transition-all duration-200 hover:border-primary/30">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg">{prompt.name}</CardTitle>
-          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+          <CardTitle className="text-heading">{prompt.name}</CardTitle>
+          <span className="shrink-0 rounded-full bg-brand-primary/10 px-2.5 py-0.5 text-caption-ui font-medium text-brand-primary">
             {prompt.category}
           </span>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="line-clamp-3 text-sm text-muted-foreground">
+        <p className="line-clamp-3 text-body-ui text-muted-foreground">
           {prompt.content}
         </p>
         {prompt.tags.length > 0 && (
@@ -47,7 +47,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
             {prompt.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                className="rounded-md bg-surface-hover px-2 py-0.5 text-caption-ui text-secondary"
               >
                 {tag}
               </span>
@@ -56,7 +56,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
         )}
       </CardContent>
       <CardFooter className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-caption-ui text-muted-foreground">
           <Clock className="h-3.5 w-3.5" />
           {formatDate(prompt.updatedAt)}
         </div>
@@ -69,7 +69,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
               aria-label={t('templates.useAsReference')}
               title={t('templates.useAsReference')}
             >
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 text-brand-primary" />
             </Button>
           )}
           <Button
@@ -86,7 +86,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
             onClick={(e) => { e.stopPropagation(); onDelete(prompt.id) }}
             aria-label={t('common.delete')}
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
+            <Trash2 className="h-4 w-4 text-brand-danger" />
           </Button>
         </div>
       </CardFooter>

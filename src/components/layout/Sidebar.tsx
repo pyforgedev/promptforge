@@ -26,14 +26,14 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/70 md:hidden"
+          className="fixed inset-0 z-drawer bg-black/70 md:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 transform border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] transition-transform duration-200 md:static md:translate-x-0 ${
+        className={`fixed left-0 top-16 z-drawer h-[calc(100vh-4rem)] w-[260px] transform border-r border-border-subtle bg-surface transition-transform duration-200 md:static md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -45,10 +45,10 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
               end={to === '/'}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex cursor-pointer items-center gap-3 rounded-md px-4 py-2.5 text-[13px] font-medium transition-colors duration-150 ${
+                `flex cursor-pointer items-center gap-3 rounded-md px-4 py-3 text-label-ui font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 min-w-[44px] md:min-w-0 md:py-2.5 ${
                   isActive
-                    ? 'bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
+                    ? 'bg-brand-primary/10 text-brand-primary'
+                    : 'text-secondary hover:bg-surface-hover hover:text-primary'
                 }`
               }
             >

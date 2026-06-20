@@ -21,24 +21,24 @@ export const QuickStats = memo(function QuickStats() {
     <div className="grid gap-4 sm:grid-cols-2 w-full max-w-4xl px-4">
       <Card key="total-prompts">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-label-ui text-muted">
             {t('history.totalPrompts')}
           </CardTitle>
-          <Image className="h-4 w-4 text-muted-foreground" />
+          <Image className="h-4 w-4 text-muted" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalPrompts}</div>
+          <div className="text-metric-score">{totalPrompts}</div>
         </CardContent>
       </Card>
       <Card key="avg-score">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-label-ui text-muted">
             {t('history.averageScore')}
           </CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
+          <Star className="h-4 w-4 text-muted" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{averageScore.toFixed(1)}</div>
+          <div className="text-metric-score">{averageScore.toFixed(1)}</div>
         </CardContent>
       </Card>
     </div>

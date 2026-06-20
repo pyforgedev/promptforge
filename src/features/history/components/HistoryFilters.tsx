@@ -31,15 +31,15 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
   const { searchMode, setSearchMode } = useHistoryStore()
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-1 flex-col gap-1.5 min-w-[200px]">
+    <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex flex-1 flex-col gap-1.5 w-full sm:min-w-[200px]">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-caption-ui font-medium text-muted">
               {t('common.search')}
             </label>
             <div className="flex items-center space-x-2">
-              <Label htmlFor="search-mode" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="search-mode" className="text-caption-ui text-muted">
                 {searchMode === 'global' ? 'Global' : 'Local'}
               </Label>
               <Switch 
@@ -51,7 +51,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <Input
               value={filters.search}
               onChange={(e) => onFilterChange('search', e.target.value)}
@@ -61,56 +61,58 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
           </div>
         </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-muted-foreground">
-          {t('generator.aspectRatio')}
-        </label>
-        <Select
-          value={filters.aspectRatio}
-          onValueChange={(v) => onFilterChange('aspectRatio', v as LegacyAspectRatio | 'all')}
-        >
-          <SelectTrigger className="w-28">
-            <SelectValue placeholder={t('common.all')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            <SelectItem value="1:1">1:1</SelectItem>
-            <SelectItem value="4:5">4:5</SelectItem>
-            <SelectItem value="3:4">3:4</SelectItem>
-            <SelectItem value="16:9">16:9</SelectItem>
-            <SelectItem value="9:16">9:16</SelectItem>
-            <SelectItem value="2:3">2:3</SelectItem>
-            <SelectItem value="3:2">3:2</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-caption-ui text-muted">
+              {t('generator.aspectRatio')}
+            </label>
+            <Select
+              value={filters.aspectRatio}
+              onValueChange={(v) => onFilterChange('aspectRatio', v as LegacyAspectRatio | 'all')}
+            >
+              <SelectTrigger className="w-full min-w-20 sm:w-28">
+                <SelectValue placeholder={t('common.all')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="1:1">1:1</SelectItem>
+                <SelectItem value="4:5">4:5</SelectItem>
+                <SelectItem value="3:4">3:4</SelectItem>
+                <SelectItem value="16:9">16:9</SelectItem>
+                <SelectItem value="9:16">9:16</SelectItem>
+                <SelectItem value="2:3">2:3</SelectItem>
+                <SelectItem value="3:2">3:2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-muted-foreground">
-          {t('history.minRating')}
-        </label>
-        <Select
-          value={String(filters.minRating)}
-          onValueChange={(v) => onFilterChange('minRating', Number(v))}
-        >
-          <SelectTrigger className="w-20">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">{t('common.all')}</SelectItem>
-            {[5, 6, 7, 8, 9].map((r) => (
-              <SelectItem key={r} value={String(r)}>
-                {r}+
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-caption-ui text-muted">
+              {t('history.minRating')}
+            </label>
+            <Select
+              value={String(filters.minRating)}
+              onValueChange={(v) => onFilterChange('minRating', Number(v))}
+            >
+              <SelectTrigger className="w-full min-w-16 sm:w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">{t('common.all')}</SelectItem>
+                {[5, 6, 7, 8, 9].map((r) => (
+                  <SelectItem key={r} value={String(r)}>
+                    {r}+
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <Button variant="outline" size="sm" onClick={onReset}>
-        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-        {t('history.resetFilters')}
-      </Button>
+          <Button variant="outline" size="sm" onClick={onReset} className="cursor-pointer">
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+            {t('history.resetFilters')}
+          </Button>
+        </div>
       </div>
     </div>
   )
