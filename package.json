@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "release-it",
+    "release:patch": "release-it patch",
+    "release:minor": "release-it minor",
+    "release:major": "release-it major"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -63,6 +67,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "release-it": "^20.2.0",
     "shadcn": "^4.11.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
