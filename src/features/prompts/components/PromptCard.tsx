@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2, Clock, Sparkles } from 'lucide-react'
 import type { Prompt } from '@/types'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   Card,
   CardContent,
@@ -62,32 +63,46 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
         </div>
         <div className="flex gap-1">
           {onUseAsReference && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => { e.stopPropagation(); onUseAsReference(prompt) }}
-              aria-label={t('templates.useAsReference')}
-              title={t('templates.useAsReference')}
-            >
-              <Sparkles className="h-4 w-4 text-brand-primary" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => { e.stopPropagation(); onUseAsReference(prompt) }}
+                  aria-label={t('templates.useAsReference')}
+                >
+                  <Sparkles className="h-4 w-4 text-brand-primary" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('templates.useAsReference')}</TooltipContent>
+            </Tooltip>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); onEdit(prompt) }}
-            aria-label={t('common.edit')}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); onDelete(prompt.id) }}
-            aria-label={t('common.delete')}
-          >
-            <Trash2 className="h-4 w-4 text-brand-danger" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => { e.stopPropagation(); onEdit(prompt) }}
+                aria-label={t('common.edit')}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('common.edit')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => { e.stopPropagation(); onDelete(prompt.id) }}
+                aria-label={t('common.delete')}
+              >
+                <Trash2 className="h-4 w-4 text-brand-danger" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('common.delete')}</TooltipContent>
+          </Tooltip>
         </div>
       </CardFooter>
     </Card>

@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 const themes: { value: Theme; icon: typeof Sun; label: string }[] = [
   { value: 'light', icon: Sun, label: 'theme.light' },
@@ -80,11 +81,18 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
         </Select>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 w-8 px-0" aria-label="Toggle theme">
-              <ActiveThemeIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-8 px-0" aria-label={t('theme.toggleTheme')}>
+                  <ActiveThemeIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t('theme.toggleTheme')}
+            </TooltipContent>
+          </Tooltip>
           <DropdownMenuContent align="end">
             {themes.map(({ value, icon: Icon, label }) => (
               <DropdownMenuItem

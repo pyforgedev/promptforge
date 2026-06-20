@@ -1,6 +1,7 @@
 import { Plus, Folder as FolderIcon, MoreVertical, Globe, MapPin, Trash2, Edit2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { cn } from '@/lib/utils'
 import {
@@ -106,22 +107,34 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
         <div className="flex items-center justify-between p-4 border-b border-border-subtle">
           <h2 className="text-label-ui font-semibold text-primary">{t('history.library')}</h2>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-md transition-colors hover:bg-surface-hover md:hidden cursor-pointer"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-md transition-colors hover:bg-surface-hover cursor-pointer"
-              onClick={handleCreateFolder}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 rounded-md transition-colors hover:bg-surface-hover md:hidden cursor-pointer"
+                  onClick={onClose}
+                  aria-label={t('common.close')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('common.close')}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 rounded-md transition-colors hover:bg-surface-hover cursor-pointer"
+                  onClick={handleCreateFolder}
+                  aria-label={t('history.newFolder')}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('history.newFolder')}</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -182,16 +195,22 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                   <span className="text-label-ui font-medium truncate">{folder.name}</span>
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 transition-opacity rounded-md text-muted hover:text-primary hover:bg-surface-hover cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 transition-opacity rounded-md text-muted hover:text-primary hover:bg-surface-hover cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={t('common.options')}
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('common.options')}</TooltipContent>
+                  </Tooltip>
                   <DropdownMenuContent align="end" className="overlay-glass border-border-strong z-modal">
                     <DropdownMenuItem 
                       className="gap-2 cursor-pointer"

@@ -165,6 +165,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 id="includeDiversity"
                 checked={input.includeDiversity}
                 onCheckedChange={(v) => setInput({ includeDiversity: v })}
+                className="data-[state=unchecked]:border"
               />
             </div>
 
@@ -181,6 +182,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 id="allowTextSpace"
                 checked={input.allowTextSpace}
                 onCheckedChange={(v) => setInput({ allowTextSpace: v })}
+                className="data-[state=unchecked]:border"
               />
             </div>
 
@@ -197,6 +199,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 id="includeNegativePrompts"
                 checked={input.includeNegativePrompts}
                 onCheckedChange={(v) => setInput({ includeNegativePrompts: v })}
+                className="data-[state=unchecked]:border"
               />
             </div>
 
@@ -213,6 +216,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 id="includeKeywords"
                 checked={input.includeKeywords}
                 onCheckedChange={(v) => setInput({ includeKeywords: v })}
+                className="data-[state=unchecked]:border"
               />
             </div>
         </div>

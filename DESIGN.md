@@ -1,5 +1,5 @@
 ---
-version: 1.1.0
+version: 1.1.2
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -415,6 +415,137 @@ here so it's built with existing tokens instead of one-off styles.
   first one to see it here," with a button that returns focus to the
   generator input, not a static illustration with no path forward.
 
+## 6.7 Switch / Toggle
+
+New in v1.1 — this pattern previously shipped with no spec at all, which led
+to a real bug: toggles rendered with the unstyled primitive default (plain
+white when on, bare outline when off) instead of the project's actual
+`brand-primary`, making on/off states nearly impossible to tell apart at a
+glance. The rule below exists specifically to prevent that regression.
+
+- **On (checked):** track filled `brand-primary` (the project's blue accent
+  — see §2.1; never a generic white/light fill), knob `text-on-brand` for
+  guaranteed contrast against the filled track.
+- **Off (unchecked):** track `bg-surface-hover` with a visible `border-subtle`
+  edge — not fully transparent — knob filled `text-secondary` (a solid
+  circle, not just an outline) so it stays visible against a dark `bg-app`.
+- **Position is a secondary signal, not the primary one.** Knob position
+  (left/right) reinforces state but color is what should register first —
+  per §5.3, never rely on position alone the way the unstyled version did.
+- **Disabled:** track and knob both drop to 50% opacity (`opacity-50`),
+  `cursor-not-allowed` — keep the same on/off color logic underneath so the
+  state is still legible, just muted.
+- **Focus:** `focus-visible:ring-2 focus-visible:ring-brand-primary
+  focus-visible:ring-offset-2`, per §5.2 — toggles are keyboard-operable
+  controls, not decorative switches.
+- **Implementation:** use the Radix/Shadcn `Switch` primitive (per §5.1) and
+  override its default `checked`/`unchecked` classes to the tokens above —
+  don't hand-roll a custom switch, and don't leave the primitive's default
+  (un-themed) colors in place.
+
+```tsx
+<Switch
+  className="data-[state=checked]:bg-brand-primary data-[state=unchecked]:bg-surface-hover data-[state=unchecked]:border data-[state=unchecked]:border-subtle"
+/>
+```
+
+## 6.8 Tooltip
+
+New in v1.1 — added because several icon-only buttons in the app currently
+have no accessible label at all, visual or otherwise. A tooltip is the
+visual half of the fix; it is not a substitute for the other half.
+
+- **Every icon-only button gets an `aria-label`** describing the action
+  (e.g. `"Copy prompt"`, `"Delete from history"`) — this is required
+  regardless of whether a tooltip is attached. Screen readers don't read
+  tooltips, and tooltips don't appear on touch devices (no hover state), so
+  the label is the part that actually has to carry the meaning.
+- **Primitive:** Radix/Shadcn `Tooltip` (per §5.1) — don't hand-roll one.
+  It shows on keyboard focus as well as hover, which a custom
+  `onMouseEnter` implementation typically misses.
+- **Tooltips are floating elements** — per §4, they're subject to the same
+  glassmorphism rule as dropdowns and modals. The shadcn default ships
+  `TooltipContent` as a solid `bg-primary` block; override it to the
+  `overlay-glass` pattern so it doesn't diverge from the rest of the system.
+- **Delay:** `delayDuration={300}` on the `TooltipProvider` — long enough to
+  not fire on every incidental hover while scanning the toolbar, short
+  enough to still feel responsive (`motion-base`, §1.4).
+- **Copy:** short, verb-led, matches the actual action — "Copy prompt," not
+  "Copy" alone if there's more than one copy-able thing on screen.
+
+```tsx
+<TooltipProvider delayDuration={300}>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button variant="ghost" size="icon" aria-label="Copy prompt">
+        <Copy className="size-4" />
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent className="bg-surface/80 backdrop-blur-md border border-strong text-text-primary">
+      Copy prompt
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+## 6.9 Scrollbar
+
+New in v1.1 — previously the app relied entirely on the browser's native
+scrollbar styling, which varied across platforms and ignored the project's
+semantic color tokens. The rules below apply to both the native page scrollbar
+(controlled via global CSS) and the custom Radix `ScrollArea` component.
+
+- **Thumb color:** `border-strong` token (see §1.1, §2.1) — the same token used
+  for overlay borders. In light mode this resolves to `#D1D5DB`; in dark mode
+  to `#3A3F46`. The value updates dynamically with the theme because it
+  references `var(--color-border-strong)`, which itself chains through
+  `rgb(var(--border-strong))` — never a hardcoded hex.
+- **Track:** transparent. The scrollbar should feel like it materialises only
+  when scrolling, not occupy permanent visual space.
+- **Width:** slim — `6px` for the native scrollbar (via `scrollbar-width: thin`
+  in Firefox and `width: 6px` in WebKit), `w-1.5` for the Radix `ScrollBar`
+  component. This is intentionally thinner than the standard platform default
+  (~12–16px) to match the IDE-like density of the UI (§Overview).
+- **Thumb hover:** `secondary` token (`#E2E8F0` light / `#334155` dark) — a
+  slight brightening in both modes so the thumb gives hover feedback without
+  requiring a separate hover color variable.
+- **Radix ScrollArea** (`src/components/ui/scroll-area.tsx`) wraps content in a
+  `ScrollAreaPrimitive.Viewport` and renders its own `ScrollBar` with the thumb
+  coloured by `bg-border-strong`. This is used in the FolderSidebar
+  (`FolderSidebar.tsx`) and any panel where content overflows within a fixed
+  container.
+- **Native page scrollbar** (`src/index.css`) is styled globally with
+  `scrollbar-color` / `scrollbar-width` for Firefox and `::-webkit-scrollbar`
+  pseudo-elements for Chromium browsers. These rules are scoped to `<html>` so
+  they affect only the document-level scroll, not third-party widgets or nested
+  scrollable containers.
+
+```css
+/* Firefox */
+html {
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* Chromium (Chrome, Safari, Edge) */
+html::-webkit-scrollbar { width: 6px; height: 6px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+```
+
+```tsx
+// Radix ScrollArea — src/components/ui/scroll-area.tsx
+<ScrollAreaPrimitive.ScrollAreaThumb
+  className="relative flex-1 rounded-full bg-border-strong"
+/>
+```
+
 ---
 
 ## 7. Layout & Spacing
@@ -454,3 +585,8 @@ here so it's built with existing tokens instead of one-off styles.
   contrast — no inline one-off hex values, ever.
 - **Don't** ship a custom dropdown/accordion/modal when a Radix/Shadcn
   primitive already covers the pattern.
+- **Don't** leave a `Switch`/toggle on the primitive's default un-themed
+  colors — always wire `checked`/`unchecked` to `brand-primary` and
+  `bg-surface-hover` per §6.7, never plain white/transparent.
+- **Don't** ship an icon-only button without `aria-label` — a tooltip alone
+  doesn't make it accessible (§6.8).

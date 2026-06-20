@@ -15,11 +15,12 @@
   "theme": {
     "light": "Terang",
     "dark": "Gelap",
-    "system": "Sistem"
+    "system": "Sistem",
+    "toggleTheme": "Ganti tema"
   },
   "language": {
     "en": "English",
-    "id": "Bahasa Indonesia"
+    "id": "Indonesia"
   },
   "home": {
     "title": "Selamat Datang di PromptForge",
@@ -54,7 +55,8 @@
     "close": "Tutup",
     "confirm": "Konfirmasi",
     "all": "Semua",
-    "selectLanguage": "Pilih bahasa"
+    "selectLanguage": "Pilih bahasa",
+    "options": "Opsi"
   },
   "prompts": {
     "name": "Nama",
@@ -126,7 +128,8 @@
     "itemSelected": "1 item terpilih",
     "loadMore": "Muat Lebih Banyak",
     "deleteFolderTitle": "Hapus Folder",
-    "deleteFolderConfirmation": "Apakah Anda yakin ingin menghapus folder ini beserta semua isinya? Tindakan ini tidak dapat dibatalkan."
+    "deleteFolderConfirmation": "Apakah Anda yakin ingin menghapus folder ini beserta semua isinya? Tindakan ini tidak dapat dibatalkan.",
+    "deselectAll": "Batalkan semua pilihan"
   },
   "toast": {
     "copySuccess": "Prompt berhasil disalin!",

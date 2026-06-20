@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { AdobeScoreBadge, AdobeScoreDisplay } from './AdobeScoreDisplay'
 import { SegmentsPanel } from './SegmentsPanel'
 import { NegativePromptPanel } from './NegativePromptPanel'
@@ -242,17 +243,22 @@ export function PromptCard({
 
       <div className="relative px-4 py-3">
         <p className="select-text text-body-ui leading-relaxed text-primary">{displayText}</p>
-        <button
-          onClick={handleCopy}
-          className="absolute right-3 top-3 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-primary"
-          aria-label={t('promptCard.copyPrompt')}
-        >
-          {copied ? (
-            <Check className="h-4 w-4 text-brand-success" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleCopy}
+              className="absolute right-3 top-3 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-primary"
+              aria-label={t('promptCard.copyPrompt')}
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-brand-success" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t('promptCard.copyPrompt')}</TooltipContent>
+        </Tooltip>
       </div>
 
       <SegmentsPanel

@@ -46,7 +46,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
                 id="search-mode" 
                 checked={searchMode === 'global'}
                 onCheckedChange={(checked) => setSearchMode(checked ? 'global' : 'local')}
-                className="scale-75"
+                className="scale-75 data-[state=unchecked]:border"
               />
             </div>
           </div>

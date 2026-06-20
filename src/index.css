@@ -220,6 +220,31 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Firefox scrollbar */
+html {
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* WebKit scrollbar (Chrome, Safari, Edge) */
+html::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
 /* Lucide global icon styles — §6.1 */
 .lucide {
   stroke-width: 1.75;

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Trash2, FolderInput, Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { bulkExport } from '@/services/export/historyExport'
 import { useToast } from '@/hooks/useToast'
@@ -118,14 +119,20 @@ export const BulkActionBar = () => {
 
             <div className="h-4 w-px bg-border-strong" />
 
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 text-muted hover:text-primary hover:bg-surface-hover rounded-full cursor-pointer"
-                      onClick={deselectAll}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 text-muted hover:text-primary hover:bg-surface-hover rounded-full cursor-pointer"
+                  onClick={deselectAll}
+                  aria-label={t('history.deselectAll')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('history.deselectAll')}</TooltipContent>
+            </Tooltip>
           </div>
         </motion.div>
       )}
