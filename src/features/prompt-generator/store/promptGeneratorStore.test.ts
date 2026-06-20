@@ -6,11 +6,11 @@ describe('usePromptGeneratorStore', () => {
     usePromptGeneratorStore.setState({
       input: {
         niche: '',
-        category: 'commercial',
+        category: 'abstract',
         batchSize: 1,
         usageContext: 'commercial',
         targetMarket: 'global',
-        targetPlatform: 'midjourney',
+        targetPlatform: 'dalle3',
         includeDiversity: true,
         allowTextSpace: false
       },
@@ -28,18 +28,19 @@ describe('usePromptGeneratorStore', () => {
   })
 
   it('toggles favorite status of prompt in batch', () => {
+    const generatorInput = {
+      niche: 'Space',
+      category: 'abstract' as const,
+      batchSize: 1 as const,
+      usageContext: 'commercial' as const,
+      targetMarket: 'global' as const,
+      targetPlatform: 'dalle3' as const,
+      includeDiversity: true,
+      allowTextSpace: false
+    }
     const mockBatch = {
       batchId: 'b1',
-      generatorInput: {
-        niche: 'Space',
-        category: 'fantasy',
-        batchSize: 1,
-        usageContext: 'commercial' as const,
-        targetMarket: 'global' as const,
-        targetPlatform: 'midjourney' as const,
-        includeDiversity: true,
-        allowTextSpace: false
-      },
+      generatorInput,
       generatedAt: new Date(),
       prompts: [
         {
@@ -48,13 +49,14 @@ describe('usePromptGeneratorStore', () => {
           batchId: 'b1',
           segments: { subject: 'galaxy', composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
           negativePrompt: '',
-          platformVariants: { midjourney: 'galaxy far away' },
+          platformVariants: { dalle3: 'galaxy far away', nano_banana: 'galaxy far away' },
           fullPrompt: 'galaxy far away',
           commercialKeywords: [],
           adobeScore: { total: 90, breakdown: { commercialViability: 20, technicalQuality: 20, compositionStrength: 25, marketDiversity: 25 }, warnings: [], suggestions: [] },
           variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
           createdAt: new Date(),
-          isFavorite: false
+          isFavorite: false,
+          generatorInput
         }
       ]
     }

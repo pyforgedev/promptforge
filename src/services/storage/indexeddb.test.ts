@@ -53,13 +53,13 @@ describe('Dexie Storage Service CRUD', () => {
       id: 'p1',
       name: 'Test Prompt',
       category: 'lifestyle',
-      createdAt: new Date(),
+      createdAt: new Date().getTime(),
       content: 'commercial photography of a cup',
       aspectRatio: '16:9',
       stylePreset: 'Commercial',
       niche: 'commercial',
       tags: ['cup', 'commercial']
-    }
+    } as unknown as Prompt
 
     // Save/Create
     await savePrompt(prompt)
@@ -102,18 +102,19 @@ describe('Dexie Storage Service CRUD', () => {
   })
 
   it('saves batch generated prompts and retrieves history items', async () => {
+    const generatorInput = {
+      niche: 'Nature',
+      category: 'lifestyle' as const,
+      batchSize: 1 as const,
+      usageContext: 'commercial' as const,
+      targetMarket: 'global' as const,
+      targetPlatform: 'dalle3' as const,
+      includeDiversity: true,
+      allowTextSpace: false
+    }
     const batch = {
       batchId: 'b1',
-      generatorInput: {
-        niche: 'Nature',
-        category: 'landscape',
-        batchSize: 1,
-        usageContext: 'commercial',
-        targetMarket: 'global',
-        targetPlatform: 'midjourney',
-        includeDiversity: true,
-        allowTextSpace: false
-      },
+      generatorInput,
       generatedAt: new Date(),
       prompts: [
         {
@@ -122,13 +123,14 @@ describe('Dexie Storage Service CRUD', () => {
           batchId: 'b1',
           segments: { subject: 'tree', composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
           negativePrompt: '',
-          platformVariants: { midjourney: 'beautiful green tree' },
+          platformVariants: { dalle3: 'beautiful green tree', nano_banana: 'beautiful green tree' },
           fullPrompt: 'beautiful green tree',
           commercialKeywords: ['nature', 'tree'],
           adobeScore: { total: 85, breakdown: { commercialViability: 20, technicalQuality: 20, compositionStrength: 25, marketDiversity: 20 }, warnings: [], suggestions: [] },
           variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
           createdAt: new Date(),
-          isFavorite: false
+          isFavorite: false,
+          generatorInput
         }
       ]
     }
@@ -156,7 +158,7 @@ describe('Dexie Storage Service CRUD', () => {
     const folder = {
       id: 'f1',
       name: 'Nature Prompts',
-      createdAt: new Date(),
+      createdAt: new Date().getTime(),
       parentId: null
     }
 

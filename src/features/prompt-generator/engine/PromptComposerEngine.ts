@@ -22,7 +22,7 @@ import { scorePrompt } from './AdobeStockScorer'
 import { adaptForPlatform } from './PlatformAdapter'
 
 export interface LLMClientInterface {
-  complete(systemPrompt: string, userPrompt: string): Promise<string>
+  complete(systemPrompt: string, userPrompt: string, options?: { maxTokens?: number }): Promise<string>
 }
 
 export interface PromptComposerEngineOptions {
@@ -46,9 +46,15 @@ export class PromptComposerEngine {
 
     const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput, variationMatrix)
 
+    // Calculate maxTokens dynamically based on requested batch size.
+    // Standard size per prompt can be up to 600-800 tokens of JSON.
+    // We scale up baseline to 4096 or batchSize * 1000 to prevent truncation on smaller batches.
+    const batchSize = validInput.batchSize || 1
+    const maxTokens = Math.max(4096, batchSize * 1000)
+
     let rawResponse: string
     try {
-      rawResponse = await this.options.llmClient.complete(systemPrompt, userPrompt)
+      rawResponse = await this.options.llmClient.complete(systemPrompt, userPrompt, { maxTokens })
     } catch (err) {
       const isTimeout =
         err instanceof Error &&
@@ -65,7 +71,7 @@ export class PromptComposerEngine {
       const retryPrompt = MetaPromptBuilder.buildRetryPrompt(rawResponse, validInput)
       let retryResponse: string
       try {
-        retryResponse = await this.options.llmClient.complete(systemPrompt, retryPrompt)
+        retryResponse = await this.options.llmClient.complete(systemPrompt, retryPrompt, { maxTokens })
       } catch {
         throw this.makeError('PARSE_FAILURE', 'LLM output could not be parsed and retry call failed', rawResponse)
       }
@@ -108,12 +114,24 @@ export class PromptComposerEngine {
 
   private parseResponse(raw: string): LLMBatchOutput | null {
     try {
-      const jsonStart = raw.indexOf('{')
-      const jsonEnd = raw.lastIndexOf('}')
+      let jsonStart = raw.indexOf('{')
+      let jsonEnd = raw.lastIndexOf('}')
       if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
         return null
       }
-      const cleaned = raw.slice(jsonStart, jsonEnd + 1).trim()
+      let cleaned = raw.slice(jsonStart, jsonEnd + 1).trim()
+      
+      // Robust JSON repair/cleanup logic for minor LLM variations
+      // 1. Remove markdown backticks if any inside the substring
+      if (cleaned.includes('```')) {
+        cleaned = cleaned.replace(/```json/gi, '').replace(/```/g, '')
+        jsonStart = cleaned.indexOf('{')
+        jsonEnd = cleaned.lastIndexOf('}')
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+          cleaned = cleaned.slice(jsonStart, jsonEnd + 1).trim()
+        }
+      }
+
       const parsed = JSON.parse(cleaned)
       const validated = llmBatchOutputSchema.safeParse(parsed)
       return validated.success ? validated.data : null

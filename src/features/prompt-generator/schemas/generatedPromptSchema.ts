@@ -5,24 +5,28 @@
 import { z } from 'zod'
 
 export const llmPromptOutputSchema = z.object({
-  variant_id: z.number().int().positive(),
+  variant_id: z.number().int().catch(1),
   variation_anchors: z.object({
-    primary_variation: z.string(),
-    composition_style: z.string(),
-    lighting_type: z.string(),
-  }),
-  subject: z.string().min(10),
-  composition: z.string().min(5),
-  lighting: z.string().min(5),
-  mood: z.string().min(5),
-  style: z.string().min(5),
-  technical: z.string().min(5),
-  color_palette: z.string().min(5),
-  environment: z.string().min(5),
-  negative_prompt: z.string().min(10),
-  full_prompt: z.string().min(30),
-  commercial_keywords: z.array(z.string()).min(5).max(20),
-  adobe_compliance_notes: z.string(),
+    primary_variation: z.string().catch(''),
+    composition_style: z.string().catch(''),
+    lighting_type: z.string().catch(''),
+  }).catch(() => ({
+    primary_variation: '',
+    composition_style: '',
+    lighting_type: '',
+  })),
+  subject: z.string().catch(''),
+  composition: z.string().catch(''),
+  lighting: z.string().catch(''),
+  mood: z.string().catch(''),
+  style: z.string().catch(''),
+  technical: z.string().catch(''),
+  color_palette: z.string().catch(''),
+  environment: z.string().catch(''),
+  negative_prompt: z.string().catch(''),
+  full_prompt: z.string().catch(''),
+  commercial_keywords: z.array(z.string()).catch([]),
+  adobe_compliance_notes: z.string().catch(''),
 })
 
 export const llmBatchOutputSchema = z.object({

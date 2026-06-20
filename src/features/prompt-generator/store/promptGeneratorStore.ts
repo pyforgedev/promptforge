@@ -45,7 +45,7 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
 
       generatePrompts: async () => {
         if (get().isGenerating) return
-        set({ isGenerating: true, error: null })
+        set({ isGenerating: true, error: null, batch: null })
 
         const activeConfig = useAIConfigStore.getState().activeConfig
         if (!activeConfig?.apiKey) {

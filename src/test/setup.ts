@@ -72,11 +72,11 @@ beforeEach(async () => {
   usePromptGeneratorStore.setState({
     input: {
       niche: '',
-      category: 'commercial',
+      category: 'lifestyle',
       batchSize: 1,
       usageContext: 'commercial',
       targetMarket: 'global',
-      targetPlatform: 'midjourney',
+      targetPlatform: 'dalle3',
       includeDiversity: true,
       allowTextSpace: false
     },
@@ -90,10 +90,21 @@ beforeEach(async () => {
   useHistoryStore.setState({
     items: [],
     folders: [],
-    activeFolderId: null,
-    searchQuery: '',
-    filterRating: 0,
-    isLoading: false,
+    selectedIds: [],
+    currentFolderId: null,
+    searchMode: 'local',
+    filters: {
+      aspectRatio: 'all',
+      stylePreset: 'all',
+      minRating: 0,
+      dateFrom: '',
+      dateTo: '',
+      search: '',
+    },
+    loading: false,
     error: null,
-  })
+    hasMore: false,
+    offset: 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
 })

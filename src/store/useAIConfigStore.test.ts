@@ -18,6 +18,7 @@ describe('useAIConfigStore', () => {
       provider: 'openai',
       apiKey: 'test-key',
       model: 'gpt-4',
+      endpoint: '',
     }
 
     await useAIConfigStore.getState().setActiveConfig(config)
@@ -28,11 +29,11 @@ describe('useAIConfigStore', () => {
     const preset: AIConfigPreset = {
       id: 'pr1',
       name: 'My OpenAI',
-      config: {
-        provider: 'openai',
-        apiKey: 'test-key',
-        model: 'gpt-4',
-      }
+      provider: 'openai',
+      apiKey: 'test-key',
+      model: 'gpt-4',
+      endpoint: '',
+      createdAt: Date.now()
     }
 
     await useAIConfigStore.getState().savePreset(preset)

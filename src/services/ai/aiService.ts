@@ -195,8 +195,8 @@ export class AIService implements LLMClientInterface {
     this.config = config
   }
 
-  async complete(systemPrompt: string, userPrompt: string): Promise<string> {
-    return generateCompletion(userPrompt, this.config, undefined, systemPrompt)
+  async complete(systemPrompt: string, userPrompt: string, options?: { maxTokens?: number }): Promise<string> {
+    return generateCompletion(userPrompt, this.config, undefined, systemPrompt, options?.maxTokens)
   }
 }
 
@@ -239,13 +239,13 @@ export async function testConnection(config: AIConfig): Promise<boolean> {
   return true
 }
 
-export async function generateCompletion(prompt: string, config: AIConfig, signal?: AbortSignal, systemPrompt?: string): Promise<string> {
+export async function generateCompletion(prompt: string, config: AIConfig, signal?: AbortSignal, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const response = await sendPrompt({
     prompt,
     systemPrompt, // Pass systemPrompt
     model: config.model,
     temperature: 0.7,
-    maxTokens: 2048,
+    maxTokens: maxTokens || 2048,
   }, config, signal)
   return response.content
 }
