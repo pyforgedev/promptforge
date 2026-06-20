@@ -29,7 +29,17 @@ export class GenerationService {
     try {
       const promptBatch = await this.engine.compose(input)
       
-      if (promptBatch && promptBatch.prompts && promptBatch.prompts.length > 0) {
+      if (!promptBatch || !promptBatch.prompts) {
+        return { data: null, error: { code: 'PROVIDER_ERROR', message: 'Engine returned empty result' } }
+      }
+
+      if (promptBatch.prompts.length < input.batchSize) {
+        console.warn(
+          `[PromptForge] Partial batch: requested ${input.batchSize}, got ${promptBatch.prompts.length}`
+        )
+      }
+
+      if (promptBatch.prompts.length > 0) {
         const historyItems = await getRecentRelevantHistory(
           input.category || 'other',
           DUPLICATE_CHECK_HISTORY_LIMIT

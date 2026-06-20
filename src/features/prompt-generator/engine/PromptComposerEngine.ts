@@ -89,21 +89,14 @@ export class PromptComposerEngine {
       const adobeScore = scorePrompt(promptWithNeg)
       const promptWithScore: GeneratedPrompt = { ...promptWithNeg, adobeScore }
       const platformVariants = adaptForPlatform(promptWithScore, validInput.targetPlatform, negativePrompt)
-      return {
-        ...promptWithScore,
-        platformVariants,
-        fullPrompt: platformVariants.dalle3,
-      }
-    })
-
-    if (prompts.length < requestedCount) {
-      const partialError: PromptGeneratorError = {
-        code: 'PARTIAL_BATCH',
-        message: `Requested ${requestedCount} prompts but LLM returned ${prompts.length}`,
-        partialPrompts: prompts,
-      }
-      throw partialError
+    return {
+      ...promptWithScore,
+      platformVariants,
+      fullPrompt: validInput.targetPlatform === 'nano_banana'
+        ? platformVariants.nano_banana
+        : platformVariants.dalle3,
     }
+    })
 
     return {
       batchId,
@@ -115,10 +108,12 @@ export class PromptComposerEngine {
 
   private parseResponse(raw: string): LLMBatchOutput | null {
     try {
-      const cleaned = raw
-        .replace(/^```json\s*/i, '')
-        .replace(/```\s*$/i, '')
-        .trim()
+      const jsonStart = raw.indexOf('{')
+      const jsonEnd = raw.lastIndexOf('}')
+      if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+        return null
+      }
+      const cleaned = raw.slice(jsonStart, jsonEnd + 1).trim()
       const parsed = JSON.parse(cleaned)
       const validated = llmBatchOutputSchema.safeParse(parsed)
       return validated.success ? validated.data : null
