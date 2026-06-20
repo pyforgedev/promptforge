@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, RefreshCw, X, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
@@ -30,6 +30,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { validateAIConfig } from '@/lib/validation'
 
 export default function Settings() {
@@ -39,21 +49,20 @@ export default function Settings() {
   const {
     presets,
     activeConfig,
-    isReady,
     setActiveConfig,
     savePreset,
     deletePreset,
   } = useAIConfigStore()
 
   const [customModels, setCustomModels] = useState<string[]>([])
-  const [provider, setProvider] = useState<AIProvider>('openai')
-  const [apiKey, setApiKey] = useState('')
-  const [endpoint, setEndpoint] = useState('')
-  const [model, setModel] = useState('gpt-4')
+  const [provider, setProvider] = useState<AIProvider>(activeConfig?.provider || 'openai')
+  const [apiKey, setApiKey] = useState(activeConfig?.apiKey || '')
+  const [endpoint, setEndpoint] = useState(activeConfig?.endpoint || '')
+  const [model, setModel] = useState(activeConfig?.model || 'gpt-4')
   const [isApplying, setIsApplying] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null)
-  const isInitialized = useRef(false)
+  const [deletePresetId, setDeletePresetId] = useState<string | null>(null)
 
   const [presetDialogOpen, setPresetDialogOpen] = useState(false)
   const [presetName, setPresetName] = useState('')
@@ -62,16 +71,13 @@ export default function Settings() {
   const [importOpen, setImportOpen] = useState(false)
   const { showToast } = useToast()
 
-  // Initialize local state when store is ready
   useEffect(() => {
-    if (isReady && activeConfig && !isInitialized.current) {
-      setApiKey(activeConfig.apiKey || '')
-      setEndpoint(activeConfig.endpoint || '')
-      setModel(activeConfig.model || 'gpt-4')
-      setProvider(activeConfig.provider || 'openai')
-      isInitialized.current = true
-    }
-  }, [isReady, activeConfig])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setApiKey(activeConfig?.apiKey || '')
+    setEndpoint(activeConfig?.endpoint || '')
+    setModel(activeConfig?.model || 'gpt-4')
+    setProvider(activeConfig?.provider || 'openai')
+  }, [activeConfig])
 
   // Load custom models
   useEffect(() => {
@@ -113,7 +119,7 @@ export default function Settings() {
     } catch (err) {
       setTestResult('error')
       const msg = err instanceof Error ? err.message : 'Connection failed'
-      showToast('error', t('settings.testFailed', { defaultValue: `Connection failed: ${msg}` }))
+      showToast('error', t('settings.testFailed', { defaultValue: `Connection failed: ${msg}`, message: msg }))
     } finally {
       setIsTesting(false)
     }
@@ -241,7 +247,7 @@ export default function Settings() {
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="provider" className="text-sm font-medium text-foreground">
-              Provider
+              {t('settings.provider')}
             </label>
             <Select 
               value={provider} 
@@ -283,7 +289,7 @@ export default function Settings() {
                 setApiKey(e.target.value)
                 setTestResult(null)
               }}
-              placeholder={apiKey ? `...${apiKey.slice(-4)}` : 'Enter API Key'}
+              placeholder={t('settings.apiKeyPlaceholder', { defaultValue: 'Enter API Key' })}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -349,7 +355,7 @@ export default function Settings() {
 
           <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 p-3">
             <label className="text-sm font-medium text-foreground">
-              Add Custom Model
+              {t('settings.addCustomModel')}
             </label>
             <div className="flex gap-2">
               <Input
@@ -372,7 +378,7 @@ export default function Settings() {
                 }}
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Add
+                {t('common.add')}
               </Button>
             </div>
             {customModels.length > 0 && (
@@ -481,7 +487,7 @@ export default function Settings() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => deletePreset(preset.id)}
+                        onClick={() => setDeletePresetId(preset.id)}
                       >
                         {t('common.delete')}
                       </Button>
@@ -507,7 +513,9 @@ export default function Settings() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.savePreset')}</DialogTitle>
-            <DialogDescription />
+            <DialogDescription>
+              {t('settings.savePresetDescription', { defaultValue: 'Enter a name for your AI configuration preset to load it later.' })}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
@@ -538,7 +546,9 @@ export default function Settings() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.importPresets')}</DialogTitle>
-            <DialogDescription />
+            <DialogDescription>
+              {t('settings.importPresetsDescription', { defaultValue: 'Paste your JSON preset configuration here to import it.' })}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <textarea
@@ -559,6 +569,38 @@ export default function Settings() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Preset Confirmation Dialog */}
+      <AlertDialog open={!!deletePresetId} onOpenChange={(open) => { if (!open) setDeletePresetId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('settings.deletePresetTitle', { defaultValue: 'Delete Preset' })}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('settings.deletePresetConfirmation', { defaultValue: 'Are you sure you want to delete this preset? This action cannot be undone.' })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (deletePresetId) {
+                  try {
+                    await deletePreset(deletePresetId)
+                    showToast('success', t('toast.presetDeleted', { defaultValue: 'Preset deleted successfully' }))
+                  } catch {
+                    showToast('error', t('toast.deleteFailed', { defaultValue: 'Failed to delete preset' }))
+                  } finally {
+                    setDeletePresetId(null)
+                  }
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

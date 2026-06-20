@@ -145,6 +145,16 @@ class PromptForgeDB extends Dexie {
       
       console.log('Migration to version 6 complete.')
     })
+
+    this.version(7).stores({
+      prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy, category, folderId',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+      prompts: 'id, name, category, createdAt',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+    })
   }
 }
 
@@ -238,6 +248,58 @@ export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt
 
 export async function getHistoryItems(): Promise<PromptHistoryRecord[]> {
   return db.prompt_history.toArray()
+}
+
+export interface HistoryQueryParams {
+  folderId: string | null
+  searchMode: 'global' | 'local'
+  minRating: number
+  search: string
+  offset: number
+  limit: number
+}
+
+export async function queryHistoryItems(params: HistoryQueryParams): Promise<{ items: PromptHistoryRecord[], hasMore: boolean }> {
+  const { folderId, searchMode, minRating, search, offset, limit } = params
+  
+  let collection
+  if (searchMode === 'local' && folderId !== null) {
+    collection = db.prompt_history.where('folderId').equals(folderId)
+  } else {
+    collection = db.prompt_history.orderBy('createdAt').reverse()
+  }
+
+  const q = search ? search.toLowerCase() : ''
+  collection = collection.filter(item => {
+    if (searchMode === 'local' && item.folderId !== folderId) return false
+    if (minRating > 0 && (item.adobeScore?.total ?? 0) < minRating) return false
+    if (q) {
+      if (
+        !item.fullPrompt.toLowerCase().includes(q) &&
+        !item.niche.toLowerCase().includes(q) &&
+        !item.category.toLowerCase().includes(q)
+      ) {
+        return false
+      }
+    }
+    return true
+  })
+
+  const results = await collection.offset(offset).limit(limit + 1).toArray()
+  
+  if (searchMode === 'local' && folderId !== null) {
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }
+
+  const hasMore = results.length > limit
+  if (hasMore) {
+    results.pop()
+  }
+
+  return {
+    items: results,
+    hasMore
+  }
 }
 
 export async function deleteHistoryItem(id: string): Promise<void> {

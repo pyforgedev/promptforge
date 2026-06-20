@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Trash2, Star, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,22 +35,7 @@ export const HistoryList = memo(function HistoryList({
 }: HistoryListProps) {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { selectedIds, toggleSelect, currentFolderId, searchMode, filters } = useHistoryStore()
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      if (searchMode === 'local' && item.folderId !== currentFolderId) return false
-
-      if (filters.minRating > 0 && (item.adobeScore?.total ?? 0) < filters.minRating) return false
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
-        if (!item.fullPrompt.toLowerCase().includes(q) && !item.niche.toLowerCase().includes(q) && !item.category.toLowerCase().includes(q)) {
-          return false
-        }
-      }
-      return true
-    })
-  }, [items, currentFolderId, searchMode, filters])
+  const { selectedIds, toggleSelect, searchMode, hasMore, loadMore } = useHistoryStore()
 
   const handleCopy = async (content: string) => {
     await onCopy(content)
@@ -65,7 +50,7 @@ export const HistoryList = memo(function HistoryList({
     }
   }
 
-  if (loading) return <LoadingSpinner />
+  if (loading && items.length === 0) return <LoadingSpinner />
 
   if (error) {
     return (
@@ -75,7 +60,7 @@ export const HistoryList = memo(function HistoryList({
     )
   }
 
-  if (filteredItems.length === 0) {
+  if (items.length === 0) {
     return (
       <EmptyState
         title={t('history.emptyTitle')}
@@ -86,7 +71,7 @@ export const HistoryList = memo(function HistoryList({
 
   return (
     <div className="flex flex-col gap-3">
-      {filteredItems.map((item) => {
+      {items.map((item) => {
         const isSelected = selectedIds.includes(item.id)
 
         return (
@@ -152,6 +137,18 @@ export const HistoryList = memo(function HistoryList({
           </Card>
         )
       })}
+      {hasMore && (
+        <div className="flex justify-center mt-4 w-full">
+          <Button 
+            variant="outline" 
+            onClick={loadMore} 
+            disabled={loading}
+            className="w-full hover:bg-white/5"
+          >
+            {loading ? t('common.loading') : t('history.loadMore')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 })

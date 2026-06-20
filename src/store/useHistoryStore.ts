@@ -1,13 +1,14 @@
 import { create } from 'zustand'
-import { 
-  getHistoryItems, 
+import db, { 
   deleteHistoryItem, 
   deleteAllHistory,
   getFolders,
   saveFolder,
   deleteFolder,
-  bulkUpdateHistoryFolder
+  bulkUpdateHistoryFolder,
+  queryHistoryItems
 } from '@/services/storage/indexeddb'
+import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import type { HistoryFilters, Folder } from '@/features/history/types'
 
@@ -20,9 +21,12 @@ interface HistoryState {
   filters: HistoryFilters
   loading: boolean
   error: string | null
+  hasMore: boolean
+  offset: number
 
   // Actions
   fetchHistory: () => Promise<void>
+  loadMore: () => Promise<void>
   fetchFolders: () => Promise<void>
   setFilter: <K extends keyof HistoryFilters>(key: K, value: HistoryFilters[K]) => void
   resetFilters: () => void
@@ -66,12 +70,47 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   filters: defaultFilters,
   loading: false,
   error: null,
+  hasMore: false,
+  offset: 0,
 
   fetchHistory: async () => {
+    set({ loading: true, error: null, offset: 0, items: [] })
+    try {
+      const { currentFolderId, searchMode, filters } = get()
+      const { items, hasMore } = await queryHistoryItems({
+        folderId: currentFolderId,
+        searchMode,
+        minRating: filters.minRating,
+        search: filters.search,
+        offset: 0,
+        limit: 20
+      })
+      set({ items, hasMore, offset: items.length, loading: false })
+    } catch (err) {
+      set({ error: (err as Error).message, loading: false })
+      throw err
+    }
+  },
+
+  loadMore: async () => {
+    if (get().loading || !get().hasMore) return
     set({ loading: true, error: null })
     try {
-      const items = await getHistoryItems()
-      set({ items, loading: false })
+      const { currentFolderId, searchMode, filters, offset, items: existingItems } = get()
+      const { items: newItems, hasMore } = await queryHistoryItems({
+        folderId: currentFolderId,
+        searchMode,
+        minRating: filters.minRating,
+        search: filters.search,
+        offset,
+        limit: 20
+      })
+      set({
+        items: [...existingItems, ...newItems],
+        hasMore,
+        offset: offset + newItems.length,
+        loading: false
+      })
     } catch (err) {
       set({ error: (err as Error).message, loading: false })
       throw err
@@ -89,14 +128,25 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }
   },
 
-  setFilter: (key, value) => 
-    set((state) => ({ filters: { ...state.filters, [key]: value } })),
+  setFilter: (key, value) => {
+    set((state) => ({ filters: { ...state.filters, [key]: value } }))
+    get().fetchHistory()
+  },
 
-  resetFilters: () => set({ filters: defaultFilters }),
+  resetFilters: () => {
+    set({ filters: defaultFilters })
+    get().fetchHistory()
+  },
 
-  setCurrentFolder: (id) => set({ currentFolderId: id, selectedIds: [] }),
+  setCurrentFolder: (id) => {
+    set({ currentFolderId: id, selectedIds: [] })
+    get().fetchHistory()
+  },
 
-  setSearchMode: (mode) => set({ searchMode: mode }),
+  setSearchMode: (mode) => {
+    set({ searchMode: mode })
+    get().fetchHistory()
+  },
 
   toggleSelect: (id) => set((state) => ({
     selectedIds: state.selectedIds.includes(id)
@@ -112,7 +162,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const { selectedIds } = get()
     set({ error: null })
     try {
-      await Promise.all(selectedIds.map(id => deleteHistoryItem(id)))
+      await db.transaction('rw', db.prompt_history, async () => {
+        await Promise.all(selectedIds.map(id => db.prompt_history.delete(id)))
+      })
+      usePromptGeneratorStore.getState().removePromptsFromBatch(selectedIds)
       set((state) => ({
         items: state.items.filter(item => !selectedIds.includes(item.id)),
         selectedIds: []
@@ -134,6 +187,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         ),
         selectedIds: []
       }))
+      if (get().searchMode === 'local') {
+        get().fetchHistory()
+      }
     } catch (err) {
       set({ error: (err as Error).message })
       throw err
@@ -144,6 +200,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteAllHistory()
+      usePromptGeneratorStore.getState().clearBatch()
       set({ items: [], selectedIds: [] })
     } catch (err) {
       set({ error: (err as Error).message })
@@ -155,6 +212,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteHistoryItem(id)
+      usePromptGeneratorStore.getState().removePromptsFromBatch([id])
       set((state) => ({
         items: state.items.filter(item => item.id !== id),
         selectedIds: state.selectedIds.filter(i => i !== id)
@@ -200,10 +258,17 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteFolder(id)
+      await db.prompt_history.where('folderId').equals(id).modify({ folderId: null })
       set((state) => ({
         folders: state.folders.filter(f => f.id !== id),
-        currentFolderId: state.currentFolderId === id ? null : state.currentFolderId
+        currentFolderId: state.currentFolderId === id ? null : state.currentFolderId,
+        items: state.items.map(item =>
+          item.folderId === id ? { ...item, folderId: null } : item
+        )
       }))
+      if (get().currentFolderId === null) {
+        get().fetchHistory()
+      }
     } catch (err) {
       set({ error: (err as Error).message })
       throw err

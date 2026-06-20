@@ -57,6 +57,8 @@ export class GenerationService {
   ): Promise<{ data: GeneratedPrompt | null; error: PromptGeneratorError | null }> {
     try {
       // TODO: Implement regeneratePrompt
+      void _batchId
+      void _variantIndex
       return { data: null, error: null }
     } catch (err) {
       const debugMsg = err instanceof Error ? err.message : String(err)

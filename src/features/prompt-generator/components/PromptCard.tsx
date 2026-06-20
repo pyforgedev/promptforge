@@ -111,7 +111,6 @@ export function PromptCard({
   const [activePlatform, setActivePlatform] = useState<DisplayPlatform>(defaultPlatform)
   const [copied, setCopied] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
-  const [isFavorite, setIsFavorite] = useState(prompt.isFavorite)
 
   const displayText = prompt.platformVariants[activePlatform]
 
@@ -133,15 +132,13 @@ export function PromptCard({
   }
 
   const handleFavorite = async () => {
-    const next = !isFavorite
-    setIsFavorite(next)
     try {
       await onToggleFavorite?.(prompt.id)
       toast.success(
-        next ? t('promptCard.favorited') : t('promptCard.unfavorited'),
+        !prompt.isFavorite ? t('promptCard.favorited') : t('promptCard.unfavorited'),
       )
     } catch {
-      setIsFavorite(!next)
+      // driven by props, no local state to revert
     }
   }
 
@@ -250,14 +247,14 @@ export function PromptCard({
             onClick={handleFavorite}
             className={cn(
               'gap-1.5 text-xs',
-              isFavorite ? 'text-rose-400 hover:text-rose-300' : 'text-muted-foreground',
+              prompt.isFavorite ? 'text-rose-400 hover:text-rose-300' : 'text-muted-foreground',
             )}
           >
             <Heart
               className="h-3.5 w-3.5"
-              fill={isFavorite ? 'currentColor' : 'none'}
+              fill={prompt.isFavorite ? 'currentColor' : 'none'}
             />
-            {isFavorite ? t('promptCard.unfavorite') : t('promptCard.favorite')}
+            {prompt.isFavorite ? t('promptCard.unfavorite') : t('promptCard.favorite')}
           </Button>
 
           {onSaveAsTemplate && (

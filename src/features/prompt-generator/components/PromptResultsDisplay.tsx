@@ -20,11 +20,12 @@ import type { GeneratedPrompt } from '../types'
 export function PromptResultsDisplay() {
   const { t } = useTranslation()
   const [templatePrompt, setTemplatePrompt] = useState<GeneratedPrompt | null>(null)
-  const { batch, isGenerating, error } = usePromptGeneratorStore(
+  const { batch, isGenerating, error, toggleFavoriteInBatch } = usePromptGeneratorStore(
     useShallow((state) => ({
       batch: state.batch,
       isGenerating: state.isGenerating,
       error: state.error,
+      toggleFavoriteInBatch: state.toggleFavoriteInBatch,
     })),
   )
 
@@ -35,7 +36,8 @@ export function PromptResultsDisplay() {
     const service = new GenerationService(activeConfig)
     const { error } = await service.toggleFavorite(id)
     if (error) throw new Error(error.message)
-  }, [activeConfig])
+    toggleFavoriteInBatch(id)
+  }, [activeConfig, toggleFavoriteInBatch])
 
   const handleExportCSV = useCallback(() => {
     if (!batch) return

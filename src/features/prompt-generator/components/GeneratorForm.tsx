@@ -188,6 +188,8 @@ export const GeneratorForm = memo(function GeneratorForm() {
           <button
             type="button"
             onClick={() => setAdvancedOptionsOpen(!advancedOptionsOpen)}
+            aria-expanded={advancedOptionsOpen}
+            aria-controls="advanced-options-panel"
             className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             {advancedOptionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -197,6 +199,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
           <AnimatePresence>
             {advancedOptionsOpen && (
               <motion.div
+                id="advanced-options-panel"
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}

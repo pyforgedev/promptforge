@@ -41,6 +41,7 @@
     "subtitle": "Kelola koleksi prompt Anda"
   },
   "common": {
+    "add": "Tambah",
     "loading": "Memuat...",
     "error": "Terjadi kesalahan",
     "save": "Simpan",
@@ -84,7 +85,17 @@
     "load": "Muat",
     "exportPresets": "Ekspor",
     "importPresets": "Impor",
-    "noPresets": "Belum ada prasetel. Impor atau buat satu."
+    "noPresets": "Belum ada prasetel. Impor atau buat satu.",
+    "testSuccess": "Koneksi berhasil!",
+    "testFailed": "Koneksi gagal: {{message}}",
+    "testConnection": "Uji Koneksi",
+    "apiKeyPlaceholder": "Masukkan Kunci API",
+    "savePresetDescription": "Masukkan nama untuk prasetel konfigurasi AI Anda untuk memuatnya nanti.",
+    "importPresetsDescription": "Tempelkan konfigurasi prasetel JSON Anda di sini untuk mengimpor.",
+    "deletePresetTitle": "Hapus Prasetel",
+    "deletePresetConfirmation": "Apakah Anda yakin ingin menghapus prasetel ini? Tindakan ini tidak dapat dibatalkan.",
+    "provider": "Penyedia",
+    "addCustomModel": "Tambah Model Kustom"
   },
   "history": {
     "pageTitle": "Riwayat Prompt",
@@ -112,7 +123,8 @@
     "renameFolder": "Ganti Nama Folder",
     "move": "Pindahkan",
     "itemsSelected": "{{count}} item terpilih",
-    "itemSelected": "1 item terpilih"
+    "itemSelected": "1 item terpilih",
+    "loadMore": "Muat Lebih Banyak"
   },
   "toast": {
     "copySuccess": "Prompt berhasil disalin!",
@@ -126,7 +138,19 @@
     "folderRenamed": "Folder berhasil diganti nama",
     "itemsDeleted": "Berhasil menghapus {{count}} item",
     "itemsMoved": "Berhasil memindahkan {{count}} item ke {{folder}}",
-    "itemDeleted": "Item berhasil dihapus"
+    "itemDeleted": "Item berhasil dihapus",
+    "presetSaved": "Prasetel berhasil disimpan",
+    "saveFailed": "Gagal menyimpan prasetel",
+    "configApplied": "Konfigurasi berhasil diterapkan",
+    "applyFailed": "Gagal menerapkan konfigurasi",
+    "exportSuccess": "Prasetel berhasil diekspor",
+    "importSuccess": "Prasetel berhasil diimpor",
+    "importFailed": "Gagal mengimpor prasetel",
+    "modelAdded": "Model kustom ditambahkan",
+    "modelRemoved": "Model kustom dihapus",
+    "presetLoaded": "Prasetel dimuat",
+    "presetDeleted": "Prasetel berhasil dihapus",
+    "deleteFailed": "Gagal menghapus prasetel"
   },
   "templates": {
     "pageTitle": "Template Prompt",
