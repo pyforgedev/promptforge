@@ -1,124 +1,98 @@
-# Investigation Plan: Prompt Generator Load States & Batch Generation Failures
-
-This plan outlines the diagnostics, root causes, and recommended solutions for the following issues:
-1. **Skeleton loading state** only showing when prompt batch size is set to 10.
-2. **Batch prompt generation** failing or being buggy when generating batch sizes of 3 and 5, while succeeding at 10.
-
----
-
 ## Goal
-Diagnose and resolve the lack of skeleton loader feedback for batch sizes 1, 3, and 5, and resolve failure rates/bugs in generating batches of 3 and 5 prompts.
-
----
+Integrate target platform optimizations (`dalle3` / `nano_banana` / `both`) and conditional generation toggles (Negative Prompts and Stock Keywords) into the PromptForge generator pipeline and UI. Ensure these constraints restrict token consumption on the LLM request side and modify the output presentation on the UI side.
 
 ## Context
-- **V2 Generator Feature**: Composed of `PromptComposerEngine`, `GenerationService`, `usePromptGeneratorStore`, `GeneratorForm`, and `PromptResultsDisplay`.
-- **Loading Behavior**: Controlled by `isGenerating` and `batch` in `PromptResultsDisplay.tsx`.
-- **Generation Logic**: Leverages `PromptComposerEngine` to construct a variation matrix, prompt the LLM, and parse JSON outputs containing prompt batches.
+PromptForge runs a React + TypeScript frontend with a composer engine:
+- `PromptComposerEngine.ts` maps input parameters, queries the LLM, and produces the generated prompts.
+- `MetaPromptBuilder.ts` formats the LLM instructions.
+- `PlatformAdapter.ts` maps the output formats for each platform variant.
+- `GeneratorForm.tsx` controls the inputs and parameters.
+- `PromptCard.tsx` manages variant display (tabs, labels, badges).
+- Localization is supported via `translation.json` in English (`en`) and Indonesian (`id`).
 
----
+Currently, the engine requests both DALL-E 3 and Nano Banana representations regardless of selection, and always generates negative prompts and keywords. The requested optimization will limit LLM instructions/generation to only the selected platform, bypass unnecessary formatting/adaptation, and skip negative prompts or stock keywords when toggled off.
 
 ## Requirements Breakdown
 
-### 1. Skeleton Loading Investigation
-- **Must-have**: Identify why loading state is bypassed/invisible for batch sizes 1, 3, 5.
-- **Should-have**: Ensure consistency across all batch sizes (1, 3, 5, 10).
-- **Out-of-scope**: Rewriting the entire UI render loop of results.
+### 1. Target Platform Refinement
+- **LLM request**: If `targetPlatform` is `dalle3` or `nano_banana`, update `MetaPromptBuilder.build()` to instruct the LLM to output only that specific platform's version inside the JSON schema (`full_prompt`). For `both`, keep the behavior of building/returning both formats.
+- **Output Schema Validation**: Update `llmPromptOutputSchema` and custom types in `src/features/prompt-generator/types/index.ts` to allow empty or undefined values where applicable when only one platform is targetted.
+- **Platform Adaptation**: Update `PlatformAdapter.ts` so `adaptForPlatform` only runs the processing steps for the selected platform (or both if `both` is chosen).
+- **UI Display / Badge**:
+  - Add a visible badge in `PromptCard.tsx` reading "Optimized for DALL-E" or "Optimized for Nano Banana" when the generator input targets only one platform.
+  - Hide or restrict tabs when a specific platform is chosen, showing only the active target platform variant, while keeping tabs available for the `both` option.
 
-### 2. Batch Prompt Generation Investigation
-- **Must-have**: Pinpoint why LLM response parsing or request generation fails specifically for batch sizes 3 and 5.
-- **Should-have**: Inspect Zod validation, token limits, parser robustness, and prompt instruction discrepancies.
-- **Out-of-scope**: Rewriting the underlying AI service or mock APIs.
+### 2. Negative Prompts & Stock Keywords Toggle
+- **UI Toggles**: Add two new toggles in `GeneratorForm.tsx` (using the `Switch` component):
+  - "Include Negative Prompts" (maps to `includeNegativePrompts` boolean, default: true)
+  - "Include Stock Keywords" (maps to `includeKeywords` boolean, default: true)
+- **State Management**:
+  - Update `GeneratorInput` interface in `types/index.ts` to include `includeNegativePrompts` and `includeKeywords`.
+  - Update `generatorInputSchema` and `generatorInputDefaults` in `generatorInputSchema.ts` to reflect the new properties.
+- **LLM Prompt Modification**:
+  - If `includeNegativePrompts` is false: instruct the LLM in `MetaPromptBuilder.ts` to exclude negative prompt generation. Update `NegativePromptGenerator.ts` to skip processing and return an empty string.
+  - If `includeKeywords` is false: instruct the LLM in `MetaPromptBuilder.ts` to omit stock keywords. Update `PromptComposerEngine.ts` mapping to handle missing/empty keyword arrays.
+- **UI Updates**:
+  - In `PromptCard.tsx`, hide the negative prompt panel and/or keywords panel entirely if they are absent or marked disabled in the generated output.
+- **Localization**:
+  - Add English and Bahasa Indonesia strings for the toggles and the target platform badges to `public/locales/en/translation.json` and `public/locales/id/translation.json`.
 
 ---
 
 ## Phases
 
-### Phase 1: Diagnostics (Sequential)
+### Phase 1: Data Model & Schema Updates (Sequential)
+- Update `GeneratorInput` and related interfaces in `src/features/prompt-generator/types/index.ts`.
+- Update `generatorInputSchema` and `generatorInputDefaults` in `src/features/prompt-generator/schemas/generatorInputSchema.ts`.
+- Update JSON schema outputs and types in `src/features/prompt-generator/schemas/generatedPromptSchema.ts` (making `negative_prompt` and `commercial_keywords` optional/nullable).
+- **Security Check**: Verify schema validation is strict enough to reject malformed LLM responses but handles missing fields gracefully when options are turned off.
 
-#### Step 1.1: Loading State Tracing
-- **Action**: Inspect `PromptResultsDisplay.tsx` line 87:
-  ```typescript
-  if (isGenerating && !batch) { ... }
-  ```
-- **Hypothesis**: When `generatePrompts` is called:
-  - If a previous `batch` exists in the Zustand store (e.g. from hydration or a previous run), `!batch` evaluates to `false`, preventing the loading skeleton from displaying.
-  - Why does it display for 10? If the batch of 10 succeeded, does it persist? Or does selecting 10 clear the batch first? Or is `batch` explicitly cleared/reset when selecting 10 but not when selecting other sizes?
-  - Let's check `GeneratorForm.tsx` select handlers:
-    ```typescript
-    onValueChange={(v) => setInput({ batchSize: Number(v) as BatchSize })}
-    ```
-    Changing `batchSize` does not call `clearBatch()`.
-  - Let's verify why it behaves differently specifically for 10. For instance, does batch size 10 fail or get parsed differently, leading to `batch` being `null` or cleared? If the generation of 10 succeeded, does the next generation display a skeleton?
-- **Security Check**: No credentials or private tokens are accessed.
+### Phase 2: Engine & Builder Updates (Sequential)
+- Modify `src/features/prompt-generator/engine/MetaPromptBuilder.ts`:
+  - Dynamically alter instructions in the `SYSTEM_PROMPT` or `userPrompt` construction based on the flags: `includeNegativePrompts`, `includeKeywords`, and `targetPlatform`.
+  - If target is a single platform, instruct LLM to output only that variant.
+  - If toggles are off, instruct LLM to return empty arrays/strings for those properties.
+- Modify `src/features/prompt-generator/engine/PromptComposerEngine.ts`:
+  - Condition `generateNegativePrompt()` execution on `validInput.includeNegativePrompts`. If false, bypass and assign empty string.
+  - Clean up double initialization of `platformVariants` highlighted in the audit (`mapLLMOutput` redundant properties).
+- Modify `src/features/prompt-generator/engine/PlatformAdapter.ts`:
+  - Update `adaptForPlatform` to return empty representations for the non-targeted platform, avoiding processing brand names/limits on non-selected targets.
 
-#### Step 1.2: Engine & LLM Response Inspection
-- **Action**: Analyze `PromptComposerEngine.ts` output constraints and parsing logic:
-  - Check how `maxTokens` is computed (line 53):
-    ```typescript
-    const maxTokens = Math.max(2048, batchSize * 800)
-    ```
-    For batch size 3: `3 * 800 = 2400` max tokens.
-    For batch size 5: `5 * 800 = 4000` max tokens.
-    For batch size 10: `10 * 800 = 8000` max tokens.
-  - **Hypothesis**: The LLM prompt asks for exactly `input.batchSize` prompts, but the generated JSON output might exceed the `maxTokens` limit if the tokens per prompt exceed 800. If the output is truncated, the JSON parsing fails (`jsonEnd = raw.lastIndexOf('}')` will find an incomplete/mismatched bracket or fail entirely), causing `parseResponse` to return `null`.
-  - **Why does 10 succeed?** 8000 tokens is a large context window. The LLM has ample room to output 10 prompts without truncation. However, for 3 or 5, the limit of 2400 or 4000 tokens may be too low if the LLM output is verbose, leading to truncation.
-  - Another hypothesis: Variation matrix alignment or LLM instructions for batch sizes 3 and 5 are structured differently, or Zod validation fails. Let's check `VariationStrategyEngine.ts` and `MetaPromptBuilder.ts` to see if the engine produces structured schemas that fail Zod validation for 3 and 5.
+### Phase 3: Localization (Parallel)
+- Add entries for:
+  - English: `generator.form.includeNegativePrompts.label`, `generator.form.includeNegativePrompts.description`, `generator.form.includeKeywords.label`, `generator.form.includeKeywords.description`, `promptCard.optimizedFor`
+  - Indonesian: `generator.form.includeNegativePrompts.label`, `generator.form.includeNegativePrompts.description`, `generator.form.includeKeywords.label`, `generator.form.includeKeywords.description`, `promptCard.optimizedFor`
+- Files:
+  - `public/locales/en/translation.json`
+  - `public/locales/id/translation.json`
 
----
-
-### Phase 2: Hypothesis Verification & Code Review
-
-#### Case 1: Skeleton Loading Missing
-1. **Verification**: Verify if `batch` is set to `null` on new generation calls.
-   - Look at `promptGeneratorStore.ts` line 46:
-     ```typescript
-     generatePrompts: async () => {
-       if (get().isGenerating) return
-       set({ isGenerating: true, error: null })
-       ...
-     ```
-     Notice that `set({ batch: data, error, isGenerating: false })` is called at the end, but the store **does not clear `batch`** at the beginning of `generatePrompts`.
-     Thus, `batch` remains populated with the previous results while `isGenerating` is `true`.
-   - In `PromptResultsDisplay.tsx` line 87:
-     ```typescript
-     if (isGenerating && !batch) { ... }
-     ```
-     Because `batch` is NOT null, the loading state is bypassed, and the old prompts remain on screen until the new ones arrive.
-   - **Why did it show for 10?** If batch size 10 was selected and it succeeded, or if generation of 10 previously failed, `batch` became `null` (since a failure sets `batch` to `null` or raw error resets it, or `removePromptsFromBatch` cleared it). If the previous run failed (e.g. timeout/parse failure), `batch` was `null`, so the skeleton loader displayed. If it succeeded, subsequent generations of size 10 also would not show the skeleton.
-   - **Recommendation**: Set `batch: null` at the start of `generatePrompts` (or conditionally clear it if changing search parameters) to guarantee the loader displays on every generation attempt.
-
-#### Case 2: Batch Generation Failures for 3 and 5
-1. **Verification**: Verify LLM response truncation and parsing errors.
-   - Check if `maxTokens` calculations for 3 (2400 tokens) and 5 (4000 tokens) are insufficient to output the complex JSON containing all segments, negative prompts, commercial keywords, and compliance notes.
-   - A single prompt contains:
-     - `subject` (vivid)
-     - `composition`
-     - `lighting`
-     - `mood`
-     - `style`
-     - `technical`
-     - `color_palette`
-     - `environment`
-     - `negative_prompt`
-     - `full_prompt` (minimum 60 words)
-     - `commercial_keywords` (10-15 keywords)
-     - `adobe_compliance_notes`
-     - JSON wrapping (braces, keys, quotes)
-   - Estimated token size per prompt: ~400–600 tokens. With reasoning overhead or verbosity from certain models, 3 prompts can easily approach 2000+ tokens, causing truncation at 2400. 5 prompts can exceed 3000+ tokens, causing truncation at 4000.
-   - **Why does 10 succeed?** 8000 tokens is generous enough to prevent truncation.
-   - **Recommendation**: Increase the baseline token limit or scale token limits more conservatively (e.g., `Math.max(4000, batchSize * 1000)`).
+### Phase 4: UI Refinement (Sequential)
+- Modify `src/features/prompt-generator/components/GeneratorForm.tsx`:
+  - Inject the two new switches into the form component.
+  - Bind switches to `usePromptGeneratorStore` inputs.
+- Modify `src/features/prompt-generator/components/PromptCard.tsx`:
+  - Conditionally render the negative prompts panel if `negativePrompt` is present and was requested.
+  - Conditionally render the keywords panel if `commercialKeywords` is present, not empty, and was requested.
+  - If `targetPlatform` is specific (`dalle3` or `nano_banana`), render a badge "Optimized for [Platform]" next to the variant indices and disable the platform selector tab switcher (only render the selected one).
 
 ---
 
 ## Risks & Mitigations
-- **Risk**: Clearing the batch on load might disrupt UX if the user wanted to keep seeing the old prompts until the new ones were ready.
-  - *Mitigation*: If we want to keep the old prompts visible, we should display a spinner overlay on top of the old results or disable the submit button with a progress bar, instead of showing a skeleton. However, the design specification asks for the skeleton loading state to display. Therefore, clearing `batch` at the start of generation is the direct fix for the skeleton.
-- **Risk**: Increasing `maxTokens` too high might incur higher latency or cost.
-  - *Mitigation*: Optimize the system prompt instructions to demand concise JSON properties where appropriate, or set a safer, balanced default like `4096` tokens minimum.
+- **Risk**: LLM output parsing fails when schema shape changes depending on toggles (e.g. omitting keywords).
+  - *Mitigation*: Schema parser (`llmPromptOutputSchema`) should use `.catch()` or default to empty values (e.g., empty array `[]` or empty string `""`) so JSON validations do not break the engine.
+- **Risk**: User switches target platform, but stored templates/history miss properties.
+  - *Mitigation*: Ensure fallback checks exist in UI (`PromptCard.tsx`) so old prompts lacking certain platforms/properties render safely.
+
+---
+
+## Open Questions
+- *None.* The audit files and request provide clear structural directions.
 
 ---
 
 ## Success Criteria
-1. The skeleton loading state is consistently displayed when generating prompts, regardless of the chosen batch size (1, 3, 5, or 10).
-2. Prompt generation for batch sizes of 3 and 5 successfully completes and parses without Zod parsing failures or JSON truncation errors.
+1. Selecting `dalle3` only calls/saves/displays DALL-E 3 variants. The UI card shows the "Optimized for DALL-E" badge and suppresses platform selection tabs.
+2. Selecting `nano_banana` only calls/saves/displays Nano Banana variants. The UI card shows the "Optimized for Nano Banana" badge and suppresses platform selection tabs.
+3. Turning off "Negative Prompts" excludes them from LLM instructions, avoids formatting, and hides the panel in the UI.
+4. Turning off "Stock Keywords" excludes them from LLM instructions, maps safely in schema, and hides the keywords panel in the UI.
+5. All localized texts correctly display in English and Indonesian.

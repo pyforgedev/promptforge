@@ -29,10 +29,10 @@ export const PLATFORM_SPECS: Record<string, PlatformSpec> = {
   nano_banana: {
     id: 'nano_banana',
     displayName: 'Nano Banana Pro / Nano Banana 2',
-    maxPromptLength: 2000,   // TODO: Verify against official docs
-    supportsNegativePrompt: true, // TODO: Verify — update format below
-    negativePromptFormat: 'separate_field', // TODO: Verify
-    promptStyle: 'natural_language', // TODO: Verify if weighted tags are supported
-    notes: 'TODO: Add accurate notes after verifying official Nano Banana prompt documentation.',
+    maxPromptLength: 2000,
+    supportsNegativePrompt: true,
+    negativePromptFormat: 'separate_field',
+    promptStyle: 'natural_language',
+    notes: 'Optimize for Nano Banana. Max 2000 characters, supports separate negative prompt.',
   },
 }

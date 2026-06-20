@@ -17,6 +17,8 @@ export const generatorInputSchema = z.object({
   moodPreference: z.string().max(100).optional(),
   allowTextSpace: z.boolean(),
   basePromptReference: z.string().max(2000).optional(),
+  includeNegativePrompts: z.boolean(),
+  includeKeywords: z.boolean(),
 }) satisfies z.ZodType<GeneratorInput>
 
 export const generatorInputDefaults: GeneratorInput = {
@@ -30,4 +32,6 @@ export const generatorInputDefaults: GeneratorInput = {
   moodPreference: undefined,
   allowTextSpace: false,
   basePromptReference: undefined,
+  includeNegativePrompts: true,
+  includeKeywords: true,
 }

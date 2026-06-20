@@ -12,7 +12,9 @@ describe('usePromptGeneratorStore', () => {
         targetMarket: 'global',
         targetPlatform: 'dalle3',
         includeDiversity: true,
-        allowTextSpace: false
+        allowTextSpace: false,
+        includeNegativePrompts: true,
+        includeKeywords: true
       },
       batch: null,
       isGenerating: false,
@@ -36,7 +38,9 @@ describe('usePromptGeneratorStore', () => {
       targetMarket: 'global' as const,
       targetPlatform: 'dalle3' as const,
       includeDiversity: true,
-      allowTextSpace: false
+      allowTextSpace: false,
+      includeNegativePrompts: true,
+      includeKeywords: true
     }
     const mockBatch = {
       batchId: 'b1',

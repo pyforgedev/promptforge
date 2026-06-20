@@ -33,6 +33,8 @@ export interface GeneratorInput {
   moodPreference?: string        // Optional. e.g. 'calm', 'dramatic', 'energetic'
   allowTextSpace: boolean        // Default: false. Reserve copy space in composition.
   basePromptReference?: string   // Optional. Creative anchor/reference prompt for the LLM.
+  includeNegativePrompts: boolean // Default: true
+  includeKeywords: boolean       // Default: true
 }
 
 // ─── Output Types ───────────────────────────────────────────────────────────

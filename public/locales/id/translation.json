@@ -265,6 +265,14 @@
         "label": "Representasi Beragam",
         "description": "Dorong keberagaman usia, etnis, dan gender pada subjek manusia"
       },
+      "includeNegativePrompts": {
+        "label": "Sertakan Prompt Negatif",
+        "description": "Hasilkan prompt negatif yang sesuai konteks untuk menekan elemen yang tidak diinginkan"
+      },
+      "includeKeywords": {
+        "label": "Sertakan Kata Kunci Stok",
+        "description": "Hasilkan kata kunci pencarian Adobe Stock yang relevan"
+      },
       "allowTextSpace": {
         "label": "Sisihkan Ruang Teks",
         "description": "Tinggalkan ruang negatif yang cocok untuk overlay teks — meningkatkan nilai komersial"
@@ -344,6 +352,7 @@
   "promptCard": {
     "variantLabel": "Varian {{index}} dari {{total}}",
     "legacyBadge": "Lama",
+    "optimizedFor": "Dioptimalkan untuk {{platform}}",
     "copyPrompt": "Salin teks prompt",
     "favorite": "Favorit",
     "unfavorite": "Batal Favorit",

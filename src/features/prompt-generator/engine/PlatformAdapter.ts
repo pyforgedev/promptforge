@@ -53,11 +53,15 @@ function buildNanaBananaPrompt(prompt: GeneratedPrompt): string {
 
 export function adaptForPlatform(
   prompt: GeneratedPrompt,
-  _targetPlatform: ImagePlatform,
+  targetPlatform: ImagePlatform,
   negativePrompt: string,
 ): PlatformVariants {
-  const dalle3 = buildDalle3Prompt(prompt, negativePrompt)
-  const nano_banana = buildNanaBananaPrompt(prompt)
+  const dalle3 = targetPlatform === 'dalle3' || targetPlatform === 'both'
+    ? buildDalle3Prompt(prompt, negativePrompt)
+    : ''
+  const nano_banana = targetPlatform === 'nano_banana' || targetPlatform === 'both'
+    ? buildNanaBananaPrompt(prompt)
+    : ''
 
   return { dalle3, nano_banana }
 }

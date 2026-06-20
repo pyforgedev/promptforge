@@ -265,6 +265,14 @@
         "label": "Diverse Representation",
         "description": "Encourage age, ethnicity, and gender diversity in human subjects"
       },
+      "includeNegativePrompts": {
+        "label": "Include Negative Prompts",
+        "description": "Generate context-aware negative prompts to suppress unwanted elements"
+      },
+      "includeKeywords": {
+        "label": "Include Stock Keywords",
+        "description": "Generate relevant Adobe Stock search keywords"
+      },
       "allowTextSpace": {
         "label": "Reserve Copy Space",
         "description": "Leave negative space suitable for text overlay — increases commercial value"
@@ -344,6 +352,7 @@
   "promptCard": {
     "variantLabel": "Variant {{index}} of {{total}}",
     "legacyBadge": "Legacy",
+    "optimizedFor": "Optimized for {{platform}}",
     "copyPrompt": "Copy prompt text",
     "favorite": "Favorite",
     "unfavorite": "Unfavorite",

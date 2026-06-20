@@ -40,7 +40,7 @@ controversial symbols, explicit content)
 
 const TARGET_PLATFORM_DESCRIPTIONS: Record<ImagePlatform, string> = {
   dalle3: 'DALL-E 3 / GPT Image 2 — natural language, flowing descriptive prose, no tag syntax',
-  nano_banana: 'Nano Banana Pro / Nano Banana 2 — [fill in per platform research in Phase 1]',
+  nano_banana: 'Nano Banana Pro / Nano Banana 2 — natural language, optimized for Nano Banana Pro (2000 character limit)',
   both: 'DALL-E 3 and Nano Banana Pro — write the full_prompt in natural language (DALL-E optimized), the platform adapter will handle Nano Banana formatting separately',
 }
 
@@ -107,6 +107,28 @@ export class MetaPromptBuilder {
     if (input.includeDiversity) {
       conditionalLines.push(
         'DIVERSITY REQUIREMENT: When human subjects are depicted, ensure meaningful diversity across the batch in terms of age, ethnicity, and gender. Avoid tokenism — diversity should feel natural to the scene, not forced.',
+      )
+    }
+
+    if (!input.includeNegativePrompts) {
+      conditionalLines.push(
+        'NEGATIVE PROMPT EXCLUSION: Do NOT generate negative prompts. The "negative_prompt" field in the JSON response MUST be an empty string "".',
+      )
+    }
+
+    if (!input.includeKeywords) {
+      conditionalLines.push(
+        'COMMERCIAL KEYWORDS EXCLUSION: Do NOT generate commercial keywords. The "commercial_keywords" field in the JSON response MUST be an empty array [].',
+      )
+    }
+
+    if (input.targetPlatform === 'dalle3') {
+      conditionalLines.push(
+        'TARGET PLATFORM CONSTRAINT: The prompt is specifically and only for DALL-E 3. Focus the "full_prompt" field purely on natural descriptive language (no tag lists, maximum 4000 characters). Do not include any formatting or considerations for other engines.',
+      )
+    } else if (input.targetPlatform === 'nano_banana') {
+      conditionalLines.push(
+        'TARGET PLATFORM CONSTRAINT: The prompt is specifically and only for Nano Banana. Focus the "full_prompt" field on Nano Banana specifications (maximum 2000 characters). Do not include any formatting or considerations for DALL-E 3.',
       )
     }
 

@@ -78,7 +78,9 @@ beforeEach(async () => {
       targetMarket: 'global',
       targetPlatform: 'dalle3',
       includeDiversity: true,
-      allowTextSpace: false
+      allowTextSpace: false,
+      includeNegativePrompts: true,
+      includeKeywords: true
     },
     batch: null,
     isGenerating: false,

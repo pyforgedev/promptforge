@@ -127,6 +127,9 @@ export function generateNegativePrompt(
   prompt: GeneratedPrompt,
   platform: ImagePlatform,
 ): string {
+  if (prompt.generatorInput.includeNegativePrompts === false) {
+    return ''
+  }
   const isCommercial = prompt.generatorInput.usageContext === 'commercial'
   const terms = buildLayeredNegatives(prompt, isCommercial)
 

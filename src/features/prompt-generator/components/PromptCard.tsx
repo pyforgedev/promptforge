@@ -145,9 +145,7 @@ export function PromptCard({
   }
 
   const showPlatformTabs =
-    prompt.generatorInput.targetPlatform === 'both' ||
-    prompt.generatorInput.targetPlatform === 'dalle3' ||
-    prompt.generatorInput.targetPlatform === 'nano_banana'
+    prompt.generatorInput.targetPlatform === 'both'
 
   const platforms: { id: DisplayPlatform; label: string }[] = [
     { id: 'dalle3', label: t('promptCard.platform.dalle3') },
@@ -170,12 +168,23 @@ export function PromptCard({
       )}
 
       <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
-        <span className="text-caption-ui font-medium text-muted-foreground">
-          {t('promptCard.variantLabel', {
-            index: prompt.variantIndex,
-            total: totalInBatch,
-          })}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-caption-ui font-medium text-muted-foreground">
+            {t('promptCard.variantLabel', {
+              index: prompt.variantIndex,
+              total: totalInBatch,
+            })}
+          </span>
+          {prompt.generatorInput.targetPlatform && prompt.generatorInput.targetPlatform !== 'both' && (
+            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+              {t('promptCard.optimizedFor', {
+                platform: prompt.generatorInput.targetPlatform === 'dalle3'
+                  ? t('promptCard.platform.dalle3')
+                  : t('promptCard.platform.nano_banana')
+              })}
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           {prompt.legacy ? (
@@ -251,9 +260,13 @@ export function PromptCard({
         unavailable={prompt.legacy}
       />
 
-      <NegativePromptPanel negativePrompt={prompt.negativePrompt} />
+      {prompt.generatorInput.includeNegativePrompts !== false && prompt.negativePrompt && (
+        <NegativePromptPanel negativePrompt={prompt.negativePrompt} />
+      )}
 
-      <KeywordsPanel keywords={prompt.commercialKeywords} />
+      {prompt.generatorInput.includeKeywords !== false && prompt.commercialKeywords && prompt.commercialKeywords.length > 0 && (
+        <KeywordsPanel keywords={prompt.commercialKeywords} />
+      )}
 
       <div className="flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
         <div className="flex items-center gap-1">

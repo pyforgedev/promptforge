@@ -95,13 +95,13 @@ export class PromptComposerEngine {
       const adobeScore = scorePrompt(promptWithNeg)
       const promptWithScore: GeneratedPrompt = { ...promptWithNeg, adobeScore }
       const platformVariants = adaptForPlatform(promptWithScore, validInput.targetPlatform, negativePrompt)
-    return {
-      ...promptWithScore,
-      platformVariants,
-      fullPrompt: validInput.targetPlatform === 'nano_banana'
-        ? platformVariants.nano_banana
-        : platformVariants.dalle3,
-    }
+      return {
+        ...promptWithScore,
+        platformVariants,
+        fullPrompt: validInput.targetPlatform === 'nano_banana'
+          ? platformVariants.nano_banana
+          : platformVariants.dalle3,
+      }
     })
 
     return {
@@ -187,7 +187,7 @@ export class PromptComposerEngine {
         nano_banana: p.full_prompt,
       },
       fullPrompt: p.full_prompt,
-      commercialKeywords: p.commercial_keywords,
+      commercialKeywords: input.includeKeywords ? p.commercial_keywords : [],
       adobeScore: placeholderScore,
       variationAnchors,
       generatorInput: input,

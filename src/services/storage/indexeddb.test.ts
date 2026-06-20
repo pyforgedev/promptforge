@@ -110,7 +110,9 @@ describe('Dexie Storage Service CRUD', () => {
       targetMarket: 'global' as const,
       targetPlatform: 'dalle3' as const,
       includeDiversity: true,
-      allowTextSpace: false
+      allowTextSpace: false,
+      includeNegativePrompts: true,
+      includeKeywords: true
     }
     const batch = {
       batchId: 'b1',

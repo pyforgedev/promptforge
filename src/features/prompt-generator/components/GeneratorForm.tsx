@@ -183,6 +183,38 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 onCheckedChange={(v) => setInput({ allowTextSpace: v })}
               />
             </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor="includeNegativePrompts" className="cursor-pointer">
+                  {t('generator.form.includeNegativePrompts.label')}
+                </Label>
+                <p className="text-caption-ui text-muted-foreground">
+                  {t('generator.form.includeNegativePrompts.description')}
+                </p>
+              </div>
+              <Switch
+                id="includeNegativePrompts"
+                checked={input.includeNegativePrompts}
+                onCheckedChange={(v) => setInput({ includeNegativePrompts: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor="includeKeywords" className="cursor-pointer">
+                  {t('generator.form.includeKeywords.label')}
+                </Label>
+                <p className="text-caption-ui text-muted-foreground">
+                  {t('generator.form.includeKeywords.description')}
+                </p>
+              </div>
+              <Switch
+                id="includeKeywords"
+                checked={input.includeKeywords}
+                onCheckedChange={(v) => setInput({ includeKeywords: v })}
+              />
+            </div>
         </div>
 
         {/* Advanced Options Accordion */}

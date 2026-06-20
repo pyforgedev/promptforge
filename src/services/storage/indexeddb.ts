@@ -102,6 +102,8 @@ class PromptForgeDB extends Dexie {
           targetPlatform: 'dalle3',
           includeDiversity: true,
           allowTextSpace: false,
+          includeNegativePrompts: true,
+          includeKeywords: true,
         }
 
         // Create a batch record for this single legacy prompt
@@ -129,11 +131,11 @@ class PromptForgeDB extends Dexie {
           },
           variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
           createdAt,
-          isFavorite: false,
+          isFavorite: !!item.isFavorite,
           legacy: true,
           niche,
           category,
-          folderId: null,
+          folderId: item.folderId || null,
         })
       }
       
