@@ -90,6 +90,8 @@ export interface GeneratedPrompt {
   isFavorite: boolean               // Default: false
   userNotes?: string                // Optional user annotation
   legacy?: boolean                  // true = migrated from old schema (no segments/score)
+  isDuplicate?: boolean
+  duplicateRef?: string
 }
 
 export interface GeneratedPromptBatch {

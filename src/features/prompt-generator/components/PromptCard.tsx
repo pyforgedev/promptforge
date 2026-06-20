@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Check, Heart, RotateCcw, ChevronDown, Tag, Bookmark } from 'lucide-react'
+import { Copy, Check, Heart, RotateCcw, ChevronDown, Tag, Bookmark, AlertTriangle } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -212,6 +212,20 @@ export function PromptCard({
               )}
             </button>
           ))}
+        </div>
+      )}
+
+      {prompt.isDuplicate && (
+        <div className="flex items-start gap-2.5 border-b border-amber-500/10 bg-amber-500/5 px-4 py-2 text-xs text-amber-200/90">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500/80" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium">{t('promptCard.duplicateWarning')}</span>
+            {prompt.duplicateRef && (
+              <span className="text-[10px] text-amber-300/60 line-clamp-1 italic">
+                "{prompt.duplicateRef}"
+              </span>
+            )}
+          </div>
         </div>
       )}
 

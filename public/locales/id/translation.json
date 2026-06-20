@@ -389,7 +389,8 @@
     "copySegment": "Salin {{segment}}",
     "saveAsTemplate": "Simpan sebagai Template",
     "saveAsTemplateTitle": "Simpan Prompt sebagai Template",
-    "savedAsTemplate": "Prompt disimpan sebagai template!"
+    "savedAsTemplate": "Prompt disimpan sebagai template!",
+    "duplicateWarning": "Kemiripan tinggi dengan prompt sebelumnya terdeteksi"
   },
   "batchActionBar": {
     "title": "{{count}} prompt dihasilkan",

@@ -223,9 +223,11 @@ export async function saveGeneratedPromptBatch(batch: GeneratedPromptBatch): Pro
   }
 
   const historyRecords: PromptHistoryRecord[] = prompts.map((prompt: GeneratedPrompt) => {
-    const { id, variantIndex, batchId: pbId, segments, negativePrompt, platformVariants, fullPrompt, commercialKeywords, adobeScore, variationAnchors, createdAt, isFavorite, userNotes, legacy } = prompt
+    const { id, variantIndex, batchId: pbId, segments, negativePrompt, platformVariants, fullPrompt, commercialKeywords, adobeScore, variationAnchors, createdAt, isFavorite, userNotes, legacy, isDuplicate, duplicateRef } = prompt
     return {
       id, variantIndex, batchId: pbId, segments, negativePrompt, platformVariants, fullPrompt, commercialKeywords, adobeScore, variationAnchors, createdAt, isFavorite, userNotes, legacy,
+      isDuplicate,
+      duplicateRef,
       folderId: null,
       niche: generatorInput.niche,
       category: generatorInput.category ?? 'other',
@@ -248,6 +250,16 @@ export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt
 
 export async function getHistoryItems(): Promise<PromptHistoryRecord[]> {
   return db.prompt_history.toArray()
+}
+
+export async function getRecentRelevantHistory(category: string, limit: number): Promise<PromptHistoryRecord[]> {
+  const targetCategory = category || 'other'
+  return db.prompt_history
+    .orderBy('createdAt')
+    .reverse()
+    .filter(item => item.category === targetCategory)
+    .limit(limit)
+    .toArray()
 }
 
 export interface HistoryQueryParams {

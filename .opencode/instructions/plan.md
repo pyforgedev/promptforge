@@ -1,89 +1,50 @@
-# TASK 01 — Stability & Performance Fixes (Non-Breaking)
+# TASK 02 — Duplicate Detection Feature (Scoped Implementation)
 
 ## Konteks
-Hasil code review menemukan beberapa bug stabilitas dan inefisiensi performa di Generator & History pages (Zustand + Dexie + i18next, React 19). Task ini HANYA mencakup perbaikan bug yang sudah ada — TIDAK ada fitur baru di sini. Duplicate Detection ditangani di task terpisah (lihat `02-duplicate-detection.md`) karena scope-nya lebih besar.
+README mengklaim fitur "Duplicate Detection: Prevents repetitive prompt generation by analyzing prompt history for similarity", tapi belum ada implementasi nyata. `similarityService.ts` sudah ada tapi tidak pernah dipanggil di alur generate.
+
+Task ini DIPISAH dari `01-stability-fixes.md` karena merupakan fitur baru dengan keputusan desain sendiri, bukan sekadar bug fix. Kerjakan task 01 dulu (terutama perbaikan Dexie filtering & hydration) sebelum mulai task ini, karena fitur ini akan bergantung pada cara history di-query.
 
 ## Goal
-Perbaiki semua item di bawah tanpa mengubah behavior yang sudah benar, tanpa breaking existing tests/build, dan tanpa menambah fitur baru di luar yang disebutkan.
+Implementasikan duplicate detection yang benar-benar mencegah/menandai prompt yang terlalu mirip dengan history — **TANPA** mengirim seluruh history ke proses generate maupun ke similarity check. History yang dipakai untuk perbandingan WAJIB dibatasi secara ketat (jumlah + relevansi), supaya:
+- Token yang terpakai saat generate tidak meledak seiring history bertambah banyak.
+- Tidak ada perbandingan yang sia-sia antara prompt di niche/category yang sama sekali tidak berhubungan.
 
-## Non-Goals (jangan dikerjakan di task ini)
-- JANGAN implementasi duplicate detection / similarity check.
-- JANGAN refactor besar arsitektur store di luar yang disebutkan.
-- JANGAN ganti library (tetap Zustand + Dexie + i18next).
+## Batasan Wajib (Hard Constraints — TIDAK BOLEH DILANGGAR)
 
----
+1. **Limit jumlah history.** Definisikan konstanta `DUPLICATE_CHECK_HISTORY_LIMIT` (mulai dari nilai default masuk akal, misal 20-30, taruh di satu tempat config, bukan magic number tersebar). Proses similarity check TIDAK BOLEH membaca history lebih dari limit ini dalam satu kali generate.
 
-## 1. Missing Translation Keys (Critical)
-**File:** `src/locales/en/translation.json`, `src/locales/id/translation.json`, `src/features/prompt-generator/components/GeneratorForm.tsx`, `PromptResultsDisplay.tsx`
+2. **Filter relevansi sebelum filter jumlah.** History yang dibandingkan HARUS difilter dulu berdasarkan kesamaan context dengan request yang sedang diproses (minimal: `category`/`niche` yang sama; kalau ada dimensi lain yang relevan seperti `style` atau `aspectRatio`, evaluasi apakah perlu ikut difilter juga). Baru dari subset yang relevan itu, ambil N terbaru. Jangan ambil N terbaru dari seluruh history lalu filter category — itu bisa menghasilkan 0 hasil relevan kalau user lagi banyak generate niche lain.
 
-**Lakukan:**
-1. Audit semua pemanggilan `t('generator.form.*')` di seluruh `src/features/prompt-generator/**` (termasuk nested seperti `generator.form.errors.${errorCode}.title`).
-2. Untuk key dinamis (`errors.${errorCode}.title`), cari semua kemungkinan `errorCode` yang dilempar dari `PromptComposerEngine.ts` / `GenerationService.ts`, lalu pastikan tiap kode punya entry lengkap (minimal `.title`, cek juga apakah ada `.description`/`.action` yang dipakai di UI).
-3. Tambahkan SEMUA key yang hilang ke `en/translation.json` DAN `id/translation.json` sekaligus — jangan hanya satu bahasa.
-4. Pastikan struktur nested JSON konsisten antara kedua file bahasa (key yang sama, urutan boleh beda, isi value beda bahasa).
+3. **Query langsung dari Dexie, bukan load-all-then-filter.** Gunakan `.where('category').equals(...)` (atau kombinasi index yang sesuai) + `.reverse()` + `.limit(N)` di level query Dexie. Jangan panggil `getHistoryItems()` tanpa filter lalu filter di JS — ini balik lagi ke masalah performa yang sudah diperbaiki di task 01.
 
-**Definition of Done:**
-- Tidak ada raw translation key (string seperti `generator.form.xxx`) yang muncul di UI saat dijalankan di kedua locale.
-- Jalankan grep `t\(['"]generator\.form\.` di kode vs key yang ada di kedua JSON — hasilnya match 100%, tidak ada yang missing di kedua sisi.
+4. **Tidak ada history mentah yang masuk ke external API call dalam bentuk unbounded.** Kalau desain similarity check butuh mengirim teks history sebagai context ke API generate (bukan hanya local string-similarity), maka SET YANG SAMA (limited + filtered dari poin 1-2) itulah yang boleh dikirim — tidak ada jalur lain yang mengirim history tanpa limit.
 
----
+5. **Default ke local similarity dulu, API context-based hanya kalau perlu.** Untuk implementasi awal, gunakan `calculateSimilarity` di `similarityService.ts` (local string/embedding similarity, tanpa API call tambahan) sebagai mekanisme utama. Eksplorasi "kirim history sebagai negative example ke prompt API" hanya kalau local similarity terbukti tidak cukup akurat — dan kalau itu terjadi, tetap tunduk ke constraint #1-4.
 
-## 2. Zustand / Dexie Persistence Race Condition (Critical)
-**File:** `src/features/prompt-generator/store/promptGeneratorStore.ts` (sekitar baris 87-95)
+## Spesifikasi Implementasi
 
-**Masalah:** `persist` middleware pakai `createJSONStorage` dengan async `getItem`/`setItem` ke IndexedDB (`withRetry`), tapi hydration awal Zustand bersifat sync secara default → bisa terjadi render sebelum hydration selesai, menyebabkan state ke-overwrite atau hydration mismatch di React 19.
+**File yang terlibat:** `src/features/prompt-generator/engine/PromptComposerEngine.ts`, `GenerationService.ts` (atau service layer sejenis), `src/features/history/store/useHistoryStore.ts` atau service Dexie terkait, `similarityService.ts`.
 
-**Lakukan:**
-1. Tambahkan state `_hasHydrated: boolean` (default `false`) ke store.
-2. Gunakan `onRehydrateStorage` callback untuk set `_hasHydrated = true` setelah hydration selesai (baik sukses maupun gagal — tangani error case juga, jangan biarkan app stuck loading kalau hydration gagal).
-3. Di komponen root yang depend ke store ini (cek `App.tsx` / layout generator), gate rendering: tampilkan skeleton/loading state sampai `_hasHydrated === true`.
-4. Terapkan pola yang sama kalau ada store lain yang pakai pattern persist serupa (cek `useHistoryStore.ts` juga apakah punya isu serupa).
+1. Tambah fungsi di history service/store: `getRecentRelevantHistory(category: string, limit: number): Promise<HistoryItem[]>` — query Dexie sesuai constraint #2-3.
+2. Di `GenerationService.ts` (bukan langsung di engine, supaya engine tetap pure/testable):
+   - Generate kandidat prompt seperti biasa.
+   - Ambil `getRecentRelevantHistory(input.category, DUPLICATE_CHECK_HISTORY_LIMIT)`.
+   - Hitung similarity kandidat vs tiap item di set tersebut pakai `calculateSimilarity`.
+   - Tentukan `SIMILARITY_THRESHOLD` (taruh sebagai konstanta yang mudah di-tune, beri komentar cara kalibrasinya).
+3. Tentukan behavior saat duplicate terdeteksi (pilih salah satu, implementasikan dengan jelas — **default-nya: opsi B/warn**, kecuali ada instruksi lain):
+   - **Opsi A — Auto-retry:** generate ulang otomatis dengan variasi seed/parameter, maksimal N percobaan (misal 3x), baru kalau masih duplicate tetap return dengan flag.
+   - **Opsi B — Warn user:** kembalikan hasil dengan flag `isDuplicate: true` + referensi item history yang mirip, biar UI yang munculkan warning dan user yang putuskan regenerate atau tetap simpan.
+4. Update UI (`PromptResultsDisplay.tsx` atau komponen terkait) untuk menampilkan indikator/warning saat `isDuplicate === true`, termasuk translation key baru yang diperlukan (koordinasikan dengan task 01 soal translation keys — tambahkan ke kedua file locale).
 
-**Definition of Done:**
-- Refresh halaman saat ada data tersimpan di IndexedDB tidak pernah menampilkan state kosong/default sebelum data asli muncul.
-- Tidak ada warning hydration mismatch di console React 19.
+## Definition of Done
+- [ ] Generate 1 prompt di niche/category manapun, dengan total history ribuan item lintas berbagai category → query history untuk similarity check tetap hanya mengambil maksimal `DUPLICATE_CHECK_HISTORY_LIMIT` item, dan semuanya dari category yang relevan (verifikasi via logging/console saat development, lalu hapus log sebelum PR).
+- [ ] Tidak ada pemanggilan `getHistoryItems()`/`toArray()` tanpa filter+limit di code path generate.
+- [ ] Threshold similarity terdokumentasi (komentar di kode menjelaskan kenapa nilai tersebut dipilih, dan langkah testing yang dipakai untuk validasi — bukan asal angka).
+- [ ] Behavior saat duplicate terdeteksi (auto-retry atau warning) terimplementasi sesuai pilihan yang ditentukan, dan teruji dengan kasus: (a) history kosong, (b) history relevan tapi tidak mirip, (c) history relevan dan mirip.
+- [ ] `npm run lint` dan `npm run build` lulus.
 
----
-
-## 3. Inefficient Dexie History Filtering (High)
-**File:** `src/features/history/components/HistoryList.tsx` (baris 37-50), `src/features/history/store/useHistoryStore.ts`
-
-**Lakukan:**
-1. Pindahkan logic filter dari client-side (filter array di memory setelah `getHistoryItems()` load semua) ke query Dexie langsung: gunakan `.where()`, `.filter()`, `.offset()`/`.limit()` untuk pagination.
-2. Implementasikan lazy-loading/pagination yang sebenarnya (infinite scroll atau "load more"), bukan load semua history sekaligus ke memory.
-3. Pastikan field yang sering difilter (category, style, date, rating) punya index di schema Dexie kalau belum ada — cek `db.version(...).stores(...)` definition.
-
-**Definition of Done:**
-- `getHistoryItems()` tanpa parameter/limit tidak lagi dipanggil di code path HistoryList.
-- Dengan history >1000 item (buat dummy data untuk test), list tetap responsif, tidak ada lag/freeze saat scroll atau filter.
-
----
-
-## 4. Inconsistent Error Handling / State Sync in bulkDelete (Medium)
-**File:** `src/features/history/store/useHistoryStore.ts`
-
-**Lakukan:**
-1. Bungkus operasi bulk delete dalam Dexie transaction (`db.transaction('rw', db.history, async () => {...})`) supaya atomic — semua sukses atau semua rollback.
-2. Update state Zustand HANYA berdasarkan item yang benar-benar berhasil dihapus di DB (jangan optimistic-update penuh sebelum konfirmasi DB sukses).
-3. Tangani dan expose error ke UI kalau bulk delete gagal sebagian/seluruhnya (jangan silent fail).
-
-**Definition of Done:**
-- Simulasikan error di tengah bulk delete (misal item ke-3 dari 10 gagal) → state Zustand dan IndexedDB tetap konsisten satu sama lain setelah operasi selesai.
-
----
-
-## 5. Minor Performance & Style (Suggestions — kerjakan kalau waktu memungkinkan)
-- `HistoryList.tsx`: pindahkan `const q = filters.search.toLowerCase()` ke luar loop filter (saat ini dipanggil per-item per-render).
-- `GeneratorForm.tsx`: ganti raw `<button>` accordion dengan Radix/Shadcn `<Accordion>` atau `<Collapsible>` untuk ARIA support yang benar.
-- `src/components/ui/textarea.tsx`: pertimbangkan ganti auto-resize manual (`useEffect`) dengan `react-textarea-autosize` untuk menghindari race condition dengan font loading.
-- `GeneratorForm.tsx` (baris ~29): re-render penuh form tiap keystroke karena `setInput({ category: v })` membuat object reference baru — boleh dibiarkan untuk sekarang, tapi catat sebagai technical debt kalau form makin besar.
-
----
-
-## Checklist Sebelum PR
-- [ ] Semua translation key audit lulus (item 1)
-- [ ] Hydration gate terpasang dan tidak ada flash of empty state (item 2)
-- [ ] History filtering pindah ke Dexie query level + pagination (item 3)
-- [ ] bulkDelete atomic via transaction (item 4)
-- [ ] `npm run lint` dan `npm run build` lulus tanpa error baru
-- [ ] Tidak ada perubahan behavior pada fitur yang tidak disebutkan di task ini
+## Pertanyaan yang Perlu Dikonfirmasi Sebelum/Saat Implementasi
+Kalau agent menemukan ambiguitas berikut saat eksekusi, jangan asumsi sendiri — tandai di PR description untuk direview manual:
+- Apakah "category" saja cukup untuk filter relevansi, atau perlu kombinasi dengan "style"/"aspectRatio"?
+- Nilai default `DUPLICATE_CHECK_HISTORY_LIMIT` dan `SIMILARITY_THRESHOLD` final — perlu di-tune manual sambil lihat hasil generate asli, jangan anggap nilai awal sudah optimal.

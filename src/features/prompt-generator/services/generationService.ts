@@ -1,6 +1,8 @@
 import { PromptComposerEngine } from '../engine/PromptComposerEngine'
 import { AIService } from '@/services/ai/aiService'
-import { saveGeneratedPromptBatch, togglePromptFavorite } from '@/services/storage/indexeddb'
+import { saveGeneratedPromptBatch, togglePromptFavorite, getRecentRelevantHistory } from '@/services/storage/indexeddb'
+import { calculateSimilarity } from '@/services/similarity/similarityService'
+import { DUPLICATE_CHECK_HISTORY_LIMIT, SIMILARITY_THRESHOLD } from '@/lib/constants'
 import type { AIConfig } from '@/features/settings/types'
 import type { GeneratorInput, GeneratedPromptBatch, PromptGeneratorError, GeneratedPrompt } from '../types'
 
@@ -26,6 +28,28 @@ export class GenerationService {
   ): Promise<{ data: GeneratedPromptBatch | null; error: PromptGeneratorError | null }> {
     try {
       const promptBatch = await this.engine.compose(input)
+      
+      if (promptBatch && promptBatch.prompts && promptBatch.prompts.length > 0) {
+        const historyItems = await getRecentRelevantHistory(
+          input.category || 'other',
+          DUPLICATE_CHECK_HISTORY_LIMIT
+        )
+
+        if (historyItems.length > 0) {
+          const historyTexts = historyItems.map(item => item.fullPrompt)
+          
+          for (const prompt of promptBatch.prompts) {
+            const similarity = calculateSimilarity(prompt.fullPrompt, historyTexts)
+            if (similarity.score >= SIMILARITY_THRESHOLD) {
+              prompt.isDuplicate = true
+              const matchedText = similarity.matches[0]
+              const matchedItem = historyItems.find(item => item.fullPrompt === matchedText)
+              prompt.duplicateRef = matchedItem?.fullPrompt || matchedText
+            }
+          }
+        }
+      }
+
       return { data: promptBatch, error: null }
     } catch (err) {
       // The engine throws PromptGeneratorError objects on failure

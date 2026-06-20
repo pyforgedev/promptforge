@@ -389,7 +389,8 @@
     "copySegment": "Copy {{segment}}",
     "saveAsTemplate": "Save as Template",
     "saveAsTemplateTitle": "Save Prompt as Template",
-    "savedAsTemplate": "Prompt saved as template!"
+    "savedAsTemplate": "Prompt saved as template!",
+    "duplicateWarning": "High similarity with previous prompt detected"
   },
   "batchActionBar": {
     "title": "{{count}} prompts generated",
