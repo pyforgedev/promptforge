@@ -1,13 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, RefreshCw, X, CheckCircle2, AlertCircle } from 'lucide-react'
+import {
+  Plus, RefreshCw, X, CheckCircle2, AlertCircle,
+  Upload, Download, Save, Key, Network, FileJson,
+  Palette, Cpu, Trash2, RotateCcw, Play,
+} from 'lucide-react'
 import { useAppContext } from '@/hooks/useAppContext'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
-import { getCustomModels, saveCustomModel, deleteCustomModel } from '@/features/settings/services/settingsService'
+import {
+  getCustomModels,
+  saveCustomModel,
+  deleteCustomModel,
+} from '@/features/settings/services/settingsService'
 import { testConnection } from '@/services/ai/aiService'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import type { AIProvider } from '@/features/settings/types'
 import {
   Select,
@@ -22,7 +31,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/common/PageHeader'
+import { EmptyState } from '@/components/common/EmptyState'
 import {
   Dialog,
   DialogContent,
@@ -45,7 +56,7 @@ import { validateAIConfig } from '@/lib/validation'
 export default function Settings() {
   const { t, i18n } = useTranslation()
   const { preferences, setTheme, setLanguage } = useAppContext()
-  
+
   const {
     presets,
     activeConfig,
@@ -55,6 +66,7 @@ export default function Settings() {
   } = useAIConfigStore()
 
   const [customModels, setCustomModels] = useState<string[]>([])
+  const [customModelsLoading, setCustomModelsLoading] = useState(true)
   const [provider, setProvider] = useState<AIProvider>(activeConfig?.provider || 'openai')
   const [apiKey, setApiKey] = useState(activeConfig?.apiKey || '')
   const [endpoint, setEndpoint] = useState(activeConfig?.endpoint || '')
@@ -69,6 +81,8 @@ export default function Settings() {
   const [newCustomModel, setNewCustomModel] = useState('')
   const [importText, setImportText] = useState('')
   const [importOpen, setImportOpen] = useState(false)
+
+  const importFileRef = useRef<HTMLInputElement>(null)
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -79,11 +93,12 @@ export default function Settings() {
     setProvider(activeConfig?.provider || 'openai')
   }, [activeConfig])
 
-  // Load custom models
   useEffect(() => {
     const load = async () => {
+      setCustomModelsLoading(true)
       const models = await getCustomModels()
       setCustomModels(models)
+      setCustomModelsLoading(false)
     }
     load()
   }, [])
@@ -98,7 +113,7 @@ export default function Settings() {
         apiKey,
         endpoint,
         model,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       })
       setPresetName('')
       setPresetDialogOpen(false)
@@ -115,11 +130,11 @@ export default function Settings() {
     try {
       await testConnection({ provider, apiKey, endpoint, model })
       setTestResult('success')
-      showToast('success', t('settings.testSuccess', { defaultValue: 'Connection successful!' }))
+      showToast('success', t('settings.testSuccess', { defaultValue: 'Connection successful' }))
     } catch (err) {
       setTestResult('error')
       const msg = err instanceof Error ? err.message : 'Connection failed'
-      showToast('error', t('settings.testFailed', { defaultValue: `Connection failed: ${msg}`, message: msg }))
+      showToast('error', t('settings.testFailed', { defaultValue: 'Connection failed: {{message}}', message: msg }))
     } finally {
       setIsTesting(false)
     }
@@ -131,7 +146,7 @@ export default function Settings() {
       showToast('error', validationError)
       return
     }
-    
+
     setIsApplying(true)
     try {
       await setActiveConfig({ provider, apiKey, endpoint, model })
@@ -180,30 +195,67 @@ export default function Settings() {
     }
   }
 
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    setImportText(text)
+    setImportOpen(true)
+    if (importFileRef.current) {
+      importFileRef.current.value = ''
+    }
+  }
+
+  const handleAddCustomModel = async () => {
+    if (!newCustomModel.trim()) return
+    const updated = await saveCustomModel(newCustomModel.trim())
+    setCustomModels(updated)
+    setModel(newCustomModel.trim())
+    setNewCustomModel('')
+    showToast('success', t('toast.modelAdded', { defaultValue: 'Custom model added' }))
+  }
+
+  const handleRemoveCustomModel = async (m: string) => {
+    const updated = await deleteCustomModel(m)
+    setCustomModels(updated)
+    showToast('success', t('toast.modelRemoved', { defaultValue: 'Custom model removed' }))
+  }
+
+  const handleLoadPreset = async (preset: typeof presets[number]) => {
+    setProvider(preset.provider || 'openai')
+    setApiKey(preset.apiKey)
+    setEndpoint(preset.endpoint)
+    setModel(preset.model)
+    setTestResult(null)
+    showToast('success', t('toast.presetLoaded', { defaultValue: 'Preset loaded' }))
+  }
+
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 pb-12">
       <PageHeader
         title={t('nav.settings')}
         description={t('settings.pageDescription')}
       />
 
-      {/* Theme & Language */}
+      {/* Preferences */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t('settings.preferences')}
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
+            <Palette className="h-4 w-4 text-brand-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-heading">
+              {t('settings.preferences')}
+            </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <label className="text-label-ui text-primary">
-              {t('settings.theme')}
-            </label>
+        <CardContent className="flex flex-col gap-5">
+          <FieldRow label={t('settings.theme')} htmlFor="theme">
             <Select
               value={preferences.theme}
               onValueChange={(v) => setTheme(v as 'light' | 'dark' | 'system')}
             >
-              <SelectTrigger className="w-36">
+              <SelectTrigger id="theme" className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -212,12 +264,9 @@ export default function Settings() {
                 <SelectItem value="system">{t('theme.system')}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FieldRow>
 
-          <div className="flex items-center justify-between">
-            <label className="text-label-ui text-primary">
-              {t('settings.language')}
-            </label>
+          <FieldRow label={t('settings.language')} htmlFor="language">
             <Select
               value={i18n.language?.startsWith('id') ? 'id' : 'en'}
               onValueChange={(v) => {
@@ -225,7 +274,7 @@ export default function Settings() {
                 i18n.changeLanguage(v)
               }}
             >
-              <SelectTrigger className="w-36 h-8 px-3 text-caption-ui">
+              <SelectTrigger id="language" className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -233,278 +282,311 @@ export default function Settings() {
                 <SelectItem value="id">{t('language.id')}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FieldRow>
         </CardContent>
       </Card>
 
       {/* AI Configuration */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-heading">
-            {t('settings.aiConfig')}
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
+            <Cpu className="h-4 w-4 text-brand-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-heading">
+              {t('settings.aiConfig')}
+            </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="provider" className="text-label-ui text-primary">
-              {t('settings.provider')}
-            </label>
-            <Select 
-              value={provider} 
-              onValueChange={(v: AIProvider) => {
-                setProvider(v)
-                setTestResult(null)
-                if (v === 'openai') setEndpoint('https://api.openai.com/v1')
-                if (v === 'gemini') {
-                  setEndpoint('https://generativelanguage.googleapis.com/v1beta')
-                  setModel('gemini-1.5-flash')
-                }
-                if (v === 'openrouter') {
-                  setEndpoint('https://openrouter.ai/api/v1')
-                  setModel('openai/gpt-3.5-turbo')
-                }
-              }}
-            >
-              <SelectTrigger id="provider" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="gemini">Google Gemini</SelectItem>
-                <SelectItem value="openrouter">OpenRouter</SelectItem>
-                <SelectItem value="custom">Custom (9router / Local / Other)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="api-key" className="text-label-ui text-primary">
-              {t('settings.apiKey')}
-            </label>
-            <Input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => {
-                setApiKey(e.target.value)
-                setTestResult(null)
-              }}
-              placeholder={t('settings.apiKeyPlaceholder', { defaultValue: 'Enter API Key' })}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="endpoint" className="text-label-ui text-primary">
-              {t('settings.endpoint')}
-            </label>
-            <Input
-              id="endpoint"
-              value={endpoint}
-              onChange={(e) => {
-                setEndpoint(e.target.value)
-                setTestResult(null)
-              }}
-              placeholder="https://api.openai.com/v1"
-              disabled={provider !== 'custom'}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="model" className="text-label-ui text-primary">
-              {t('settings.model')}
-            </label>
-            <Select value={model} onValueChange={(v) => {
-              setModel(v)
-              setTestResult(null)
-            }}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {provider === 'openai' && (
-                  <>
-                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                    <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                  </>
-                )}
-                {provider === 'gemini' && (
-                  <>
-                    <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                    <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
-                    <SelectItem value="gemini-1.0-pro">Gemini 1.0 Pro</SelectItem>
-                  </>
-                )}
-                {provider === 'openrouter' && (
-                  <>
-                    <SelectItem value="openai/gpt-4o">OpenRouter: GPT-4o</SelectItem>
-                    <SelectItem value="anthropic/claude-3.5-sonnet">OpenRouter: Claude 3.5 Sonnet</SelectItem>
-                    <SelectItem value="meta-llama/llama-3.1-70b-instruct">OpenRouter: Llama 3.1 70B</SelectItem>
-                  </>
-                )}
-                {customModels.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-                {!['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'claude-3-opus', 'claude-3-sonnet', ...customModels].includes(model) && (
-                  <SelectItem value={model}>{model}</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2 rounded-md border border-border-subtle bg-surface-hover/50 p-3">
-            <label className="text-label-ui text-primary">
-              {t('settings.addCustomModel')}
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={newCustomModel}
-                onChange={(e) => setNewCustomModel(e.target.value)}
-                placeholder="e.g. gpt-4o"
-                className="h-9"
-              />
-              <Button variant="secondary"
-                size="sm"
-                className="h-9"
-                onClick={async () => {
-                  if (newCustomModel.trim()) {
-                    const updated = await saveCustomModel(newCustomModel.trim())
-                    setCustomModels(updated)
-                    setModel(newCustomModel.trim())
-                    setNewCustomModel('')
-                    showToast('success', t('toast.modelAdded', { defaultValue: 'Custom model added' }))
+        <CardContent className="flex flex-col gap-6">
+          {/* Connection Section */}
+          <SectionGroup icon={Key} title="Connection">
+            <FieldRow label={t('settings.provider')} htmlFor="provider">
+              <Select
+                value={provider}
+                onValueChange={(v: AIProvider) => {
+                  setProvider(v)
+                  setTestResult(null)
+                  if (v === 'openai') setEndpoint('https://api.openai.com/v1')
+                  if (v === 'gemini') {
+                    setEndpoint('https://generativelanguage.googleapis.com/v1beta')
+                    setModel('gemini-1.5-flash')
+                  }
+                  if (v === 'openrouter') {
+                    setEndpoint('https://openrouter.ai/api/v1')
+                    setModel('openai/gpt-3.5-turbo')
                   }
                 }}
               >
-                <Plus className="mr-1 h-4 w-4" />
-                {t('common.add')}
-              </Button>
-            </div>
-            {customModels.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {customModels.map((m) => (
-                  <div
-                    key={m}
-                    className="flex items-center gap-1 rounded-full bg-surface-hover px-3 py-1 text-caption-ui text-secondary"
-                  >
-                    <span>{m}</span>
-                    <button
-                      onClick={async () => {
-                        const updated = await deleteCustomModel(m)
-                        setCustomModels(updated)
-                        showToast('success', t('toast.modelRemoved', { defaultValue: 'Custom model removed' }))
-                      }}
-                      className="ml-1 rounded-full p-0.5 hover:bg-surface-hover/50"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                <SelectTrigger id="provider" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="gemini">Google Gemini</SelectItem>
+                  <SelectItem value="openrouter">OpenRouter</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldRow>
 
-          <div className="flex gap-2 items-center">
+            <FieldRow label={t('settings.apiKey')} htmlFor="api-key">
+              <Input
+                id="api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => {
+                  setApiKey(e.target.value)
+                  setTestResult(null)
+                }}
+                placeholder={t('settings.apiKeyPlaceholder', { defaultValue: 'Enter API Key' })}
+              />
+            </FieldRow>
+
+            <FieldRow label={t('settings.endpoint')} htmlFor="endpoint">
+              <Input
+                id="endpoint"
+                value={endpoint}
+                onChange={(e) => {
+                  setEndpoint(e.target.value)
+                  setTestResult(null)
+                }}
+                placeholder="https://api.openai.com/v1"
+                disabled={provider !== 'custom'}
+              />
+            </FieldRow>
+          </SectionGroup>
+
+          <SectionDivider />
+
+          {/* Model Section */}
+          <SectionGroup icon={Network} title="Model">
+            <FieldRow label={t('settings.model')} htmlFor="model-select">
+              <Select value={model} onValueChange={(v) => {
+                setModel(v)
+                setTestResult(null)
+              }}>
+                <SelectTrigger id="model-select" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {provider === 'openai' && (
+                    <>
+                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                      <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                      <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    </>
+                  )}
+                  {provider === 'gemini' && (
+                    <>
+                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                      <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                      <SelectItem value="gemini-1.0-pro">Gemini 1.0 Pro</SelectItem>
+                    </>
+                  )}
+                  {provider === 'openrouter' && (
+                    <>
+                      <SelectItem value="openai/gpt-4o">OpenRouter: GPT-4o</SelectItem>
+                      <SelectItem value="anthropic/claude-3.5-sonnet">OpenRouter: Claude 3.5 Sonnet</SelectItem>
+                      <SelectItem value="meta-llama/llama-3.1-70b-instruct">OpenRouter: Llama 3.1 70B</SelectItem>
+                    </>
+                  )}
+                  {customModels.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                  {!['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'claude-3-opus', 'claude-3-sonnet', ...customModels].includes(model) && (
+                    <SelectItem value={model}>{model}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </FieldRow>
+
+            <div className="flex flex-col gap-2 rounded-lg border border-border-subtle p-3">
+              <span className="text-caption-ui text-secondary">
+                {t('settings.addCustomModel')}
+              </span>
+              <div className="flex gap-2">
+                <Input
+                  value={newCustomModel}
+                  onChange={(e) => setNewCustomModel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddCustomModel()
+                    }
+                  }}
+                  placeholder="e.g. gpt-4o"
+                  className="h-9"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-9 shrink-0"
+                  onClick={handleAddCustomModel}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('common.add')}
+                </Button>
+              </div>
+              {customModelsLoading ? (
+                <div className="flex gap-2">
+                  <Skeleton className="h-7 w-24 rounded-md" />
+                  <Skeleton className="h-7 w-20 rounded-md" />
+                </div>
+              ) : customModels.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {customModels.map((m) => (
+                    <span
+                      key={m}
+                      className="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-hover px-2 py-1 text-caption-ui text-secondary transition-colors hover:border-border-strong"
+                    >
+                      {m}
+                      <button
+                        onClick={() => handleRemoveCustomModel(m)}
+                        className="ml-0.5 rounded p-0.5 text-muted transition-colors hover:text-primary"
+                        aria-label={`Remove ${m}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </SectionGroup>
+
+          <SectionDivider />
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2">
             <Button onClick={handleApplyConfig} disabled={isApplying}>
-              {isApplying && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+              {isApplying ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
               {t('settings.apply')}
             </Button>
-            <Button variant="secondary" onClick={handleTestConnection} disabled={isTesting || !apiKey || !endpoint}>
+            <Button
+              variant="secondary"
+              onClick={handleTestConnection}
+              disabled={isTesting || !apiKey || !endpoint}
+            >
               {isTesting ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4 w-4 animate-spin" />
               ) : testResult === 'success' ? (
-                <CheckCircle2 className="mr-2 h-4 w-4 text-brand-success" />
+                <CheckCircle2 className="h-4 w-4 text-brand-success" />
               ) : testResult === 'error' ? (
-                <AlertCircle className="mr-2 h-4 w-4 text-brand-danger" />
-              ) : null}
+                <AlertCircle className="h-4 w-4 text-brand-danger" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
               {t('settings.testConnection', { defaultValue: 'Test Connection' })}
             </Button>
             <Button variant="outline" onClick={() => setPresetDialogOpen(true)}>
+              <Save className="h-4 w-4" />
               {t('settings.savePreset')}
             </Button>
           </div>
 
+          <SectionDivider />
+
+          {/* Saved Presets */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-            <label className="text-label-ui text-primary">
+              <span className="text-label-ui text-primary">
                 {t('settings.savedPresets')}
-              </label>
-              <div className="flex gap-2">
+              </span>
+              <div className="flex gap-1.5">
                 <input
+                  ref={importFileRef}
                   type="file"
-                  id="import-file"
-                  className="hidden"
                   accept=".json"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const text = await file.text()
-                    setImportText(text)
-                    setImportOpen(true)
-                  }}
+                  className="hidden"
+                  onChange={handleFileImport}
                 />
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-caption-ui" onClick={() => document.getElementById('import-file')?.click()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2 text-caption-ui"
+                  onClick={() => importFileRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5" />
                   {t('settings.importPresets')}
                 </Button>
                 {presets.length > 0 && (
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-caption-ui" onClick={handleExport}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2 text-caption-ui"
+                    onClick={handleExport}
+                  >
+                    <Download className="h-3.5 w-3.5" />
                     {t('settings.exportPresets')}
                   </Button>
                 )}
               </div>
             </div>
+
             {presets.length > 0 ? (
               <div className="flex flex-col gap-1.5">
                 {presets.map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex items-center justify-between rounded-md border border-border-subtle bg-surface px-3 py-2"
+                    className="group flex items-center justify-between rounded-lg border border-border-subtle bg-surface px-4 py-3 transition-all hover:border-border-strong hover:bg-surface-hover"
                   >
-                    <div>
-                      <p className="text-label-ui font-medium text-primary">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-label-ui text-primary">
                         {preset.name}
-                      </p>
-                      <p className="text-caption-ui text-muted-foreground">
-                        {preset.model}
-                      </p>
+                      </span>
+                      <span className="text-caption-ui text-muted">
+                        {preset.provider} &middot; {preset.model}
+                      </span>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={async () => {
-                          setProvider(preset.provider || 'openai')
-                          setApiKey(preset.apiKey)
-                          setEndpoint(preset.endpoint)
-                          setModel(preset.model)
-                          setTestResult(null)
-                          showToast('success', t('toast.presetLoaded', { defaultValue: 'Preset loaded' }))
-                        }}
+                        className="h-8 gap-1.5 px-2.5 text-caption-ui"
+                        onClick={() => handleLoadPreset(preset)}
                       >
+                        <RotateCcw className="h-3.5 w-3.5" />
                         {t('settings.load')}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
+                        className="h-8 w-8 p-0 text-muted hover:text-brand-danger"
                         onClick={() => setDeletePresetId(preset.id)}
+                        aria-label={t('common.delete')}
                       >
-                        {t('common.delete')}
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border-subtle p-6 text-center">
-                <p className="text-body-ui text-muted-foreground">
-                  {t('settings.noPresets', { defaultValue: 'No presets saved. Import or create one.' })}
-                </p>
-              </div>
+              <EmptyState
+                title={t('settings.noPresets', { defaultValue: 'No presets saved' })}
+                description={t('settings.noPresetsDescription', { defaultValue: 'Import a preset from a file or create one to get started.' })}
+                action={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => importFileRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {t('settings.importPresets')}
+                  </Button>
+                }
+              />
             )}
           </div>
-
-
         </CardContent>
       </Card>
 
@@ -518,22 +600,27 @@ export default function Settings() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="preset-name" className="text-label-ui text-primary">
-                {t('settings.presetName')}
-              </label>
+            <FieldRow label={t('settings.presetName')} htmlFor="preset-name">
               <Input
                 id="preset-name"
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleSavePreset()
+                  }
+                }}
                 placeholder="My Preset"
+                autoFocus
               />
-            </div>
+            </FieldRow>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setPresetDialogOpen(false)}>
                 {t('common.cancel')}
               </Button>
               <Button onClick={handleSavePreset} disabled={!presetName.trim()}>
+                <Save className="h-4 w-4" />
                 {t('common.save')}
               </Button>
             </div>
@@ -551,18 +638,21 @@ export default function Settings() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <textarea
-              rows={8}
+            <Textarea
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
               placeholder='{"presets": [...]}'
-              className="flex w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-body-ui placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+              className="min-h-[160px] font-mono text-sm"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setImportOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setImportOpen(false)
+                setImportText('')
+              }}>
                 {t('common.cancel')}
               </Button>
               <Button onClick={handleImport} disabled={!importText.trim()}>
+                <FileJson className="h-4 w-4" />
                 {t('settings.importPresets')}
               </Button>
             </div>
@@ -570,7 +660,7 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Preset Confirmation Dialog */}
+      {/* Delete Preset Confirmation */}
       <AlertDialog open={!!deletePresetId} onOpenChange={(open) => { if (!open) setDeletePresetId(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -596,6 +686,7 @@ export default function Settings() {
               }}
               className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
             >
+              <Trash2 className="h-4 w-4" />
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -603,4 +694,51 @@ export default function Settings() {
       </AlertDialog>
     </div>
   )
+}
+
+function FieldRow({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string
+  htmlFor: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <label htmlFor={htmlFor} className="shrink-0 text-label-ui text-primary">
+        {label}
+      </label>
+      <div className="w-full max-w-sm">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function SectionGroup({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted" />
+        <span className="text-caption-ui text-secondary">{title}</span>
+      </div>
+      <div className="flex flex-col gap-4 pl-5">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function SectionDivider() {
+  return <div className="border-t border-border-subtle" />
 }

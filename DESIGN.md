@@ -1,5 +1,5 @@
 ---
-version: 1.1.2
+version: 1.2.0
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -546,6 +546,139 @@ html::-webkit-scrollbar-thumb:hover {
 />
 ```
 
+## 6.10 Form Field Layout
+
+New in v1.2 — formalizes the label+input pairing pattern that was previously
+undefined, leading to inconsistent spacing and alignment across forms.
+
+- **Layout:** Labels sit left of their input on a shared row, right-aligned
+  mentally but implemented as a flex row with `justify-between`. The input
+  group is constrained to `max-w-sm` so fields don't stretch edge-to-edge.
+- **Label token:** always `text-label-ui text-primary` (Inter, 13px, Medium,
+  §1.2). Never use `text-body-ui` for a label — it creates visual confusion
+  between the label and the field value.
+- **Input token:** use the `Input` or `SelectTrigger` components directly.
+  They already apply `bg-surface`, `border-border-subtle`, and
+  `focus-visible:ring-brand-primary` per the system.
+- **Grouping:** related fields are wrapped in a `SectionGroup` — a container
+  with a small icon + `text-caption-ui text-secondary` header label, then
+  fields indented with `pl-5` to establish visual hierarchy without relying
+  on borders or background changes.
+- **Section dividers:** between unrelated field groups, use a thin
+  `border-t border-border-subtle` rule. This is the only horizontal divider
+  in the system — never use `<hr>` (hard to style consistently across
+  themes) or background color shifts to separate sections.
+- **Inline errors:** `border-danger` on the input + `text-brand-danger` helper
+  below the field (per §6.4). The helper text is `text-caption-ui`.
+- **Disabled fields:** `opacity-50 cursor-not-allowed` is handled by the
+  Input/Select components. Never add a separate disabled label.
+- **Enter to submit:** fields that trigger an action (preset name, custom model
+  name) respond to Enter via `onKeyDown` — don't require the user to click a
+  button if they're already typing in a single-field form.
+
+```tsx
+// FieldRow — the standard label + input pairing
+function FieldRow({ label, htmlFor, children }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <label htmlFor={htmlFor} className="shrink-0 text-label-ui text-primary">
+        {label}
+      </label>
+      <div className="w-full max-w-sm">{children}</div>
+    </div>
+  )
+}
+
+// SectionGroup — groups related fields under a shared header
+function SectionGroup({ icon: Icon, title, children }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted" />
+        <span className="text-caption-ui text-secondary">{title}</span>
+      </div>
+      <div className="flex flex-col gap-4 pl-5">{children}</div>
+    </div>
+  )
+}
+```
+
+## 6.11 Settings Page Layout
+
+Settings pages follow a different layout from the main generator dashboard.
+Avoid reusing the generator's dense card layout in settings — settings need
+more whitespace and clearer section boundaries.
+
+- **Container width:** `max-w-3xl` (768px) instead of `xl` (1280px). Settings
+  forms with long text inputs feel stretched at 1280px; 768px keeps line
+  lengths readable while being wider than `max-w-2xl` (672px) which feels
+  cramped for field+label rows.
+- **Bottom padding:** `pb-12` on the page container. Apply/import/export
+  actions at the bottom of a tall settings card need breathing room before
+  the page end — `pb-6` is insufficient here.
+- **Card header icons:** every settings card gets a `CardHeader` with an
+  8×8 icon container (`.rounded-lg bg-brand-primary/10`) + icon. This gives
+  each card a visual anchor that distinguishes it by glance:
+  - Preferences → `Palette`
+  - AI Config → `Cpu`
+- **SectionGroup** (§6.10) replaces sub-cards for field grouping within a
+  settings card. Do not nest `Card` components — use `SectionGroup` +
+  `SectionDivider` instead.
+- **Action buttons:** group primary actions (Apply, Test Connection) with
+  the fields they act on, not at the very bottom of a long card. Place them
+  after the last related field group, before saved presets.
+- **List items** (presets, saved configs) use the `group` pattern (§6.12)
+  with actions revealed on hover. Never show delete/load buttons at full
+  opacity on every item — it creates visual clutter.
+- **Empty state:** use the `EmptyState` component (§6.6), not a dashed-border
+  div. The empty state is an invitation to act, so include an action button.
+- **Import:** use a hidden `<input type="file">` triggered by a `<label>` or
+  button click (never a raw `<input>` visible on the page). Read the file as
+  text and open the import dialog with pre-filled content.
+
+## 6.12 List Items (Presets, Saved Items)
+
+- **Container:** `rounded-lg border border-border-subtle bg-surface px-4 py-3`.
+  The item starts with a subtle border and flat surface — elevation comes from
+  interaction, not resting state.
+- **Resting state:** title in `text-label-ui text-primary`, metadata in
+  `text-caption-ui text-muted`. Two distinct text roles in one item.
+- **Hover state:** `hover:border-border-strong hover:bg-surface-hover` with
+  `transition-all`. The border strengthens and the background shifts to signal
+  interactivity.
+- **Action reveal:** action buttons inside a `div` with
+  `opacity-0 transition-opacity group-hover:opacity-100`. Actions are visible
+  on hover (desktop) and always visible in the item's focused/active state.
+  On touch devices, the items reveal actions on first tap or show them
+  persistently via a "more" button — test both.
+- **Destructive action:** the delete button uses `text-muted hover:text-brand-danger`
+  instead of showing red at rest. Color-coded danger appears only on hover to
+  avoid alarming the user during normal browsing.
+- **No icon-only buttons without aria-label:** per §6.8, every icon button
+  gets an `aria-label`. Tooltip is not a substitute.
+
+```tsx
+<div className="group flex items-center justify-between rounded-lg border border-border-subtle bg-surface px-4 py-3 transition-all hover:border-border-strong hover:bg-surface-hover">
+  <div className="flex flex-col gap-0.5">
+    <span className="text-label-ui text-primary">{name}</span>
+    <span className="text-caption-ui text-muted">{metadata}</span>
+  </div>
+  <div className="flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+    <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-caption-ui">
+      {action}
+    </Button>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 w-8 p-0 text-muted hover:text-brand-danger"
+      aria-label="Delete"
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+    </Button>
+  </div>
+</div>
+```
+
 ---
 
 ## 7. Layout & Spacing
@@ -556,6 +689,12 @@ html::-webkit-scrollbar-thumb:hover {
   drawer at `z-drawer`, following the overlay rules in §4.
 - **Spacing rhythm:** `lg` (24px) between major sections (e.g. Input Form →
   Output Results) so the interface has room to breathe.
+- **Settings container:** `max-w-3xl` (768px) — wider than the default
+  `max-w-2xl` to accommodate label+input field rows without wrapping, but
+  narrower than the dashboard `xl` to maintain readability on longer fields.
+- **Card header icons:** always pair a card title with a semantic icon in an
+  8×8 rounded box at `bg-brand-primary/10`. This visually separates cards
+  in a multi-card layout without relying on background color changes.
 
 ---
 
@@ -590,3 +729,16 @@ html::-webkit-scrollbar-thumb:hover {
   `bg-surface-hover` per §6.7, never plain white/transparent.
 - **Don't** ship an icon-only button without `aria-label` — a tooltip alone
   doesn't make it accessible (§6.8).
+- **Don't** use `text-muted-foreground` — this is not a DESIGN.md token. Use
+  `text-muted` (which maps to the `text-muted` semantic token in §2.3).
+  `text-muted-foreground` is a shadcn default that bypasses the project's
+  semantic color system.
+- **Don't** show destructive action buttons (delete, remove) at full color at
+  rest — use `text-muted` and transition to `text-brand-danger` on hover to
+  avoid alarming the user during normal browsing (§6.12).
+- **Don't** put success confirmation text in exclamation marks. Be confident,
+  not loud: "Configuration applied" not "Configuration applied!" (§8
+  Content rules).
+- **Don't** leave action buttons permanently visible on list items in a
+  settings page — reveal them on hover via `group-hover:opacity-100` to
+  reduce visual noise (§6.12).
