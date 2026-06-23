@@ -98,7 +98,13 @@
     "deletePresetTitle": "Delete Preset",
     "deletePresetConfirmation": "Are you sure you want to delete this preset? This action cannot be undone.",
     "provider": "Provider",
-    "addCustomModel": "Add Custom Model"
+    "addCustomModel": "Add Custom Model",
+    "masterPrompt": "Advanced — Master Prompt",
+    "masterPromptDescription": "View and edit the master system prompt sent to the AI for every generation.",
+    "masterPromptWarning": "Editing this affects every generation going forward. Use Reset if results get worse.",
+    "masterPromptPlaceholder": "The default master prompt will appear here...",
+    "masterPromptSaved": "Master prompt saved successfully",
+    "masterPromptReset": "Master prompt reset to default"
   },
   "history": {
     "pageTitle": "Prompt History",
@@ -323,7 +329,9 @@
         }
       },
       "niche": {
-        "placeholder": "e.g., A programmer working late at night, a futuristic city skyline, a family enjoying a picnic in a sunny park..."
+        "placeholder": "e.g., A programmer working late at night, a futuristic city skyline, a family enjoying a picnic in a sunny park...",
+        "randomIdeaTooltip": "Generates an idea based on your selected Category.",
+        "selectCategoryFirst": "Select a category first"
       },
       "language": {
         "label": "Language",
@@ -339,30 +347,27 @@
       "variationLevel": {
         "label": "Variation Level"
       },
+      "styleMode": {
+        "label": "Scene Mode",
+        "userLabel": "Manual",
+        "systemLabel": "Auto",
+        "tooltip": "Manual lets you pick specific values for mood, colors, art style, background, and human models. Auto lets the system determine all of them based on Variation Level.",
+        "systemDescription": "System will automatically determine mood, colors, art style, background, and human models based on Variation Level."
+      },
       "mood": {
-        "label": "Mood",
-        "tooltip": "User Defined pins a specific mood across all prompts. System Defined lets the engine vary the mood based on the Variation Level.",
-        "systemDescription": "System will vary mood automatically based on Variation Level."
+        "label": "Mood"
       },
       "colorPalette": {
-        "label": "Color Palette",
-        "tooltip": "User Defined pins a specific palette across all prompts. System Defined lets the engine vary colors based on the Variation Level.",
-        "systemDescription": "System will vary color palette automatically based on Variation Level."
+        "label": "Color Palette"
       },
       "artStyle": {
-        "label": "Art Style",
-        "tooltip": "User Defined pins a specific art style across all prompts. System Defined lets the engine vary style based on the Variation Level.",
-        "systemDescription": "System will vary art style automatically based on Variation Level."
+        "label": "Art Style"
       },
       "background": {
-        "label": "Background",
-        "tooltip": "User Defined pins a specific background across all prompts. System Defined lets the engine vary the background based on the Variation Level.",
-        "systemDescription": "System will vary background automatically based on Variation Level."
+        "label": "Background"
       },
       "humanModel": {
-        "label": "Human Model",
-        "tooltip": "User Defined pins a specific human model across all prompts. System Defined lets the engine vary the model based on the Variation Level.",
-        "systemDescription": "System will vary human model automatically based on Variation Level."
+        "label": "Human Model"
       },
       "customInstructions": {
         "label": "Custom Instructions",

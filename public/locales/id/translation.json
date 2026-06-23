@@ -98,7 +98,13 @@
     "deletePresetTitle": "Hapus Prasetel",
     "deletePresetConfirmation": "Apakah Anda yakin ingin menghapus prasetel ini? Tindakan ini tidak dapat dibatalkan.",
     "provider": "Penyedia",
-    "addCustomModel": "Tambah Model Kustom"
+    "addCustomModel": "Tambah Model Kustom",
+    "masterPrompt": "Lanjutan — Master Prompt",
+    "masterPromptDescription": "Lihat dan edit prompt sistem utama yang dikirim ke AI untuk setiap generasi.",
+    "masterPromptWarning": "Mengedit ini memengaruhi setiap generasi ke depan. Gunakan Reset jika hasil memburuk.",
+    "masterPromptPlaceholder": "Master prompt bawaan akan muncul di sini...",
+    "masterPromptSaved": "Master prompt berhasil disimpan",
+    "masterPromptReset": "Master prompt berhasil direset ke bawaan"
   },
   "history": {
     "pageTitle": "Riwayat Prompt",
@@ -323,7 +329,9 @@
         }
       },
       "niche": {
-        "placeholder": "mis., Seorang programmer bekerja larut malam, cakrawala kota futuristik, sebuah keluarga menikmati piknik di taman yang cerah..."
+        "placeholder": "mis., Seorang programmer bekerja larut malam, cakrawala kota futuristik, sebuah keluarga menikmati piknik di taman yang cerah...",
+        "randomIdeaTooltip": "Hasilkan ide berdasarkan Kategori yang dipilih.",
+        "selectCategoryFirst": "Pilih kategori terlebih dahulu"
       },
       "language": {
         "label": "Bahasa",
@@ -339,30 +347,27 @@
       "variationLevel": {
         "label": "Tingkat Variasi"
       },
+      "styleMode": {
+        "label": "Mode Adegan",
+        "userLabel": "Manual",
+        "systemLabel": "Otomatis",
+        "tooltip": "Manual memungkinkan Anda memilih nilai spesifik untuk suasana, warna, gaya seni, latar belakang, dan model manusia. Otomatis membiarkan sistem menentukan semuanya berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan secara otomatis menentukan suasana, warna, gaya seni, latar belakang, dan model manusia berdasarkan Tingkat Variasi."
+      },
       "mood": {
-        "label": "Suasana",
-        "tooltip": "User Defined menetapkan suasana tertentu di semua prompt. System Defined membiarkan mesin memvariasikan suasana berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan memvariasikan suasana secara otomatis berdasarkan Tingkat Variasi."
+        "label": "Suasana"
       },
       "colorPalette": {
-        "label": "Palet Warna",
-        "tooltip": "User Defined menetapkan palet tertentu di semua prompt. System Defined membiarkan mesin memvariasikan warna berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan memvariasikan palet warna secara otomatis berdasarkan Tingkat Variasi."
+        "label": "Palet Warna"
       },
       "artStyle": {
-        "label": "Gaya Seni",
-        "tooltip": "User Defined menetapkan gaya seni tertentu di semua prompt. System Defined membiarkan mesin memvariasikan gaya berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan memvariasikan gaya seni secara otomatis berdasarkan Tingkat Variasi."
+        "label": "Gaya Seni"
       },
       "background": {
-        "label": "Latar Belakang",
-        "tooltip": "User Defined menetapkan latar belakang tertentu di semua prompt. System Defined membiarkan mesin memvariasikan latar berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan memvariasikan latar belakang secara otomatis berdasarkan Tingkat Variasi."
+        "label": "Latar Belakang"
       },
       "humanModel": {
-        "label": "Model Manusia",
-        "tooltip": "User Defined menetapkan model manusia tertentu di semua prompt. System Defined membiarkan mesin memvariasikan model berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan memvariasikan model manusia secara otomatis berdasarkan Tingkat Variasi."
+        "label": "Model Manusia"
       },
       "customInstructions": {
         "label": "Instruksi Kustom",

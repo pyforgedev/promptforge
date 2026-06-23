@@ -110,6 +110,7 @@ describe('Dexie Storage Service CRUD', () => {
       language: 'en' as const,
       aspectRatio: 'random' as const,
       variationLevel: 3,
+      styleMode: 'user' as const,
       mood: { mode: 'user' as const, value: 'none' as const },
       colorPalette: { mode: 'user' as const, value: 'none' as const },
       artStyle: { mode: 'user' as const, value: 'none' as const },

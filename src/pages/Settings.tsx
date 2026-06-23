@@ -8,6 +8,8 @@ import {
 import { useAppContext } from '@/hooks/useAppContext'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { useMasterPromptStore } from '@/store/useMasterPromptStore'
+import { DEFAULT_SYSTEM_PROMPT } from '@/features/prompt-generator/engine/MetaPromptBuilder'
 import {
   getCustomModels,
   saveCustomModel,
@@ -65,6 +67,16 @@ export default function Settings() {
     deletePreset,
   } = useAIConfigStore()
 
+  const {
+    customPrompt: savedCustomPrompt,
+    load: loadMasterPrompt,
+    setCustomPrompt: saveMasterPrompt,
+    resetToDefault: resetMasterPrompt,
+  } = useMasterPromptStore()
+
+  const [masterPromptText, setMasterPromptText] = useState('')
+  const [masterPromptLoaded, setMasterPromptLoaded] = useState(false)
+
   const [customModels, setCustomModels] = useState<string[]>([])
   const [customModelsLoading, setCustomModelsLoading] = useState(true)
   const [provider, setProvider] = useState<AIProvider>(activeConfig?.provider || 'openai')
@@ -102,6 +114,34 @@ export default function Settings() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    const load = async () => {
+      await loadMasterPrompt()
+      const store = useMasterPromptStore.getState()
+      setMasterPromptText(store.customPrompt ?? DEFAULT_SYSTEM_PROMPT)
+      setMasterPromptLoaded(true)
+    }
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSaveMasterPrompt = async () => {
+    const trimmed = masterPromptText.trim()
+    if (!trimmed || trimmed === DEFAULT_SYSTEM_PROMPT) {
+      await resetMasterPrompt()
+      showToast('success', t('settings.masterPromptReset', { defaultValue: 'Master prompt reset to default' }))
+      return
+    }
+    await saveMasterPrompt(trimmed)
+    showToast('success', t('settings.masterPromptSaved', { defaultValue: 'Master prompt saved successfully' }))
+  }
+
+  const handleResetMasterPrompt = async () => {
+    await resetMasterPrompt()
+    setMasterPromptText(DEFAULT_SYSTEM_PROMPT)
+    showToast('success', t('settings.masterPromptReset', { defaultValue: 'Master prompt reset to default' }))
+  }
 
   const handleSavePreset = async () => {
     if (!presetName.trim()) return
@@ -692,6 +732,49 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Advanced — Master Prompt */}
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
+            <FileJson className="h-4 w-4 text-brand-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-heading">
+              {t('settings.masterPrompt', { defaultValue: 'Advanced — Master Prompt' })}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="rounded-lg border border-border-subtle bg-warning/5 px-4 py-3 text-sm text-secondary">
+            {t('settings.masterPromptWarning', { defaultValue: 'Editing this affects every generation going forward. Use Reset if results get worse.' })}
+          </div>
+          {masterPromptLoaded ? (
+            <Textarea
+              value={masterPromptText}
+              onChange={(e) => setMasterPromptText(e.target.value)}
+              placeholder={t('settings.masterPromptPlaceholder', { defaultValue: 'The default master prompt will appear here...' })}
+              className="min-h-[300px] font-mono text-sm"
+            />
+          ) : (
+            <Skeleton className="h-[300px] w-full rounded-lg" />
+          )}
+          <div className="flex items-center gap-2">
+            <Button onClick={handleSaveMasterPrompt} disabled={!masterPromptText.trim()}>
+              <Save className="h-4 w-4" />
+              {t('common.save')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleResetMasterPrompt}
+              disabled={!savedCustomPrompt}
+            >
+              <RotateCcw className="h-4 w-4" />
+              {t('templates.resetDefault', { defaultValue: 'Reset to Default' })}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -16,6 +16,7 @@ import type {
   AdobeStockScore,
 } from '../types'
 import { MetaPromptBuilder } from './MetaPromptBuilder'
+import { useMasterPromptStore } from '@/store/useMasterPromptStore'
 import { generateNegativePrompt } from './NegativePromptGenerator'
 import { scorePrompt } from './AdobeStockScorer'
 import { adaptForPlatform } from './PlatformAdapter'
@@ -42,7 +43,8 @@ export class PromptComposerEngine {
 
     const validInput = parsed.data
 
-    const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput)
+    const masterPromptOverride = useMasterPromptStore.getState().customPrompt
+    const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput, masterPromptOverride ?? undefined)
 
     // Calculate maxTokens dynamically based on requested batch size.
     // Standard size per prompt can be up to 600-800 tokens of JSON.

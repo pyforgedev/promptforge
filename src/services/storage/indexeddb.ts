@@ -100,6 +100,7 @@ class PromptForgeDB extends Dexie {
           language: 'en',
           aspectRatio: 'random',
           variationLevel: 3,
+          styleMode: 'user',
           mood: { mode: 'user', value: 'none' },
           colorPalette: { mode: 'user', value: 'none' },
           artStyle: { mode: 'user', value: 'none' },

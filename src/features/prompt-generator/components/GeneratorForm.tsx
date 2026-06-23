@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { RandomIdeaButton } from './RandomIdeaButton'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -16,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
-import { DualModeSelect } from '@/components/ui/dual-mode-select'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { cn } from '@/lib/utils'
-import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatform } from '../types'
+import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatform, MoodOption, ColorPaletteOption, ArtStyleOption, BackgroundOption, HumanModelOption } from '../types'
 import { OPTION_LABELS, MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
 
 function makeOptions(options: readonly string[]): ComboboxOption[] {
@@ -58,14 +58,16 @@ export const GeneratorForm = memo(function GeneratorForm() {
   const [customInstructionsEnabled, setCustomInstructionsEnabled] = useState(() => !!input.customInstructions)
   const [basePromptRefEnabled, setBasePromptRefEnabled] = useState(() => !!input.basePromptReference)
 
-  const isDiverseDisabled = input.humanModel?.mode === 'user' && input.humanModel?.value === 'no_people'
+  const isDiverseDisabled = input.humanModel?.mode === 'user' && input.humanModel?.value === 'no_people' || false
 
-  const lastUserValues = useRef({
-    mood: 'none',
-    colorPalette: 'none',
-    artStyle: 'none',
-    background: 'none',
-    humanModel: 'no_people',
+  type StyleFieldKey = 'mood' | 'colorPalette' | 'artStyle' | 'background' | 'humanModel'
+
+  const lastStyleModeUserValues = useRef<Record<StyleFieldKey, string>>({
+    mood: input.mood?.mode === 'user' ? input.mood?.value ?? 'none' : 'none',
+    colorPalette: input.colorPalette?.mode === 'user' ? input.colorPalette?.value ?? 'none' : 'none',
+    artStyle: input.artStyle?.mode === 'user' ? input.artStyle?.value ?? 'none' : 'none',
+    background: input.background?.mode === 'user' ? input.background?.value ?? 'none' : 'none',
+    humanModel: input.humanModel?.mode === 'user' ? input.humanModel?.value ?? 'no_people' : 'no_people',
   })
 
   const handleGenerate = () => {
@@ -74,31 +76,43 @@ export const GeneratorForm = memo(function GeneratorForm() {
     }
   }
 
-  type DualFieldKey = keyof typeof lastUserValues.current
-
-  const createDualModeHandler = useCallback(
-    (field: DualFieldKey) =>
-      (mode: 'user' | 'system') => {
-        if (mode === 'user') {
-          const savedValue = lastUserValues.current[field]
-          setInput({ [field]: { mode: 'user', value: savedValue } } as Partial<typeof input>)
-        } else {
-          const current = input[field] as { mode: 'user'; value: string } | { mode: 'system' }
-          if (current.mode === 'user') {
-            lastUserValues.current[field] = current.value
-          }
-          setInput({ [field]: { mode: 'system' } } as Partial<typeof input>)
-        }
-      },
+  const handleStyleModeChange = useCallback(
+    (mode: 'user' | 'system') => {
+      const save = lastStyleModeUserValues.current
+      const i = input
+      if (mode === 'user') {
+        setInput({
+          styleMode: 'user',
+          mood: { mode: 'user', value: save.mood as MoodOption },
+          colorPalette: { mode: 'user', value: save.colorPalette as ColorPaletteOption },
+          artStyle: { mode: 'user', value: save.artStyle as ArtStyleOption },
+          background: { mode: 'user', value: save.background as BackgroundOption },
+          humanModel: { mode: 'user', value: save.humanModel as HumanModelOption },
+        })
+      } else {
+        if (i.mood?.mode === 'user') save.mood = i.mood?.value ?? 'none'
+        if (i.colorPalette?.mode === 'user') save.colorPalette = i.colorPalette?.value ?? 'none'
+        if (i.artStyle?.mode === 'user') save.artStyle = i.artStyle?.value ?? 'none'
+        if (i.background?.mode === 'user') save.background = i.background?.value ?? 'none'
+        if (i.humanModel?.mode === 'user') save.humanModel = i.humanModel?.value ?? 'no_people'
+        setInput({
+          styleMode: 'system',
+          mood: { mode: 'system' },
+          colorPalette: { mode: 'system' },
+          artStyle: { mode: 'system' },
+          background: { mode: 'system' },
+          humanModel: { mode: 'system' },
+        })
+      }
+    },
     [input, setInput],
   )
 
-  const createDualValueHandler = useCallback(
-    (field: DualFieldKey) =>
-      (value: string) => {
-        lastUserValues.current[field] = value
-        setInput({ [field]: { mode: 'user' as const, value } } as Partial<typeof input>)
-      },
+  const handleStyleValueChange = useCallback(
+    (field: StyleFieldKey, value: string) => {
+      lastStyleModeUserValues.current[field] = value
+      setInput({ [field]: { mode: 'user' as const, value } } as Partial<typeof input>)
+    },
     [setInput],
   )
 
@@ -120,12 +134,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
 
-  const dualModeFields = [
-    { key: 'mood' as const, options: moodOptions },
-    { key: 'colorPalette' as const, options: colorPaletteOptions },
-    { key: 'artStyle' as const, options: artStyleOptions },
-    { key: 'background' as const, options: backgroundOptions },
-    { key: 'humanModel' as const, options: humanModelOptions },
+  const styleFields: { key: StyleFieldKey; options: ComboboxOption[] }[] = [
+    { key: 'mood', options: moodOptions },
+    { key: 'colorPalette', options: colorPaletteOptions },
+    { key: 'artStyle', options: artStyleOptions },
+    { key: 'background', options: backgroundOptions },
+    { key: 'humanModel', options: humanModelOptions },
   ]
 
   return (
@@ -197,7 +211,13 @@ export const GeneratorForm = memo(function GeneratorForm() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="niche">{t('generator.niche_v2')}</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="niche">{t('generator.niche_v2')}</Label>
+              <RandomIdeaButton
+                category={input.category}
+                onIdeaGenerated={(idea) => setInput({ niche: idea })}
+              />
+            </div>
             <Textarea
               id="niche"
               autoFocus
@@ -280,25 +300,75 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
         <div className="border-t border-border-subtle" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dualModeFields.map(({ key, options }) => {
-              const field = input[key] ?? { mode: 'system' as const }
-              return (
-                <DualModeSelect
-                  key={key}
-                  label={t(`generator.form.${key}.label`)}
-                  htmlFor={`${key}-mode`}
-                  mode={field.mode}
-                  value={field.mode === 'user' ? field.value : 'none'}
-                  options={options}
-                  onModeChange={createDualModeHandler(key)}
-                  onValueChange={createDualValueHandler(key)}
-                  tooltip={t(`generator.form.${key}.tooltip`)}
-                  systemDescription={t(`generator.form.${key}.systemDescription`)}
-                />
-              )
-            })}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <TooltipProvider delayDuration={300}>
+              <div className="flex items-center gap-2">
+                <Label>{t('generator.form.styleMode.label')}</Label>
+                <Tooltip>
+                  <TooltipTrigger type="button" className="flex cursor-help">
+                    <Info className="h-3.5 w-3.5 text-muted" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    {t('generator.form.styleMode.tooltip')}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+            <ToggleGroup.Root
+              type="single"
+              value={input.styleMode}
+              onValueChange={(val) => val && handleStyleModeChange(val as 'user' | 'system')}
+              className="flex gap-0"
+            >
+              <ToggleGroup.Item
+                value="user"
+                className={cn(
+                  "flex h-9 items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                  "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                  "hover:bg-surface-hover/80"
+                )}
+              >
+                {t('generator.form.styleMode.userLabel')}
+              </ToggleGroup.Item>
+              <ToggleGroup.Item
+                value="system"
+                className={cn(
+                  "flex h-9 items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                  "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                  "hover:bg-surface-hover/80"
+                )}
+              >
+                {t('generator.form.styleMode.systemLabel')}
+              </ToggleGroup.Item>
+            </ToggleGroup.Root>
           </div>
+
+          {input.styleMode === 'user' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {styleFields.map(({ key, options }) => {
+                const field = input[key]
+                return (
+                  <div key={key} className="flex flex-col gap-1.5">
+                    <Label htmlFor={`${key}-value`}>{t(`generator.form.${key}.label`)}</Label>
+                    <Combobox
+                      options={options}
+                      value={field?.mode === 'user' ? field?.value ?? 'none' : 'none'}
+                      onValueChange={(v) => handleStyleValueChange(key, v)}
+                      placeholder={t(`generator.form.${key}.label`)}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">
+              {t('generator.form.styleMode.systemDescription')}
+            </p>
+          )}
+        </div>
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">

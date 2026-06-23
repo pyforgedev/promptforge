@@ -140,6 +140,7 @@ export interface GeneratorInput {
   targetPlatform: ImagePlatform
   aspectRatio: AspectRatio
   variationLevel: number
+  styleMode: 'user' | 'system'
   mood: DualModeField<MoodOption>
   colorPalette: DualModeField<ColorPaletteOption>
   artStyle: DualModeField<ArtStyleOption>

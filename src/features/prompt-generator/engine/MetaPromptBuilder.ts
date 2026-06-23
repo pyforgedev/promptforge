@@ -18,7 +18,7 @@ import {
   type PoolDimension,
 } from './VariationStrategyEngine'
 
-const SYSTEM_PROMPT = `You are a senior stock photography art director and AI image prompt engineer with \
+export const DEFAULT_SYSTEM_PROMPT = `You are a senior stock photography art director and AI image prompt engineer with \
 10+ years of experience creating commercially successful images for Adobe Stock, \
 Getty Images, and Shutterstock.
 
@@ -166,7 +166,9 @@ function buildVariantInstructions(
 export class MetaPromptBuilder {
   static build(
     input: GeneratorInput,
+    systemPromptOverride?: string,
   ): { systemPrompt: string; userPrompt: string } {
+    const effectiveSystemPrompt = systemPromptOverride ?? DEFAULT_SYSTEM_PROMPT
     const plan = buildVariationPlan(input)
     const platformDescription = TARGET_PLATFORM_DESCRIPTIONS[input.targetPlatform]
     const platformSpec = input.targetPlatform !== 'both'
@@ -274,7 +276,7 @@ OUTPUT REQUIREMENTS:
 
 ${OUTPUT_JSON_SCHEMA}`
 
-    return { systemPrompt: SYSTEM_PROMPT, userPrompt }
+    return { systemPrompt: effectiveSystemPrompt, userPrompt }
   }
 
   static buildRetryPrompt(
