@@ -20,8 +20,9 @@ export const useMasterPromptStore = create<MasterPromptState>()(
       isReady: false,
 
       setCustomPrompt: async (prompt: string) => {
-        await withRetry(() => saveGeneratorState(STORAGE_KEY, prompt))
-        set({ customPrompt: prompt })
+        const validated = typeof prompt === 'string' ? prompt : String(prompt ?? '')
+        await withRetry(() => saveGeneratorState(STORAGE_KEY, validated))
+        set({ customPrompt: validated })
       },
 
       resetToDefault: async () => {
@@ -30,8 +31,9 @@ export const useMasterPromptStore = create<MasterPromptState>()(
       },
 
       load: async () => {
-        const saved = await withRetry(() => getGeneratorState(STORAGE_KEY)) as string | null | undefined
-        set({ customPrompt: saved ?? null, isReady: true })
+        const saved = await withRetry(() => getGeneratorState(STORAGE_KEY))
+        const validated = typeof saved === 'string' ? saved : null
+        set({ customPrompt: validated, isReady: true })
       },
     }),
     {
@@ -39,7 +41,8 @@ export const useMasterPromptStore = create<MasterPromptState>()(
       storage: createJSONStorage(() => ({
         getItem: async (name) => {
           const value = await withRetry(() => getGeneratorState(name))
-          return value ? JSON.stringify(value) : null
+          const validated = typeof value === 'string' ? value : null
+          return validated ? JSON.stringify(validated) : null
         },
         setItem: async (name, value) => {
           await withRetry(() => saveGeneratorState(name, JSON.parse(value)))

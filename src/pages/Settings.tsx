@@ -119,7 +119,8 @@ export default function Settings() {
     const load = async () => {
       await loadMasterPrompt()
       const store = useMasterPromptStore.getState()
-      setMasterPromptText(store.customPrompt ?? DEFAULT_SYSTEM_PROMPT)
+      const promptValue = store.customPrompt ?? DEFAULT_SYSTEM_PROMPT
+      setMasterPromptText(typeof promptValue === 'string' ? promptValue : String(promptValue))
       setMasterPromptLoaded(true)
     }
     load()
@@ -127,7 +128,7 @@ export default function Settings() {
   }, [])
 
   const handleSaveMasterPrompt = async () => {
-    const trimmed = masterPromptText.trim()
+    const trimmed = String(masterPromptText ?? '').trim()
     if (!trimmed || trimmed === DEFAULT_SYSTEM_PROMPT) {
       await resetMasterPrompt()
       showToast('success', t('settings.masterPromptReset', { defaultValue: 'Master prompt reset to default' }))
@@ -760,7 +761,7 @@ export default function Settings() {
             <Skeleton className="h-[300px] w-full rounded-lg" />
           )}
           <div className="flex items-center gap-2">
-            <Button onClick={handleSaveMasterPrompt} disabled={!masterPromptText.trim()}>
+            <Button onClick={handleSaveMasterPrompt} disabled={!String(masterPromptText ?? '').trim()}>
               <Save className="h-4 w-4" />
               {t('common.save')}
             </Button>
