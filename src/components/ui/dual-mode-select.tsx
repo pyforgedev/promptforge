@@ -66,7 +66,7 @@ export function DualModeSelect({
         <ToggleGroupPrimitive.Item
           value="user"
           className={cn(
-            "flex h-9 items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-3 text-sm font-medium text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand hover:bg-surface-hover/80",
+            "flex h-9 items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-3 text-label-ui text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand hover:bg-surface-hover/80",
             disabled && "cursor-not-allowed opacity-50"
           )}
         >
@@ -75,7 +75,7 @@ export function DualModeSelect({
         <ToggleGroupPrimitive.Item
           value="system"
           className={cn(
-            "flex h-9 items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-3 text-sm font-medium text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand hover:bg-surface-hover/80",
+            "flex h-9 items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-3 text-label-ui text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand hover:bg-surface-hover/80",
             disabled && "cursor-not-allowed opacity-50"
           )}
         >
@@ -92,7 +92,7 @@ export function DualModeSelect({
         />
       )}
       {!showCombobox && systemDescription && (
-        <p className="text-sm text-muted">
+        <p className="text-body-ui text-muted">
           {systemDescription}
         </p>
       )}

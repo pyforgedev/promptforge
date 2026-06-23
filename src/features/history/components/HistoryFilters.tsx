@@ -31,7 +31,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
   const { searchMode, setSearchMode } = useHistoryStore()
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface p-4 card-spotlight">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="flex flex-1 flex-col gap-1.5 w-full sm:min-w-[200px]">
           <div className="flex items-center justify-between">
@@ -40,7 +40,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
             </label>
             <div className="flex items-center space-x-2">
               <Label htmlFor="search-mode" className="text-caption-ui text-muted">
-                {searchMode === 'global' ? 'Global' : 'Local'}
+                {searchMode === 'global' ? t('history.global') : t('history.local')}
               </Label>
               <Switch 
                 id="search-mode" 
@@ -55,7 +55,9 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
             <Input
               value={filters.search}
               onChange={(e) => onFilterChange('search', e.target.value)}
-              placeholder={searchMode === 'global' ? "Search everywhere..." : "Search in this folder..."}
+              placeholder={searchMode === 'global'
+                ? t('history.searchGlobalPlaceholder', { defaultValue: 'Search everywhere...' })
+                : t('history.searchLocalPlaceholder', { defaultValue: 'Search in this folder...' })}
               className="pl-8"
             />
           </div>

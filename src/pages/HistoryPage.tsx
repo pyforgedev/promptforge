@@ -64,17 +64,18 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex h-full md:h-[calc(100vh-100px)] md:-m-6 overflow-hidden">
+    <div className="flex h-full overflow-hidden lg:-m-6 lg:h-[calc(100dvh-3.5rem)]">
       <FolderSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="flex-1 flex flex-col gap-4 sm:gap-6 overflow-y-auto p-4 sm:p-6 md:p-6 relative">
+      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="md:hidden h-9 w-9 shrink-0 cursor-pointer"
+              className="h-9 w-9 shrink-0 cursor-pointer lg:hidden"
               onClick={() => setSidebarOpen(true)}
+              aria-label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -94,7 +95,7 @@ export default function HistoryPage() {
               disabled={items.length === 0}
               className="cursor-pointer"
             >
-              <Trash2 className="mr-2 h-4 w-4 text-brand-danger" />
+              <Trash2 className="mr-2 h-4 w-4" />
               {t('history.deleteAll')}
             </Button>
           </div>

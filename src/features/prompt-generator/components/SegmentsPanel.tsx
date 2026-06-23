@@ -35,11 +35,12 @@ function SegmentRow({ label, value }: SegmentRowProps) {
 
   return (
     <div className="flex items-start gap-2 py-1.5">
-      <span className="w-28 shrink-0 text-caption-ui font-medium text-muted-foreground">{label}</span>
+      <span className="w-28 shrink-0 text-caption-ui font-medium text-muted">{label}</span>
       <span className="flex-1 text-body-ui leading-relaxed text-primary">{value}</span>
       <button
+        type="button"
         onClick={handleCopy}
-        className="mt-0.5 shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+        className="mt-0.5 shrink-0 rounded p-0.5 text-muted opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
         aria-label={t('promptCard.copySegment', { segment: label })}
       >
         {copied ? (
@@ -63,10 +64,11 @@ export function SegmentsPanel({ segments, unavailable }: SegmentsPanelProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="border-t border-border/50">
+    <div className="border-t border-border-subtle">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted-foreground transition-colors hover:text-primary"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted transition-colors hover:text-primary"
       >
         <span>{t('promptCard.segments.title')}</span>
         <ChevronDown
@@ -84,9 +86,9 @@ export function SegmentsPanel({ segments, unavailable }: SegmentsPanelProps) {
             transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="group flex flex-col divide-y divide-border/40 px-4 pb-3">
+            <div className="group flex flex-col divide-y divide-border-subtle px-4 pb-3">
               {unavailable ? (
-                <p className="py-2 text-body-ui text-muted-foreground">
+                <p className="py-2 text-body-ui text-muted">
                   {t('promptCard.segments.unavailable')}
                 </p>
               ) : (

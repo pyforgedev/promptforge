@@ -91,7 +91,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-drawer bg-black/70 md:hidden"
+          className="fixed inset-0 z-drawer bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -99,8 +99,8 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
 
       <aside
         className={cn(
-          "flex flex-col h-full border-r border-border-subtle bg-surface/80 backdrop-blur-md",
-          "fixed left-0 top-16 z-drawer w-[260px] transition-transform duration-200 md:static md:translate-x-0",
+          "flex h-[calc(100dvh-3.5rem)] flex-col border-r border-border-subtle bg-surface/80 backdrop-blur-md lg:h-full",
+          "fixed left-0 top-14 z-drawer w-[260px] transition-transform duration-200 lg:static lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -112,7 +112,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 rounded-md transition-colors hover:bg-surface-hover md:hidden cursor-pointer"
+                  className="min-h-[40px] min-w-[40px] cursor-pointer rounded-md transition-colors hover:bg-surface-hover lg:hidden"
                   onClick={onClose}
                   aria-label={t('common.close')}
                 >
@@ -126,7 +126,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 rounded-md transition-colors hover:bg-surface-hover cursor-pointer"
+                  className="min-h-[40px] min-w-[40px] cursor-pointer rounded-md transition-colors hover:bg-surface-hover md:h-7 md:min-h-0 md:w-7 md:min-w-0"
                   onClick={handleCreateFolder}
                   aria-label={t('history.newFolder')}
                 >
@@ -145,7 +145,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
               size="sm"
               className={cn(
                 "h-7 text-caption-ui gap-2 rounded-md transition-all cursor-pointer",
-                searchMode === 'local' ? "bg-brand-primary/10 text-brand-primary" : "text-muted hover:text-secondary hover:bg-surface-hover"
+                searchMode === 'local' ? "bg-brand-primary text-text-on-brand" : "text-secondary hover:bg-surface-hover hover:text-primary"
               )}
               onClick={() => setSearchMode('local')}
             >
@@ -157,7 +157,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
               size="sm"
               className={cn(
                 "h-7 text-caption-ui gap-2 rounded-md transition-all cursor-pointer",
-                searchMode === 'global' ? "bg-brand-primary/10 text-brand-primary" : "text-muted hover:text-secondary hover:bg-surface-hover"
+                searchMode === 'global' ? "bg-brand-primary text-text-on-brand" : "text-secondary hover:bg-surface-hover hover:text-primary"
               )}
               onClick={() => setSearchMode('global')}
             >
@@ -211,7 +211,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                     </TooltipTrigger>
                     <TooltipContent>{t('common.options')}</TooltipContent>
                   </Tooltip>
-                  <DropdownMenuContent align="end" className="overlay-glass border-border-strong z-modal">
+                  <DropdownMenuContent align="end" className="overlay-glass border-border-strong">
                     <DropdownMenuItem 
                       className="gap-2 cursor-pointer"
                       onClick={() => setRenamingFolder({ id: folder.id, name: folder.name })}
@@ -220,7 +220,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                       {t('history.rename')}
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      className="gap-2 text-brand-danger focus:text-brand-danger cursor-pointer"
+                      className="gap-2 cursor-pointer text-muted focus:text-brand-danger"
                       onClick={() => setDeleteFolderId(folder.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -286,4 +286,3 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
     </>
   )
 }
-

@@ -98,11 +98,11 @@ export function PromptResultsDisplay() {
               transition={{ duration: shouldReduceMotion ? 0 : 0.25, delay: i * 0.05 }}
               className="relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface"
             >
-              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
+              <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
                 <div className={cn('h-4 w-32 rounded', pulse)} />
                 <div className={cn('h-5 w-16 rounded-full', pulse)} />
               </div>
-              <div className="flex gap-4 border-b border-border/60 px-4 py-2">
+              <div className="flex gap-4 border-b border-border-subtle px-4 py-2">
                 <div className={cn('h-4 w-16 rounded', pulse)} />
                 <div className={cn('h-4 w-20 rounded', pulse)} />
               </div>
@@ -112,7 +112,7 @@ export function PromptResultsDisplay() {
                 <div className={cn('h-4 w-[85%] rounded', pulse)} />
                 <div className={cn('h-4 w-[70%] rounded', pulse)} />
               </div>
-              <div className="flex items-center justify-between border-t border-border/60 px-4 py-2.5">
+              <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2.5">
                 <div className="flex gap-2">
                   <div className={cn('h-8 w-16 rounded-md', pulse)} />
                   <div className={cn('h-8 w-20 rounded-md', pulse)} />
@@ -129,14 +129,16 @@ export function PromptResultsDisplay() {
   if (error && !batch) {
     const errorCode = error.code || 'PROVIDER_ERROR';
     return (
-      <div className="flex flex-col items-center justify-center gap-4 text-center rounded-lg border-2 border-dashed border-brand-danger/50 bg-brand-danger/5 p-12 min-h-[300px]">
+      <div className="overlay-glass flex min-h-[220px] flex-col justify-center gap-4 rounded-r-lg border-l-[3px] border-l-brand-danger p-6">
         {errorCode === 'PARTIAL_BATCH' ? (
-           <AlertCircle className="h-10 w-10 text-brand-danger" />
+           <AlertCircle className="h-6 w-6 text-brand-danger" />
         ) : (
-           <ServerCrash className="h-10 w-10 text-brand-danger" />
+           <ServerCrash className="h-6 w-6 text-brand-danger" />
         )}
-        <h3 className="text-heading text-brand-danger">{t(`generator.form.errors.${errorCode}.title`)}</h3>
-        <p className="text-muted-foreground max-w-sm">{error.message}</p>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-heading text-brand-danger">{t(`generator.form.errors.${errorCode}.title`)}</h3>
+          <p className="max-w-xl text-body-ui text-secondary">{error.message}</p>
+        </div>
       </div>
     )
   }

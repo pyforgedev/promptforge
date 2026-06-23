@@ -8,8 +8,10 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border p-12 text-center">
-      <Inbox className="h-12 w-12 text-muted" />
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-border-subtle bg-surface px-6 py-10 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
+        <Inbox className="h-5 w-5" />
+      </div>
       <h3 className="text-heading text-primary">
         {title}
       </h3>
@@ -18,7 +20,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
           {description}
         </p>
       )}
-      {action}
+      {action && <div className="pt-1">{action}</div>}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { memo, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info, Sliders, Palette, History, Globe } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
@@ -26,6 +26,22 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { cn } from '@/lib/utils'
 import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatform, MoodOption, ColorPaletteOption, ArtStyleOption, BackgroundOption, HumanModelOption } from '../types'
 import { OPTION_LABELS, MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
+
+function SectionGroup({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted" />
+        <span className="text-caption-ui text-secondary font-semibold">{title}</span>
+      </div>
+      <div className="flex flex-col gap-4 pl-5">{children}</div>
+    </div>
+  )
+}
+
+function SectionDivider() {
+  return <div className="border-t border-border-subtle" />
+}
 
 function makeOptions(options: readonly string[]): ComboboxOption[] {
   return options.map((v) => ({ value: v, label: OPTION_LABELS[v] ?? v }))
@@ -143,14 +159,16 @@ export const GeneratorForm = memo(function GeneratorForm() {
   ]
 
   return (
-    <Card>
+    <Card className="border-border-subtle card-spotlight">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-heading">
-          <Sparkles className="h-6 w-6 text-primary" />
+        <CardTitle className="flex items-center gap-3 text-xl font-semibold tracking-tight">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
+            <Sparkles className="h-4 w-4 text-brand-primary" />
+          </div>
           {t('generator.title_v2')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6">
+      <CardContent className="flex flex-col gap-8">
         <div className="grid gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -211,7 +229,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Label htmlFor="niche">{t('generator.niche_v2')}</Label>
               <RandomIdeaButton
                 category={input.category}
@@ -224,16 +242,17 @@ export const GeneratorForm = memo(function GeneratorForm() {
               value={input.niche}
               onChange={(e) => setInput({ niche: e.target.value })}
               placeholder={t('generator.form.niche.placeholder')}
-              className="min-h-[100px]"
+              className="min-h-[100px] resize-none"
             />
           </div>
         </div>
 
-        <div className="border-t border-border-subtle" />
+        <SectionDivider />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="usageContext">{t('generator.form.usageContext.label')}</Label>
+        <SectionGroup icon={Sliders} title="Output Settings">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="usageContext">{t('generator.form.usageContext.label')}</Label>
               <Select
                 value={input.usageContext}
                 onValueChange={(v) => setInput({ usageContext: v as UsageContext })}
@@ -284,7 +303,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     className={cn(
                       "flex h-9 w-9 items-center justify-center border border-border-subtle bg-surface-hover text-sm font-medium text-secondary transition-colors",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                      "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                      "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
                       "hover:bg-surface-hover/80",
                       level === 1 && "rounded-l-md",
                       level === 5 && "rounded-r-md",
@@ -297,10 +316,12 @@ export const GeneratorForm = memo(function GeneratorForm() {
               </ToggleGroup.Root>
             </div>
           </div>
+        </SectionGroup>
 
-        <div className="border-t border-border-subtle" />
+        <SectionDivider />
 
-        <div className="flex flex-col gap-4">
+        <SectionGroup icon={Palette} title="Style Preferences">
+          <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <TooltipProvider delayDuration={300}>
               <div className="flex items-center gap-2">
@@ -326,7 +347,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 className={cn(
                   "flex h-9 items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                  "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                  "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
                   "hover:bg-surface-hover/80"
                 )}
               >
@@ -337,7 +358,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 className={cn(
                   "flex h-9 items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                  "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                  "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
                   "hover:bg-surface-hover/80"
                 )}
               >
@@ -369,6 +390,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
             </p>
           )}
         </div>
+        </SectionGroup>
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -390,88 +412,92 @@ export const GeneratorForm = memo(function GeneratorForm() {
           )}
         </div>
 
-        <TooltipProvider delayDuration={300}>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-1.5">
-                  <Label htmlFor="includeHistory" className="cursor-pointer">
-                    {t('generator.form.includeHistory.label')}
-                  </Label>
-                  <Tooltip>
-                    <TooltipTrigger type="button" className="flex cursor-help">
-                      <Info className="h-3.5 w-3.5 text-muted" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      {t('generator.form.includeHistory.tooltip')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                <p className="text-caption-ui text-muted">
-                  {t('generator.form.includeHistory.description')}
-                </p>
-              </div>
-              <Switch
-                id="includeHistory"
-                checked={input.includeHistory}
-                onCheckedChange={(v) => setInput({ includeHistory: v })}
-              />
-            </div>
-            {input.includeHistory && (
-              <div className="flex flex-col gap-2 px-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-caption-ui text-muted">{t('generator.form.includeHistory.sliderLabel')}</span>
-                  <span className={cn(
-                    "text-label-ui font-medium tabular-nums",
-                    input.includeHistoryCount <= 15 ? "text-brand-success" :
-                    input.includeHistoryCount <= 35 ? "text-brand-warning" :
-                    "text-brand-danger"
-                  )}>
-                    {input.includeHistoryCount}
-                  </span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="range"
-                    min={5}
-                    max={50}
-                    step={1}
-                    value={input.includeHistoryCount}
-                    onChange={(e) => setInput({ includeHistoryCount: Number(e.target.value) })}
-                    className="w-full h-2 appearance-none rounded-full cursor-pointer bg-transparent"
-                    style={{
-                      background: (() => {
-                        const pct = ((input.includeHistoryCount - 5) / 45) * 100
-                        const seg1 = ((15 - 5) / 45) * 100
-                        const seg2 = ((35 - 5) / 45) * 100
-                        const activeColor =
-                          input.includeHistoryCount <= 15
-                            ? 'var(--color-brand-success)'
-                            : input.includeHistoryCount <= 35
-                            ? 'var(--color-brand-warning)'
-                            : 'var(--color-brand-danger)'
-                        if (input.includeHistoryCount <= 15) {
-                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${pct}%, color-mix(in srgb, var(--color-brand-success) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg1}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
-                        } else if (input.includeHistoryCount <= 35) {
-                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
-                        } else {
-                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${seg2}%, var(--color-brand-danger) ${seg2}%, ${activeColor} ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
-                        }
-                      })()
-                    }}
-                    aria-label={t('generator.form.includeHistory.sliderLabel')}
-                  />
-                </div>
-                <div className="flex justify-between text-caption-ui text-muted px-0.5">
-                  <span>5</span>
-                  <span>50</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </TooltipProvider>
+        <SectionDivider />
 
-        <div className="border-t border-border-subtle" />
+        <SectionGroup icon={History} title="Variation Context">
+          <TooltipProvider delayDuration={300}>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="includeHistory" className="cursor-pointer">
+                      {t('generator.form.includeHistory.label')}
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger type="button" className="flex cursor-help">
+                        <Info className="h-3.5 w-3.5 text-muted" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        {t('generator.form.includeHistory.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-caption-ui text-muted">
+                    {t('generator.form.includeHistory.description')}
+                  </p>
+                </div>
+                <Switch
+                  id="includeHistory"
+                  checked={input.includeHistory}
+                  onCheckedChange={(v) => setInput({ includeHistory: v })}
+                />
+              </div>
+              {input.includeHistory && (
+                <div className="flex flex-col gap-2 px-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-caption-ui text-muted">{t('generator.form.includeHistory.sliderLabel')}</span>
+                    <span className={cn(
+                      "text-label-ui font-medium tabular-nums",
+                      input.includeHistoryCount <= 15 ? "text-brand-success" :
+                      input.includeHistoryCount <= 35 ? "text-brand-warning" :
+                      "text-brand-danger"
+                    )}>
+                      {input.includeHistoryCount}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min={5}
+                      max={50}
+                      step={1}
+                      value={input.includeHistoryCount}
+                      onChange={(e) => setInput({ includeHistoryCount: Number(e.target.value) })}
+                      className="w-full h-2 appearance-none rounded-full cursor-pointer bg-transparent"
+                      style={{
+                        background: (() => {
+                          const pct = ((input.includeHistoryCount - 5) / 45) * 100
+                          const seg1 = ((15 - 5) / 45) * 100
+                          const seg2 = ((35 - 5) / 45) * 100
+                          const activeColor =
+                            input.includeHistoryCount <= 15
+                              ? 'var(--color-brand-success)'
+                              : input.includeHistoryCount <= 35
+                              ? 'var(--color-brand-warning)'
+                              : 'var(--color-brand-danger)'
+                          if (input.includeHistoryCount <= 15) {
+                            return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${pct}%, color-mix(in srgb, var(--color-brand-success) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg1}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                          } else if (input.includeHistoryCount <= 35) {
+                            return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                          } else {
+                            return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${seg2}%, var(--color-brand-danger) ${seg2}%, ${activeColor} ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                          }
+                        })()
+                      }}
+                      aria-label={t('generator.form.includeHistory.sliderLabel')}
+                    />
+                  </div>
+                  <div className="flex justify-between text-caption-ui text-muted px-0.5">
+                    <span>5</span>
+                    <span>50</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TooltipProvider>
+        </SectionGroup>
+
+        <SectionDivider />
 
         <div>
           <button
@@ -495,7 +521,8 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="grid gap-4 sm:grid-cols-2 pt-4">
+                <SectionGroup icon={Globe} title="Advanced Options">
+                <div className="grid gap-4">
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="targetMarket">{t('generator.form.targetMarket.label')}</Label>
                     <Select
@@ -519,7 +546,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                       isDiverseDisabled && "opacity-50"
                     )}>
                       <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           <Label
                             htmlFor="includeDiversity"
                             className={cn("cursor-pointer", isDiverseDisabled && "cursor-not-allowed")}
@@ -628,6 +655,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     </>
                   )}
                 </div>
+                </SectionGroup>
               </motion.div>
             )}
           </AnimatePresence>
@@ -650,7 +678,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
             </div>
           ) : (
             <Button onClick={handleGenerate} disabled={isGenerating || !input.niche.trim()} size="lg" className="flex-1">
-              {isGenerating ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {isGenerating ? <RefreshCw className="mr-2 h-4 w-4 motion-safe:animate-pulse" /> : <Sparkles className="mr-2 h-4 w-4" />}
               {isGenerating ? t('generator.generating') : t('generator.generate_v2')}
             </Button>
           )}

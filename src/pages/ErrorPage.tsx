@@ -27,7 +27,7 @@ export default function ErrorPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-app p-4">
+    <div className="flex min-h-screen items-center justify-center bg-app p-4">
       <div className="max-w-2xl w-full overlay-glass border-l-[3px] border-l-brand-danger p-8 rounded-lg">
         <div className="flex flex-col items-center text-center space-y-6">
           <div className="p-4 bg-brand-danger/10 rounded-full">
@@ -45,17 +45,17 @@ export default function ErrorPage() {
           <div className="flex items-center gap-4 pt-4">
             <Button onClick={handleGoHome} className="flex items-center gap-2">
               <Home className="w-4 h-4" />
-              Go Home
+              Go home
             </Button>
             <Button variant="ghost" onClick={handleReload} className="flex items-center gap-2 text-secondary hover:text-primary">
               <RefreshCw className="w-4 h-4" />
-              Reload Page
+              Reload page
             </Button>
           </div>
 
           {isDev && errorStack && (
             <div className="w-full mt-8 text-left">
-              <p className="text-caption-ui font-mono text-muted mb-2 uppercase tracking-widest">Stack Trace</p>
+              <p className="mb-2 text-caption-ui font-mono text-muted">Stack trace</p>
               <div className="bg-surface/50 p-4 rounded border border-border-subtle overflow-auto max-h-[400px]">
                 <pre className="font-mono text-caption-ui text-brand-danger leading-relaxed whitespace-pre-wrap">
                   {errorStack}

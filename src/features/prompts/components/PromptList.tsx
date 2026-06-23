@@ -3,6 +3,7 @@ import type { Prompt } from '@/types'
 import { PromptCard } from './PromptCard'
 import { EmptyState } from '@/components/common/EmptyState'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { AlertCircle } from 'lucide-react'
 
 interface PromptListProps {
   prompts: Prompt[]
@@ -27,8 +28,9 @@ export function PromptList({
 
   if (error) {
     return (
-      <div className="overlay-glass border-l-[3px] border-l-brand-danger p-4 text-body-ui rounded-r-lg text-brand-danger">
-        {error}
+      <div className="overlay-glass flex items-start gap-2 rounded-r-lg border-l-[3px] border-l-brand-danger p-4 text-body-ui">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-danger" />
+        <span className="text-secondary">{error}</span>
       </div>
     )
   }
@@ -43,7 +45,7 @@ export function PromptList({
   }
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {prompts.map((prompt) => (
         <PromptCard
           key={prompt.id}

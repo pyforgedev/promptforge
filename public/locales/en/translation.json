@@ -23,17 +23,17 @@
     "id": "Indonesian"
   },
   "home": {
-    "title": "Welcome to PromptForge",
-    "subtitle": "Create, manage, and optimize your AI prompts",
+    "title": "Prompt IDE for stock-image ideas",
+    "subtitle": "Compose varied microstock prompts, score commercial fit, and keep repetition out of every batch.",
     "getStarted": "Get Started",
-    "featurePrompts": "Prompt Manager",
-    "featurePromptsDesc": "Create, edit, and organize your AI prompts with ease",
-    "featureGenerate": "AI Generator",
-    "featureGenerateDesc": "Test your prompts against AI models instantly",
-    "featureStorage": "Local Storage",
-    "featureStorageDesc": "All data stored locally with IndexedDB for privacy",
-    "featureI18n": "Multi-language",
-    "featureI18nDesc": "Switch between English and Indonesian seamlessly"
+    "featurePrompts": "Template bench",
+    "featurePromptsDesc": "Save reusable prompt structures and send references back to the composer.",
+    "featureGenerate": "Batch composer",
+    "featureGenerateDesc": "Generate 1, 3, 5, or 10 prompt variants with commercial scoring.",
+    "featureStorage": "Local prompt memory",
+    "featureStorageDesc": "IndexedDB history keeps generated ideas searchable without leaving the device.",
+    "featureI18n": "Bilingual workflow",
+    "featureI18nDesc": "Compose and manage prompts in English or Bahasa Indonesia."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -56,7 +56,8 @@
     "confirm": "Confirm",
     "all": "All",
     "selectLanguage": "Select language",
-    "options": "Options"
+    "options": "Options",
+    "openNavigation": "Open navigation"
   },
   "prompts": {
     "name": "Name",
@@ -77,9 +78,11 @@
     "theme": "Theme",
     "language": "Language",
     "aiConfig": "AI Configuration",
+    "connection": "Connection",
     "apiKey": "API Key",
     "endpoint": "Endpoint",
     "model": "Model",
+    "modelSection": "Model",
     "apply": "Apply",
     "savePreset": "Save Preset",
     "savedPresets": "Saved Presets",
@@ -103,13 +106,15 @@
     "masterPromptDescription": "View and edit the master system prompt sent to the AI for every generation.",
     "masterPromptWarning": "Editing this affects every generation going forward. Use Reset if results get worse.",
     "masterPromptPlaceholder": "The default master prompt will appear here...",
-    "masterPromptSaved": "Master prompt saved successfully",
+    "masterPromptSaved": "Master prompt saved",
     "masterPromptReset": "Master prompt reset to default"
   },
   "history": {
     "pageTitle": "Prompt History",
     "pageDescription": "View and manage your generated prompts",
     "searchPlaceholder": "Search prompts...",
+    "searchGlobalPlaceholder": "Search everywhere...",
+    "searchLocalPlaceholder": "Search in this folder...",
     "minRating": "Min Rating",
     "resetFilters": "Reset",
     "emptyTitle": "No history yet",
@@ -139,30 +144,32 @@
     "deselectAll": "Deselect all"
   },
   "toast": {
-    "copySuccess": "Prompt copied to clipboard",
-    "deleteSuccess": "Prompt deleted successfully",
-    "deleteAllSuccess": "All history deleted successfully",
-    "generationSuccess": "Prompt generated successfully",
-    "improveSuccess": "Prompt improved successfully",
+    "copySuccess": "Prompt copied",
+    "deleteSuccess": "Prompt deleted",
+    "deleteAllSuccess": "All history deleted",
+    "generationSuccess": "Prompt generated",
+    "improveSuccess": "Prompt improved",
     "error": "Error",
-    "folderCreated": "Folder created successfully",
-    "folderDeleted": "Folder deleted successfully",
-    "folderRenamed": "Folder renamed successfully",
+    "folderCreated": "Folder created",
+    "folderDeleted": "Folder deleted",
+    "folderRenamed": "Folder renamed",
     "itemsDeleted": "Deleted {{count}} items",
     "itemsMoved": "Moved {{count}} items to {{folder}}",
-    "itemDeleted": "Item deleted successfully",
-    "presetSaved": "Preset saved successfully",
+    "itemDeleted": "Item deleted",
+    "presetSaved": "Preset saved",
     "saveFailed": "Failed to save preset",
-    "configApplied": "Configuration applied successfully",
+    "configApplied": "Configuration applied",
     "applyFailed": "Failed to apply configuration",
-    "exportSuccess": "Presets exported successfully",
-    "importSuccess": "Presets imported successfully",
+    "exportSuccess": "Presets exported",
+    "importSuccess": "Presets imported",
     "importFailed": "Failed to import presets",
     "modelAdded": "Custom model added",
     "modelRemoved": "Custom model removed",
     "presetLoaded": "Preset loaded",
-    "presetDeleted": "Preset deleted successfully",
-    "deleteFailed": "Failed to delete preset"
+    "presetDeleted": "Preset deleted",
+    "deleteFailed": "Failed to delete preset",
+    "themeChanged": "Theme updated",
+    "languageChanged": "Language updated"
   },
   "templates": {
     "pageTitle": "Prompt Templates",
@@ -176,7 +183,7 @@
     "export": "Export",
     "resetDefault": "Reset Default",
     "useAsReference": "Use as Reference in Generator",
-    "referenceToast": "Template loaded as reference — ready to compose!",
+    "referenceToast": "Template loaded as reference",
     "searchPlaceholder": "Search templates by name or content...",
     "noResultsTitle": "No templates match your search",
     "noResultsDescription": "Try adjusting your search or filter to find what you're looking for."
@@ -216,7 +223,7 @@
     "copy": "Copy",
     "copyMidjourney": "Copy for Midjourney",
     "copyDalle": "Copy for DALL-E",
-    "copied": "Copied!",
+    "copied": "Copied",
     "qualityScore": "AI Quality Score",
     "qualityCommercial": "Commercial Potential",
     "qualityCreativity": "Creativity",
@@ -457,12 +464,13 @@
       "title": "Stock Keywords",
       "copyAll": "Copy all keywords"
     },
-    "copied": "Copied!",
+    "copied": "Copied",
     "copySegment": "Copy {{segment}}",
     "saveAsTemplate": "Save as Template",
     "saveAsTemplateTitle": "Save Prompt as Template",
-    "savedAsTemplate": "Prompt saved as template!",
-    "duplicateWarning": "High similarity with previous prompt detected"
+    "savedAsTemplate": "Prompt saved as template",
+    "duplicateWarning": "High similarity with previous prompt detected",
+    "keepAnyway": "Keep anyway"
   },
   "batchActionBar": {
     "title": "{{count}} prompts generated",
@@ -474,6 +482,6 @@
     "save": "Save",
     "saved": "Batch saved to history",
     "saveError": "Failed to save batch",
-    "exported": "Exported successfully"
+    "exported": "Exported"
   }
 }

@@ -135,7 +135,7 @@ export default function Settings() {
       return
     }
     await saveMasterPrompt(trimmed)
-    showToast('success', t('settings.masterPromptSaved', { defaultValue: 'Master prompt saved successfully' }))
+    showToast('success', t('settings.masterPromptSaved', { defaultValue: 'Master prompt saved' }))
   }
 
   const handleResetMasterPrompt = async () => {
@@ -158,7 +158,7 @@ export default function Settings() {
       })
       setPresetName('')
       setPresetDialogOpen(false)
-      showToast('success', t('toast.presetSaved', { defaultValue: 'Preset saved successfully' }))
+      showToast('success', t('toast.presetSaved', { defaultValue: 'Preset saved' }))
     } catch (err) {
       const debugMsg = err instanceof Error ? err.message : String(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.saveFailed', { defaultValue: 'Failed to save preset' }))
@@ -191,7 +191,7 @@ export default function Settings() {
     setIsApplying(true)
     try {
       await setActiveConfig({ provider, apiKey, endpoint, model })
-      showToast('success', t('toast.configApplied', { defaultValue: 'Configuration applied successfully' }))
+      showToast('success', t('toast.configApplied', { defaultValue: 'Configuration applied' }))
     } catch (err) {
       const debugMsg = err instanceof Error ? err.message : String(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.applyFailed', { defaultValue: 'Failed to apply configuration' }))
@@ -212,7 +212,7 @@ export default function Settings() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    showToast('success', t('toast.exportSuccess', { defaultValue: 'Presets exported successfully' }))
+    showToast('success', t('toast.exportSuccess', { defaultValue: 'Presets exported' }))
   }
 
   const handleImport = async () => {
@@ -229,7 +229,7 @@ export default function Settings() {
       }
       setImportText('')
       setImportOpen(false)
-      showToast('success', t('toast.importSuccess', { defaultValue: 'Presets imported successfully' }))
+      showToast('success', t('toast.importSuccess', { defaultValue: 'Presets imported' }))
     } catch (err) {
       const debugMsg = err instanceof Error ? err.message : String(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.importFailed', { defaultValue: 'Failed to import presets' }))
@@ -279,7 +279,7 @@ export default function Settings() {
       />
 
       {/* Preferences */}
-      <Card>
+      <Card className="card-spotlight">
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
             <Palette className="h-4 w-4 text-brand-primary" />
@@ -294,7 +294,10 @@ export default function Settings() {
           <FieldRow label={t('settings.theme')} htmlFor="theme">
             <Select
               value={preferences.theme}
-              onValueChange={(v) => setTheme(v as 'light' | 'dark' | 'system')}
+                onValueChange={(v) => {
+                  setTheme(v as 'light' | 'dark' | 'system')
+                  showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated' }))
+                }}
             >
               <SelectTrigger id="theme" className="w-40">
                 <SelectValue />
@@ -312,8 +315,9 @@ export default function Settings() {
               value={i18n.language?.startsWith('id') ? 'id' : 'en'}
               onValueChange={(v) => {
                 setLanguage(v)
-                i18n.changeLanguage(v)
-              }}
+                  i18n.changeLanguage(v)
+                  showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated' }))
+                }}
             >
               <SelectTrigger id="language" className="w-40">
                 <SelectValue />
@@ -328,7 +332,7 @@ export default function Settings() {
       </Card>
 
       {/* AI Configuration */}
-      <Card>
+      <Card className="card-spotlight">
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
             <Cpu className="h-4 w-4 text-brand-primary" />
@@ -341,7 +345,7 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           {/* Connection Section */}
-          <SectionGroup icon={Key} title="Connection">
+          <SectionGroup icon={Key} title={t('settings.connection', { defaultValue: 'Connection' })}>
             <FieldRow label={t('settings.provider')} htmlFor="provider">
               <Select
                 value={provider}
@@ -401,7 +405,7 @@ export default function Settings() {
           <SectionDivider />
 
           {/* Model Section */}
-          <SectionGroup icon={Network} title="Model">
+          <SectionGroup icon={Network} title={t('settings.modelSection', { defaultValue: 'Model' })}>
             <FieldRow label={t('settings.model')} htmlFor="model-select">
               <Select value={model} onValueChange={(v) => {
                 setModel(v)
@@ -505,7 +509,7 @@ export default function Settings() {
           <div className="flex flex-wrap items-center gap-2">
             <Button onClick={handleApplyConfig} disabled={isApplying}>
               {isApplying ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4 w-4 motion-safe:animate-pulse" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
@@ -517,7 +521,7 @@ export default function Settings() {
               disabled={isTesting || !apiKey || !endpoint}
             >
               {isTesting ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4 w-4 motion-safe:animate-pulse" />
               ) : testResult === 'success' ? (
                 <CheckCircle2 className="h-4 w-4 text-brand-success" />
               ) : testResult === 'error' ? (
@@ -577,7 +581,7 @@ export default function Settings() {
                 {presets.map((preset) => (
                   <div
                     key={preset.id}
-                    className="group flex items-center justify-between rounded-lg border border-border-subtle bg-surface px-4 py-3 transition-all hover:border-border-strong hover:bg-surface-hover"
+                    className="group flex items-center justify-between rounded-lg border border-border-subtle bg-surface px-4 py-3 transition-all hover:border-border-strong hover:bg-surface-hover card-spotlight"
                   >
                     <div className="flex flex-col gap-0.5">
                       <span className="text-label-ui text-primary">
@@ -587,7 +591,7 @@ export default function Settings() {
                         {preset.provider} &middot; {preset.model}
                       </span>
                     </div>
-                    <div className="flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                       <Button
                         variant="outline"
                         size="sm"
@@ -717,7 +721,7 @@ export default function Settings() {
                 if (deletePresetId) {
                   try {
                     await deletePreset(deletePresetId)
-                    showToast('success', t('toast.presetDeleted', { defaultValue: 'Preset deleted successfully' }))
+                    showToast('success', t('toast.presetDeleted', { defaultValue: 'Preset deleted' }))
                   } catch {
                     showToast('error', t('toast.deleteFailed', { defaultValue: 'Failed to delete preset' }))
                   } finally {
@@ -735,7 +739,7 @@ export default function Settings() {
       </AlertDialog>
 
       {/* Advanced — Master Prompt */}
-      <Card>
+      <Card className="card-spotlight">
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
             <FileJson className="h-4 w-4 text-brand-primary" />
@@ -747,7 +751,7 @@ export default function Settings() {
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="rounded-lg border border-border-subtle bg-warning/5 px-4 py-3 text-sm text-secondary">
+          <div className="rounded-lg border border-brand-warning/20 bg-brand-warning/10 px-4 py-3 text-body-ui text-secondary">
             {t('settings.masterPromptWarning', { defaultValue: 'Editing this affects every generation going forward. Use Reset if results get worse.' })}
           </div>
           {masterPromptLoaded ? (
@@ -814,7 +818,7 @@ function SectionGroup({
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Icon className="h-3.5 w-3.5 text-muted" />
-        <span className="text-caption-ui text-secondary">{title}</span>
+        <span className="text-caption-ui font-semibold text-secondary">{title}</span>
       </div>
       <div className="flex flex-col gap-4 pl-5">
         {children}

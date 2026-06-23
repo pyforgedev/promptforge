@@ -1,13 +1,13 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
 export const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-label-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-label-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-brand-primary text-text-on-brand hover:bg-brand-primary-hover",
+        default: "btn-press bg-brand-primary text-text-on-brand hover:bg-brand-primary-hover",
         destructive:
-          "bg-brand-danger text-text-on-brand hover:bg-brand-danger/90",
+          "btn-press bg-brand-danger text-text-on-brand hover:bg-brand-danger/90",
         outline:
           "border border-border-subtle bg-transparent hover:bg-surface-hover text-primary",
         secondary:

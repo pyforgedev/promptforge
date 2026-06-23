@@ -77,7 +77,7 @@ export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | '
 
   toast.promise(promise, {
     loading: `Preparing ${items.length} prompts for export...`,
-    success: 'Export successful!',
+    success: 'Exported',
     error: 'Export failed.',
   })
 }

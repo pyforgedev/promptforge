@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Download, Upload, RotateCcw, Search } from 'lucide-react'
@@ -53,6 +53,7 @@ export default function TemplatesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const importFileRef = useRef<HTMLInputElement>(null)
 
   const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
 
@@ -94,32 +95,27 @@ export default function TemplatesPage() {
     downloadAsTxt(txt, 'promptforge-templates.txt')
   }
 
-  const handleImport = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.txt'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const text = await file.text()
-      const parsed = parsePromptsFromTxt(text)
-      for (const p of parsed) {
-        if (p.name && p.content) {
-          try {
-            await create({
-              name: p.name,
-              category: p.category || 'general',
-              tags: p.tags || [],
-              content: p.content,
-            })
-          } catch {
-            // skip duplicates
-          }
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    const parsed = parsePromptsFromTxt(text)
+    for (const p of parsed) {
+      if (p.name && p.content) {
+        try {
+          await create({
+            name: p.name,
+            category: p.category || 'general',
+            tags: p.tags || [],
+            content: p.content,
+          })
+        } catch {
+          // skip duplicates
         }
       }
-      refresh()
     }
-    input.click()
+    refresh()
+    if (importFileRef.current) importFileRef.current.value = ''
   }
 
   const handleResetDefault = async () => {
@@ -154,7 +150,14 @@ export default function TemplatesPage() {
         description={t('templates.pageDescription')}
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleImport}>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".txt"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" onClick={() => importFileRef.current?.click()}>
               <Upload className="mr-2 h-4 w-4" />
               {t('templates.import')}
             </Button>
@@ -176,7 +179,7 @@ export default function TemplatesPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <Input
             placeholder={t('templates.searchPlaceholder')}
             value={searchQuery}

@@ -56,10 +56,10 @@ function BreakdownBar({ label, value, max = 25 }: BreakdownBarProps) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-caption-ui">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="text-muted">{label}</span>
         <span className="font-medium tabular-nums text-primary">
           {value}
-          <span className="text-muted-foreground">/{max}</span>
+          <span className="text-muted">/{max}</span>
         </span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
@@ -91,7 +91,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
               <span className="text-label-ui font-semibold leading-none">
                 {t('promptCard.score.title')}
               </span>
-              <span className="text-caption-ui font-normal text-muted-foreground">
+              <span className="text-caption-ui font-normal text-muted">
                 {t('promptCard.score.subtitle')}
               </span>
             </div>
@@ -121,7 +121,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
 
           {score.warnings.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="flex items-center gap-1.5 text-caption-ui font-semibold uppercase tracking-wide text-brand-danger">
+              <p className="flex items-center gap-1.5 text-caption-ui font-semibold text-brand-danger">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {t('promptCard.score.warnings')}
               </p>
@@ -140,7 +140,7 @@ export function AdobeScoreDisplay({ score, children }: AdobeScoreDisplayProps) {
 
           {score.suggestions.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="flex items-center gap-1.5 text-caption-ui font-semibold uppercase tracking-wide text-brand-primary">
+              <p className="flex items-center gap-1.5 text-caption-ui font-semibold text-brand-primary">
                 <Lightbulb className="h-3.5 w-3.5" />
                 {t('promptCard.score.suggestions')}
               </p>

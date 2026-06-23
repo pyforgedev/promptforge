@@ -1,5 +1,5 @@
 ---
-version: 1.2.0
+version: 1.3.0
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -20,8 +20,9 @@ accents.
 
 **Key characteristics:**
 
-- **Developer-centric typography** — UI chrome uses `Inter`; generated prompts
-  and quality scores use `JetBrains Mono` / `Geist Mono` to read like data, not prose.
+- **Developer-centric typography** — UI chrome uses `Geist` (sans-serif); generated
+  prompts and quality scores use `JetBrains Mono` / `Geist Mono` to read like data,
+  not prose.
 - **Motion & speed** — the UI must feel instantaneous: streaming text for
   outputs, skeletons for pending data, no spinners.
 - **Flat depth, glass overlays** — cards are flat with thin borders. Elevation
@@ -69,16 +70,21 @@ live in §2 so they can change without anyone hunting through components.
 
 | Role | Family | Size | Weight | Line-height | Tracking |
 |---|---|---|---|---|---|
-| `display` | Inter | 32px | 700 | 1.2 | -0.02em |
-| `heading` | Inter | 20px | 600 | 1.3 | -0.01em |
-| `body` | Inter | 15px | 400 | 1.5 | — |
-| `label` | Inter | 13px | 500 | 1.4 | — |
-| `caption` | Inter | 12px | 500 | 1.4 | 0.01em |
+| `display` | Geist | 36px | 800 | 1.15 | -0.03em |
+| `heading` | Geist | 20px | 600 | 1.3 | -0.015em |
+| `body` | Geist | 15px | 400 | 1.5 | — |
+| `label` | Geist | 13px | 500 | 1.4 | — |
+| `caption` | Geist | 12px | 500 | 1.4 | 0.01em |
 | `body-mono` | JetBrains Mono / Geist Mono | 14px | 400 | 1.6 | 0 |
 | `metric-score` | JetBrains Mono / Geist Mono | 24px | 600 | 1.0 | -0.02em |
 
 `caption` is new — use it for timestamps, item counts, and metadata in
 `HistoryList`, instead of reusing `label` at a smaller size.
+
+**Font features:** Geist OpenType features are enabled via
+`font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'` for refined
+typographic control. **Font smoothing** is applied globally:
+`-webkit-font-smoothing: antialiased` and `-moz-osx-font-smoothing: grayscale`.
 
 ### 1.3 Spacing, radius, elevation
 
@@ -92,12 +98,18 @@ live in §2 so they can change without anyone hunting through components.
 
 | Z-index layer | Value | Used for |
 |---|---|---|
+| `z-grain` | 1 | Grain/noise overlay (below all content) |
 | `z-base` | 0 | Default page content |
 | `z-sticky` | 10 | Sticky headers/toolbars |
 | `z-dropdown` | 20 | Select menus, popovers |
 | `z-drawer` | 30 | Mobile sidebar drawer |
 | `z-modal` | 40 | Dialogs |
 | `z-toast` | 50 | Copy/duplicate-warning toasts |
+
+The grain overlay (`z-grain: 1`) is a fixed-position texture layer that renders
+above the background (`z-base` defaults to 0 via stacking context) but below
+all interactive content (`z-sticky` and above). This ensures it never visually
+interferes with dropdowns, modals, or toasts.
 
 Every floating element gets its z-index from this table — no ad hoc `z-[999]`
 in component code. This avoids the classic bug where a toast renders behind a
@@ -112,11 +124,30 @@ modal.
 | `motion-slow` | 320ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Drawer slide-in, modal entrance |
 | `motion-stream` | per-character, no easing | — | Text streaming (see §6.2) |
 
-With Framer Motion:
+**Stagger animations:** Use the `animate-stagger-*` utility classes for
+sequential entry animations. Each class applies a `slide-up-fade` keyframe
+animation with incremental delays:
 
-```tsx
-const baseTransition = { duration: 0.2, ease: [0.4, 0, 0.2, 1] };
+| Class | Delay |
+|---|---|
+| `animate-stagger-1` | 0ms |
+| `animate-stagger-2` | 60ms |
+| `animate-stagger-3` | 120ms |
+| `animate-stagger-4` | 180ms |
+
+```css
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-stagger-1 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 0ms forwards; }
+.animate-stagger-2 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 60ms forwards; }
+.animate-stagger-3 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 120ms forwards; }
+.animate-stagger-4 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 180ms forwards; }
 ```
+
+**Button press:** The `btn-press` class applies tactile feedback on `:active`:
+`transform: scale(0.98) translateY(1px)`. Use on primary action buttons.
 
 **Reduced motion is mandatory, not optional:** wrap non-essential motion
 (drawer slides, accordion expand, hover scale) in a check against
@@ -339,7 +370,7 @@ direct example of what this section prevents going forward).
 
 ## 6. Typography Strategy
 
-- **UI labels & navigation:** `label` token (Inter, 13px, Medium) — keeps
+- **UI labels & navigation:** `label` token (Geist, 13px, Medium) — keeps
   interface chrome minimal and out of the way.
 - **The "Prompt" text:** the most important element on screen, uses
   `body-mono`. Monospace gives it a code-block feel, making syntax like
@@ -361,6 +392,8 @@ direct example of what this section prevents going forward).
   buttons/action bars, `24px` for empty-state illustrations.
 - **Color:** icons inherit `currentColor` — never hardcode an icon fill/stroke
   color separately from the text it sits beside.
+- **Sidebar navigation:** nav items use `tracking-tight` for tighter label
+  spacing alongside the icon.
 
 ## 6.2 Streaming Output Panel
 
@@ -614,7 +647,7 @@ undefined, leading to inconsistent spacing and alignment across forms.
 - **Layout:** Labels sit left of their input on a shared row, right-aligned
   mentally but implemented as a flex row with `justify-between`. The input
   group is constrained to `max-w-sm` so fields don't stretch edge-to-edge.
-- **Label token:** always `text-label-ui text-primary` (Inter, 13px, Medium,
+- **Label token:** always `text-label-ui text-primary` (Geist, 13px, Medium,
   §1.2). Never use `text-body-ui` for a label — it creates visual confusion
   between the label and the field value.
 - **Input token:** use the `Input` or `SelectTrigger` components directly.
@@ -655,7 +688,7 @@ function SectionGroup({ icon: Icon, title, children }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Icon className="h-3.5 w-3.5 text-muted" />
-        <span className="text-caption-ui text-secondary">{title}</span>
+        <span className="text-caption-ui text-secondary font-semibold">{title}</span>
       </div>
       <div className="flex flex-col gap-4 pl-5">{children}</div>
     </div>
@@ -681,7 +714,7 @@ more whitespace and clearer section boundaries.
   each card a visual anchor that distinguishes it by glance:
   - Preferences → `Palette`
   - AI Config → `Cpu`
-- **SectionGroup** (§6.10) replaces sub-cards for field grouping within a
+- **SectionGroup** (§6.12) replaces sub-cards for field grouping within a
   settings card. Do not nest `Card` components — use `SectionGroup` +
   `SectionDivider` instead.
 - **Action buttons:** group primary actions (Apply, Test Connection) with
@@ -739,6 +772,72 @@ more whitespace and clearer section boundaries.
 </div>
 ```
 
+## 6.15 Grain Overlay & Texture
+
+New in v1.3 — a subtle noise texture overlays the entire application to add
+visual depth without distracting from content.
+
+- **Position:** fixed-position pseudo-element on `body::before`, covering the
+  full viewport.
+- **Z-index:** `1` (see §1.3), rendering above the background but below all
+  interactive content (dropdowns, modals, toasts at `z-sticky` and above).
+- **Pointer events:** `none` — the overlay is purely visual and must not
+  interfere with clicking through to underlying elements.
+- **Opacity:** `0.028` in light mode, `0.04` in dark mode — subtle enough to
+  be perceptible only on close inspection, sufficient to break up color
+  banding.
+- **Implementation:** a data-URI SVG using `feTurbulence` with `type="fractalNoise"`,
+  `baseFrequency="0.8"`, `numOctaves="4"`, applied as a `background-size: 256px`
+  repeating pattern.
+
+```css
+/* Light mode */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,...");
+  background-size: 256px;
+  opacity: 0.028;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Dark mode override */
+[data-theme="dark"] body::before {
+  opacity: 0.04;
+}
+```
+
+## 6.16 Card Spotlight Border
+
+New in v1.3 — interactive cards gain a luminous border effect that follows the
+cursor position, providing visual feedback on hover.
+
+- **Utility class:** `.card-spotlight` applies to any interactive card component.
+- **Effect:** a `::after` pseudo-element with a `radial-gradient` centered at
+  `--mouse-x`/`--mouse-y` CSS custom properties, using `brand-primary/6` color,
+  fading to transparent at 40% radius.
+- **States:** opacity `0` at rest, `1` on hover — smooth transition via
+  `transition-opacity`.
+- **Pointer events:** `none` — the effect is purely decorative.
+- **Hook:** `useSpotlightBorder` in `src/hooks/useSpotlightBorder.ts` listens to
+  `document mousemove`, throttles via `requestAnimationFrame`, and sets
+  `--mouse-x`/`--mouse-y` on each `.card-spotlight` element relative to its
+  bounding rect.
+- **Applied to:** `GeneratorForm` card, `PromptCard`, `HistoryList` item cards,
+  `QuickStats` metric tiles, `RecentPrompts` prompt tiles, and Home page
+  feature cards.
+
+```tsx
+// Hook usage in component
+const spotlightRef = useSpotlightBorder();
+
+<div ref={spotlightRef} className="card-spotlight rounded-xl border ...">
+  {/* content */}
+</div>
+```
+
 ---
 
 ## 7. Layout & Spacing
@@ -756,6 +855,22 @@ more whitespace and clearer section boundaries.
   8×8 rounded box at `bg-brand-primary/10`. This visually separates cards
   in a multi-card layout without relying on background color changes.
 
+**Layout updates (v1.3):**
+
+- **Viewport height:** `min-h-dvh` on the main layout container to fix iOS
+  Safari's viewport jump on address bar hide/show.
+- **Main content padding:** tightened to `p-4 md:p-6` (was `p-6`) for denser
+  information density.
+- **Header:** reduced to `h-14`. Background changed to `bg-surface/80
+  backdrop-blur-md`. App name uses `text-label-ui font-semibold tracking-tight`
+  instead of `text-heading`.
+- **Sidebar:** navigation container uses `gap-0.5` and `p-3`. Nav items use
+  `rounded-lg` (was `rounded-md`). Active items get a left accent bar
+  (`absolute left-0 h-5 w-0.5 rounded-full bg-brand-primary`). Icons transition
+  to `text-brand-primary` when active, `text-muted group-hover:text-primary`
+  when inactive. Mobile overlay uses `bg-black/60 backdrop-blur-sm`.
+  Background: `bg-surface/95 backdrop-blur-md`.
+
 ---
 
 ## 8. Do's and Don'ts
@@ -770,6 +885,9 @@ more whitespace and clearer section boundaries.
   pattern (§5.1).
 - **Do** test every new component in both `data-theme="light"` and
   `data-theme="dark"`, with keyboard-only navigation, before merging.
+- **Do** use stagger animations (`animate-stagger-*`) for sequential entry
+  effects on hero elements, feature grids, and list items.
+- **Do** apply `btn-press` class to primary action buttons for tactile feedback.
 
 ### Don't
 
@@ -802,3 +920,11 @@ more whitespace and clearer section boundaries.
 - **Don't** leave action buttons permanently visible on list items in a
   settings page — reveal them on hover via `group-hover:opacity-100` to
   reduce visual noise (§6.12).
+- **Don't** use all-caps labels — labels should be sentence case. The
+  `SectionGroup` header uses `text-caption-ui text-secondary font-semibold`
+  without `uppercase` or `tracking-wide`.
+- **Don't** let the grain overlay (`z-grain: 1`) visually interfere with
+  modals, dropdowns, or toasts — these components render at `z-sticky` (10)
+  and above, ensuring proper stacking order.
+
+(End of file - total 946 lines)

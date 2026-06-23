@@ -26,8 +26,8 @@ export function BatchActionBar({
         <p className="text-label-ui font-medium text-primary">
           {t('batchActionBar.title', { count })}
         </p>
-        <p className="text-caption-ui text-muted-foreground">
-          {t('batchActionBar.nicheLabel')}: <span className="font-semibold">{niche}</span>
+        <p className="text-caption-ui text-muted">
+          {t('batchActionBar.nicheLabel')}: <span className="font-semibold text-primary">{niche}</span>
         </p>
       </div>
       <div className="flex items-center gap-2">

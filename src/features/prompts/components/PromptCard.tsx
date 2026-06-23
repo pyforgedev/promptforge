@@ -30,7 +30,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
   const { t } = useTranslation()
 
   return (
-    <Card className="cursor-pointer transition-all duration-200 hover:border-primary/30">
+    <Card className="group cursor-pointer transition-all duration-200 hover:border-border-strong hover:bg-surface-hover card-spotlight">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-heading">{prompt.name}</CardTitle>
@@ -40,7 +40,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
         </div>
       </CardHeader>
       <CardContent>
-        <p className="line-clamp-3 text-body-ui text-muted-foreground">
+        <p className="line-clamp-3 text-body-mono text-secondary">
           {prompt.content}
         </p>
         {prompt.tags.length > 0 && (
@@ -57,11 +57,11 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
         )}
       </CardContent>
       <CardFooter className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-caption-ui text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-caption-ui text-muted">
           <Clock className="h-3.5 w-3.5" />
           {formatDate(prompt.updatedAt)}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           {onUseAsReference && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -71,7 +71,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
                   onClick={(e) => { e.stopPropagation(); onUseAsReference(prompt) }}
                   aria-label={t('templates.useAsReference')}
                 >
-                  <Sparkles className="h-4 w-4 text-brand-primary" />
+                  <Sparkles className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('templates.useAsReference')}</TooltipContent>
@@ -98,7 +98,7 @@ export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, o
                 onClick={(e) => { e.stopPropagation(); onDelete(prompt.id) }}
                 aria-label={t('common.delete')}
               >
-                <Trash2 className="h-4 w-4 text-brand-danger" />
+                  <Trash2 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('common.delete')}</TooltipContent>

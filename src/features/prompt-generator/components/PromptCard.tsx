@@ -35,10 +35,11 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
   }
 
   return (
-    <div className="border-t border-border/50">
+    <div className="border-t border-border-subtle">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted-foreground transition-colors hover:text-primary"
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted transition-colors hover:text-primary"
       >
         <span className="flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5" />
@@ -63,13 +64,14 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
               <div className="flex flex-wrap gap-1.5">
                 {keywords.map((kw, i) => (
                   <button
+                    type="button"
                     key={kw}
                     onClick={() => copyOne(kw, i)}
                     className={cn(
                       'cursor-pointer rounded-full border px-2.5 py-0.5 text-caption-ui transition-colors',
                     copiedIdx === i
                       ? 'border-brand-success/40 bg-brand-success/10 text-brand-success'
-                      : 'border-border-subtle bg-surface-hover text-muted-foreground hover:border-brand-primary/40 hover:text-primary',
+                      : 'border-border-subtle bg-surface-hover text-muted hover:border-brand-primary/40 hover:text-primary',
                     )}
                   >
                     {kw}
@@ -77,8 +79,9 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
                 ))}
               </div>
               <button
+                type="button"
                 onClick={copyAll}
-                className="cursor-pointer self-start text-caption-ui text-muted-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
+                className="cursor-pointer self-start text-caption-ui text-muted underline-offset-2 transition-colors hover:text-primary hover:underline"
               >
                 {t('promptCard.keywords.copyAll')}
               </button>
@@ -114,6 +117,7 @@ export function PromptCard({
   const [activePlatform, setActivePlatform] = useState<DisplayPlatform>(defaultPlatform)
   const [copied, setCopied] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [duplicateWarningDismissed, setDuplicateWarningDismissed] = useState(false)
 
   const displayText = prompt.platformVariants[activePlatform]
 
@@ -158,26 +162,26 @@ export function PromptCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
-      className="relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface card-spotlight transition-all duration-200 hover:border-border-strong"
     >
       {isRegenerating && (
         <div className="absolute inset-0 z-10 flex flex-col gap-3 rounded-xl bg-surface/80 p-4 backdrop-blur-sm">
-          <div className="h-4 w-3/4 animate-pulse rounded bg-border" />
-          <div className="h-4 w-1/2 animate-pulse rounded bg-border" />
-          <div className="h-4 w-2/3 animate-pulse rounded bg-border" />
+          <div className="h-4 w-3/4 animate-pulse rounded bg-border-subtle" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-border-subtle" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-border-subtle" />
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 border-b border-border-subtle bg-surface-hover/50 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <span className="text-caption-ui font-medium text-muted-foreground">
+          <span className="text-caption-ui font-medium text-muted">
             {t('promptCard.variantLabel', {
               index: prompt.variantIndex,
               total: totalInBatch,
             })}
           </span>
           {prompt.generatorInput.targetPlatform && prompt.generatorInput.targetPlatform !== 'both' && (
-            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            <span className="rounded-full bg-brand-primary/10 border border-brand-primary/20 px-2 py-0.5 text-[10px] font-semibold text-brand-primary">
               {t('promptCard.optimizedFor', {
                 platform: prompt.generatorInput.targetPlatform === 'dalle3'
                   ? t('promptCard.platform.dalle3')
@@ -189,12 +193,12 @@ export function PromptCard({
 
         <div className="flex items-center gap-2">
           {prompt.legacy ? (
-            <span className="rounded-full border border-border-subtle bg-surface-hover px-2 py-0.5 text-caption-ui text-muted-foreground">
+            <span className="rounded-full border border-border-subtle bg-surface-hover px-2 py-0.5 text-caption-ui text-muted">
               {t('promptCard.legacyBadge')}
             </span>
           ) : (
             <AdobeScoreDisplay score={prompt.adobeScore}>
-              <button className="cursor-pointer">
+              <button type="button" className="cursor-pointer">
                 <AdobeScoreBadge score={prompt.adobeScore.total} />
               </button>
             </AdobeScoreDisplay>
@@ -203,23 +207,24 @@ export function PromptCard({
       </div>
 
       {showPlatformTabs && (
-        <div className="flex border-b border-border/60 px-4">
+        <div className="flex border-b border-border-subtle px-4">
           {platforms.map((p) => (
             <button
+              type="button"
               key={p.id}
               onClick={() => setActivePlatform(p.id)}
               className={cn(
                 'relative cursor-pointer py-2 pr-4 text-caption-ui font-medium transition-colors',
                 activePlatform === p.id
                   ? 'text-primary'
-                  : 'text-muted-foreground hover:text-primary',
+                  : 'text-muted hover:text-primary',
               )}
             >
               {p.label}
               {activePlatform === p.id && (
                 <motion.span
                   layoutId={`tab-underline-${prompt.id}`}
-                  className="absolute bottom-0 left-0 right-4 h-0.5 rounded-full bg-primary"
+                  className="absolute bottom-0 left-0 right-4 h-0.5 rounded-full bg-brand-primary"
                 />
               )}
             </button>
@@ -227,8 +232,9 @@ export function PromptCard({
         </div>
       )}
 
-      {prompt.isDuplicate && (
-        <div className="flex items-start gap-2.5 border-b border-border-subtle bg-brand-warning/10 px-4 py-2 text-caption-ui text-brand-warning">
+      {prompt.isDuplicate && !duplicateWarningDismissed && (
+        <div className="flex flex-col gap-2 border-b border-border-subtle bg-brand-warning/10 px-4 py-3 text-caption-ui text-brand-warning sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-2.5">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-warning" />
           <div className="flex flex-col gap-0.5">
             <span className="font-medium">{t('promptCard.duplicateWarning')}</span>
@@ -238,16 +244,27 @@ export function PromptCard({
               </span>
             )}
           </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 shrink-0 self-start text-caption-ui text-brand-warning hover:bg-brand-warning/10 hover:text-brand-warning"
+            onClick={() => setDuplicateWarningDismissed(true)}
+          >
+            {t('promptCard.keepAnyway')}
+          </Button>
         </div>
       )}
 
       <div className="relative px-4 py-3">
-        <p className="select-text text-body-ui leading-relaxed text-primary">{displayText}</p>
+        <p className="select-text pr-9 text-body-mono text-primary">{displayText}</p>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              type="button"
               onClick={handleCopy}
-              className="absolute right-3 top-3 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-primary"
+              className="absolute right-3 top-3 cursor-pointer rounded-md p-1.5 text-muted opacity-100 transition-colors hover:bg-surface-hover hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
               aria-label={t('promptCard.copyPrompt')}
             >
               {copied ? (
@@ -274,7 +291,7 @@ export function PromptCard({
         <KeywordsPanel keywords={prompt.commercialKeywords} />
       )}
 
-      <div className="flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 border-t border-border-subtle px-4 py-2.5">
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -282,7 +299,7 @@ export function PromptCard({
             onClick={handleFavorite}
             className={cn(
               'gap-1.5 text-caption-ui',
-              prompt.isFavorite ? 'text-rose-400 hover:text-rose-300' : 'text-muted-foreground',
+              prompt.isFavorite ? 'text-brand-primary hover:text-brand-primary-hover' : 'text-muted',
             )}
           >
             <Heart
@@ -297,7 +314,7 @@ export function PromptCard({
               variant="ghost"
               size="sm"
               onClick={() => onSaveAsTemplate(prompt)}
-              className="gap-1.5 text-caption-ui text-muted-foreground"
+              className="gap-1.5 text-caption-ui text-muted"
             >
               <Bookmark className="h-3.5 w-3.5" />
               {t('promptCard.saveAsTemplate')}
@@ -311,7 +328,7 @@ export function PromptCard({
             size="sm"
             onClick={handleRegenerate}
             disabled={isRegenerating}
-            className="gap-1.5 text-caption-ui text-muted-foreground"
+            className="gap-1.5 text-caption-ui text-muted"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             {t('promptCard.regenerateVariant')}

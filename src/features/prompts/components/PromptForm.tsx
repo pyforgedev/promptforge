@@ -8,6 +8,8 @@ import {
 } from '@/features/prompts/utils/promptValidators'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { AlertCircle } from 'lucide-react'
 import type { Prompt } from '@/types'
 
 interface PromptFormProps {
@@ -60,7 +62,7 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           aria-describedby={errors.name ? 'name-error' : undefined}
         />
         {errors.name && (
-          <p id="name-error" className="text-caption-ui text-brand-danger">{errors.name.message}</p>
+          <p id="name-error" className="flex items-center gap-1 text-caption-ui text-brand-danger"><AlertCircle className="h-3 w-3" />{errors.name.message}</p>
         )}
       </div>
 
@@ -75,7 +77,7 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           aria-describedby={errors.category ? 'category-error' : undefined}
         />
         {errors.category && (
-          <p id="category-error" className="text-caption-ui text-brand-danger">{errors.category.message}</p>
+          <p id="category-error" className="flex items-center gap-1 text-caption-ui text-brand-danger"><AlertCircle className="h-3 w-3" />{errors.category.message}</p>
         )}
       </div>
 
@@ -83,16 +85,16 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
         <label htmlFor="content" className="text-label-ui">
           {t('prompts.content')}
         </label>
-        <textarea
+        <Textarea
           id="content"
           rows={8}
-          className="flex w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-body-ui placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-40"
           {...register('content')}
           aria-invalid={!!errors.content}
           aria-describedby={errors.content ? 'content-error' : undefined}
         />
         {errors.content && (
-          <p id="content-error" className="text-caption-ui text-brand-danger">{errors.content.message}</p>
+          <p id="content-error" className="flex items-center gap-1 text-caption-ui text-brand-danger"><AlertCircle className="h-3 w-3" />{errors.content.message}</p>
         )}
       </div>
 
@@ -108,7 +110,7 @@ export function PromptForm({ initialData, onSubmit, onCancel }: PromptFormProps)
           placeholder="tag1, tag2, tag3"
         />
         {errors.tags && (
-          <p className="text-caption-ui text-brand-danger">{errors.tags.message}</p>
+          <p className="flex items-center gap-1 text-caption-ui text-brand-danger"><AlertCircle className="h-3 w-3" />{errors.tags.message}</p>
         )}
       </div>
 

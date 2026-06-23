@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Copy, Trash2, Star, Clock } from 'lucide-react'
+import { AlertCircle, Copy, Trash2, Star, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -55,8 +55,9 @@ export const HistoryList = memo(function HistoryList({
 
   if (error) {
     return (
-      <div className="overlay-glass border-l-[3px] border-l-brand-danger p-4 text-body-ui rounded-r-lg text-brand-danger">
-        {error}
+      <div className="overlay-glass flex items-start gap-2 rounded-r-lg border-l-[3px] border-l-brand-danger p-4 text-body-ui">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-danger" />
+        <span className="text-secondary">{error}</span>
       </div>
     )
   }
@@ -86,7 +87,7 @@ export const HistoryList = memo(function HistoryList({
           <Card 
             key={item.id} 
             className={cn(
-              "group relative transition-all duration-200 hover:border-brand-primary/30 cursor-pointer",
+              "group relative cursor-pointer transition-all duration-200 hover:border-border-strong hover:bg-surface-hover card-spotlight",
               isSelected && "border-brand-primary bg-brand-primary/5 ring-1 ring-brand-primary/20"
             )}
             onClick={() => toggleSelect(item.id)}
@@ -121,7 +122,7 @@ export const HistoryList = memo(function HistoryList({
               <p className="text-body-mono text-primary leading-relaxed line-clamp-2 sm:line-clamp-3">
                 {item.fullPrompt}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-3 flex flex-wrap gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="outline"
                   size="sm"
@@ -134,10 +135,10 @@ export const HistoryList = memo(function HistoryList({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 sm:h-8 text-caption-ui cursor-pointer hover:bg-brand-danger/10 hover:border-brand-danger/30 hover:text-brand-danger"
+                  className="h-7 cursor-pointer text-caption-ui text-muted hover:border-brand-danger/30 hover:bg-brand-danger/10 hover:text-brand-danger sm:h-8"
                   onClick={() => handleDelete(item.id)}
                 >
-                  <Trash2 className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-3.5 sm:w-3.5 text-brand-danger" />
+                  <Trash2 className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-3.5 sm:w-3.5" />
                   {t('common.delete')}
                 </Button>
               </div>

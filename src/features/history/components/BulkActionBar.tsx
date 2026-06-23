@@ -57,7 +57,7 @@ export const BulkActionBar = () => {
           exit={{ y: shouldReduceMotion ? 0 : 100, opacity: 0 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-toast"
         >
-          <div className="overlay-glass flex items-center gap-4 px-6 py-3 rounded-full shadow-xl">
+          <div className="overlay-glass flex items-center gap-4 rounded-full px-4 py-3 shadow-xl sm:px-6">
             <span className="text-label-ui font-medium text-primary">
               {count === 1 ? t('history.itemSelected') : t('history.itemsSelected', { count })}
             </span>
@@ -76,7 +76,7 @@ export const BulkActionBar = () => {
                     {t('history.export')}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="overlay-glass border-strong">
+                <DropdownMenuContent align="end" className="overlay-glass border-border-strong">
                   <DropdownMenuItem onClick={() => handleExport('txt')} className="cursor-pointer">TXT</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">JSON</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">CSV</DropdownMenuItem>
@@ -94,7 +94,7 @@ export const BulkActionBar = () => {
                     {t('history.move')}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="overlay-glass border-strong">
+                <DropdownMenuContent align="end" className="overlay-glass border-border-strong">
                   <DropdownMenuItem onClick={() => handleBulkMove(null)} className="cursor-pointer">
                     {t('history.allPrompts')}
                   </DropdownMenuItem>
@@ -109,7 +109,7 @@ export const BulkActionBar = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 text-brand-danger/80 hover:text-brand-danger hover:bg-brand-danger/10 cursor-pointer"
+                className="h-8 cursor-pointer text-muted hover:bg-brand-danger/10 hover:text-brand-danger"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-3.5 w-3.5" />
@@ -139,4 +139,3 @@ export const BulkActionBar = () => {
     </AnimatePresence>
   )
 }
-

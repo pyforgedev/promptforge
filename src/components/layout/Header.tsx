@@ -34,47 +34,47 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)
-    showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated successfully' }))
+    showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated' }))
   }
 
   const handleThemeChange = (value: Theme) => {
     setTheme(value)
-    showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated successfully' }))
+    showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated' }))
   }
 
   const ActiveThemeIcon = themes.find(entry => entry.value === preferences.theme)?.icon || Monitor
 
   return (
-    <header className="sticky top-0 z-sticky flex h-16 items-center justify-between border-b border-border-subtle bg-overlay/80 px-6 backdrop-blur-md">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-sticky flex h-14 items-center justify-between border-b border-border-subtle bg-surface/80 px-4 md:px-6 backdrop-blur-md">
+      <div className="flex items-center gap-3">
         <button
-          className="cursor-pointer rounded-md p-2 hover:bg-surface-hover md:hidden"
+          className="cursor-pointer rounded-md p-1.5 transition-colors duration-150 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app lg:hidden"
           onClick={onMenuToggle}
-          aria-label={t('nav.home')}
+          aria-label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
         >
           <Menu className="h-5 w-5 text-primary" />
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <AppLogo size="sm" />
-          <h1 className="text-heading text-primary">
+          <span className="text-label-ui font-semibold text-primary tracking-tight">
             {t('app.name')}
-          </h1>
+          </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Select
           value={i18n.language?.startsWith('id') ? 'id' : 'en'}
           onValueChange={(v) => changeLanguage(v)}
         >
-          <SelectTrigger className="w-[140px] h-8 px-3 text-caption-ui" aria-label={t('common.selectLanguage')}>
+          <SelectTrigger className="h-8 w-[130px] border-border-subtle bg-transparent px-3 text-caption-ui transition-colors hover:bg-surface-hover" aria-label={t('common.selectLanguage')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="en" className={i18n.language?.startsWith('en') ? 'font-bold' : ''}>
+            <SelectItem value="en" className={i18n.language?.startsWith('en') ? 'font-semibold' : ''}>
               {t('language.en')}
             </SelectItem>
-            <SelectItem value="id" className={i18n.language?.startsWith('id') ? 'font-bold' : ''}>
+            <SelectItem value="id" className={i18n.language?.startsWith('id') ? 'font-semibold' : ''}>
               {t('language.id')}
             </SelectItem>
           </SelectContent>
@@ -84,7 +84,7 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 w-8 px-0" aria-label={t('theme.toggleTheme')}>
+                <Button variant="ghost" size="sm" className="h-8 w-8 px-0 hover:bg-surface-hover transition-colors" aria-label={t('theme.toggleTheme')}>
                   <ActiveThemeIcon className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -93,18 +93,18 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
               {t('theme.toggleTheme')}
             </TooltipContent>
           </Tooltip>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-40">
             {themes.map(({ value, icon: Icon, label }) => (
               <DropdownMenuItem
                 key={value}
                 onSelect={() => handleThemeChange(value)}
                 className={`flex items-center gap-2 cursor-pointer ${
-                  preferences.theme === value ? 'font-bold text-brand-primary bg-brand-primary/10' : ''
+                  preferences.theme === value ? 'font-medium text-brand-primary bg-brand-primary/8' : ''
                 }`}
               >
                 <Icon className="h-4 w-4" />
                 <span>{t(label)}</span>
-                {preferences.theme === value && <Check className="ml-auto h-4 w-4" />}
+                {preferences.theme === value && <Check className="ml-auto h-3.5 w-3.5" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

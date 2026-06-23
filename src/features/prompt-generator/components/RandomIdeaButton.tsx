@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dices, Loader2, AlertCircle } from 'lucide-react'
+import { Dices, AlertCircle } from 'lucide-react'
 import { useReducedMotion } from 'framer-motion'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { generateCompletion } from '@/services/ai/aiService'
@@ -58,7 +58,7 @@ export function RandomIdeaButton({ category, onIdeaGenerated }: RandomIdeaButton
               className="h-5 w-5 text-muted hover:text-primary"
             >
               {isLoading ? (
-                <Loader2 className={`h-3.5 w-3.5${shouldReduceMotion ? '' : ' animate-spin'}`} />
+                <Dices className={`h-3.5 w-3.5${shouldReduceMotion ? '' : ' motion-safe:animate-pulse'}`} />
               ) : (
                 <Dices className="h-3.5 w-3.5" />
               )}

@@ -23,17 +23,17 @@
     "id": "Indonesia"
   },
   "home": {
-    "title": "Selamat Datang di PromptForge",
-    "subtitle": "Buat, kelola, dan optimalkan prompt AI Anda",
+    "title": "IDE prompt untuk ide gambar stok",
+    "subtitle": "Susun prompt microstock yang bervariasi, nilai potensi komersialnya, dan kurangi pengulangan di setiap batch.",
     "getStarted": "Mulai",
-    "featurePrompts": "Manajer Prompt",
-    "featurePromptsDesc": "Buat, edit, dan atur prompt AI Anda dengan mudah",
-    "featureGenerate": "Generator AI",
-    "featureGenerateDesc": "Uji prompt Anda terhadap model AI secara instan",
-    "featureStorage": "Penyimpanan Lokal",
-    "featureStorageDesc": "Semua data disimpan secara lokal dengan IndexedDB untuk privasi",
-    "featureI18n": "Multi-bahasa",
-    "featureI18nDesc": "Beralih antara Bahasa Indonesia dan Inggris dengan mulus"
+    "featurePrompts": "Bangku template",
+    "featurePromptsDesc": "Simpan struktur prompt yang dapat dipakai ulang dan kirim referensi kembali ke komposer.",
+    "featureGenerate": "Komposer batch",
+    "featureGenerateDesc": "Buat 1, 3, 5, atau 10 variasi prompt dengan skor komersial.",
+    "featureStorage": "Memori prompt lokal",
+    "featureStorageDesc": "Riwayat IndexedDB membuat ide yang dihasilkan tetap mudah dicari tanpa keluar dari perangkat.",
+    "featureI18n": "Alur kerja bilingual",
+    "featureI18nDesc": "Susun dan kelola prompt dalam Bahasa Indonesia atau Inggris."
   },
   "dashboard": {
     "title": "Dasbor",
@@ -56,7 +56,8 @@
     "confirm": "Konfirmasi",
     "all": "Semua",
     "selectLanguage": "Pilih bahasa",
-    "options": "Opsi"
+    "options": "Opsi",
+    "openNavigation": "Buka navigasi"
   },
   "prompts": {
     "name": "Nama",
@@ -77,9 +78,11 @@
     "theme": "Tema",
     "language": "Bahasa",
     "aiConfig": "Konfigurasi AI",
+    "connection": "Koneksi",
     "apiKey": "Kunci API",
     "endpoint": "Endpoint",
     "model": "Model",
+    "modelSection": "Model",
     "apply": "Terapkan",
     "savePreset": "Simpan Prasetel",
     "savedPresets": "Prasetel Tersimpan",
@@ -103,13 +106,15 @@
     "masterPromptDescription": "Lihat dan edit prompt sistem utama yang dikirim ke AI untuk setiap generasi.",
     "masterPromptWarning": "Mengedit ini memengaruhi setiap generasi ke depan. Gunakan Reset jika hasil memburuk.",
     "masterPromptPlaceholder": "Master prompt bawaan akan muncul di sini...",
-    "masterPromptSaved": "Master prompt berhasil disimpan",
+    "masterPromptSaved": "Master prompt disimpan",
     "masterPromptReset": "Master prompt berhasil direset ke bawaan"
   },
   "history": {
     "pageTitle": "Riwayat Prompt",
     "pageDescription": "Lihat dan kelola prompt yang telah dihasilkan",
     "searchPlaceholder": "Cari prompt...",
+    "searchGlobalPlaceholder": "Cari di semua tempat...",
+    "searchLocalPlaceholder": "Cari di folder ini...",
     "minRating": "Rating Min",
     "resetFilters": "Reset",
     "emptyTitle": "Belum ada riwayat",
@@ -139,30 +144,32 @@
     "deselectAll": "Batalkan semua pilihan"
   },
   "toast": {
-    "copySuccess": "Prompt berhasil disalin",
-    "deleteSuccess": "Prompt berhasil dihapus",
-    "deleteAllSuccess": "Semua riwayat berhasil dihapus",
-    "generationSuccess": "Prompt berhasil dibuat",
-    "improveSuccess": "Prompt berhasil ditingkatkan",
+    "copySuccess": "Prompt disalin",
+    "deleteSuccess": "Prompt dihapus",
+    "deleteAllSuccess": "Semua riwayat dihapus",
+    "generationSuccess": "Prompt dibuat",
+    "improveSuccess": "Prompt ditingkatkan",
     "error": "Kesalahan",
-    "folderCreated": "Folder berhasil dibuat",
-    "folderDeleted": "Folder berhasil dihapus",
-    "folderRenamed": "Folder berhasil diganti nama",
+    "folderCreated": "Folder dibuat",
+    "folderDeleted": "Folder dihapus",
+    "folderRenamed": "Folder diganti nama",
     "itemsDeleted": "Berhasil menghapus {{count}} item",
     "itemsMoved": "Berhasil memindahkan {{count}} item ke {{folder}}",
-    "itemDeleted": "Item berhasil dihapus",
-    "presetSaved": "Prasetel berhasil disimpan",
+    "itemDeleted": "Item dihapus",
+    "presetSaved": "Prasetel disimpan",
     "saveFailed": "Gagal menyimpan prasetel",
-    "configApplied": "Konfigurasi berhasil diterapkan",
+    "configApplied": "Konfigurasi diterapkan",
     "applyFailed": "Gagal menerapkan konfigurasi",
-    "exportSuccess": "Prasetel berhasil diekspor",
-    "importSuccess": "Prasetel berhasil diimpor",
+    "exportSuccess": "Prasetel diekspor",
+    "importSuccess": "Prasetel diimpor",
     "importFailed": "Gagal mengimpor prasetel",
     "modelAdded": "Model kustom ditambahkan",
     "modelRemoved": "Model kustom dihapus",
     "presetLoaded": "Prasetel dimuat",
-    "presetDeleted": "Prasetel berhasil dihapus",
-    "deleteFailed": "Gagal menghapus prasetel"
+    "presetDeleted": "Prasetel dihapus",
+    "deleteFailed": "Gagal menghapus prasetel",
+    "themeChanged": "Tema diperbarui",
+    "languageChanged": "Bahasa diperbarui"
   },
   "templates": {
     "pageTitle": "Template Prompt",
@@ -176,7 +183,7 @@
     "export": "Ekspor",
     "resetDefault": "Reset Default",
     "useAsReference": "Gunakan sebagai Referensi di Generator",
-    "referenceToast": "Template dimuat sebagai referensi — siap untuk menyusun prompt!",
+    "referenceToast": "Template dimuat sebagai referensi",
     "searchPlaceholder": "Cari template berdasarkan nama atau konten...",
     "noResultsTitle": "Tidak ada template yang sesuai dengan pencarian Anda",
     "noResultsDescription": "Coba sesuaikan pencarian atau filter Anda."
@@ -216,7 +223,7 @@
     "copy": "Salin",
     "copyMidjourney": "Salin untuk Midjourney",
     "copyDalle": "Salin untuk DALL-E",
-    "copied": "Disalin!",
+    "copied": "Disalin",
     "qualityScore": "Skor Kualitas AI",
     "qualityCommercial": "Potensi Komersial",
     "qualityCreativity": "Kreativitas",
@@ -457,12 +464,13 @@
       "title": "Kata Kunci Stok",
       "copyAll": "Salin semua kata kunci"
     },
-    "copied": "Disalin!",
+    "copied": "Disalin",
     "copySegment": "Salin {{segment}}",
     "saveAsTemplate": "Simpan sebagai Template",
     "saveAsTemplateTitle": "Simpan Prompt sebagai Template",
-    "savedAsTemplate": "Prompt disimpan sebagai template!",
-    "duplicateWarning": "Kemiripan tinggi dengan prompt sebelumnya terdeteksi"
+    "savedAsTemplate": "Prompt disimpan sebagai template",
+    "duplicateWarning": "Kemiripan tinggi dengan prompt sebelumnya terdeteksi",
+    "keepAnyway": "Tetap gunakan"
   },
   "batchActionBar": {
     "title": "{{count}} prompt dihasilkan",
@@ -474,6 +482,6 @@
     "save": "Simpan",
     "saved": "Batch tersimpan ke riwayat",
     "saveError": "Gagal menyimpan batch",
-    "exported": "Berhasil diekspor"
+    "exported": "Diekspor"
   }
 }

@@ -22,10 +22,11 @@ export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps
   }
 
   return (
-    <div className="border-t border-border/50">
+    <div className="border-t border-border-subtle">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted-foreground transition-colors hover:text-primary"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-caption-ui font-medium text-muted transition-colors hover:text-primary"
       >
         <span>{t('promptCard.negative.title')}</span>
         <ChevronDown
@@ -44,14 +45,15 @@ export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-4 pb-3">
-              <p className="text-caption-ui text-muted-foreground">
+              <p className="text-caption-ui text-muted">
                 {t('promptCard.negative.description')}
               </p>
               <div className="relative rounded-md bg-surface-hover/50 p-3">
                 <p className="pr-8 text-body-ui leading-relaxed text-primary">{negativePrompt}</p>
                 <button
+                  type="button"
                   onClick={handleCopy}
-                  className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:text-primary"
+                  className="absolute right-2 top-2 rounded p-1 text-muted transition-colors hover:text-primary"
                   aria-label={t('promptCard.negative.copy')}
                 >
                   {copied ? (
