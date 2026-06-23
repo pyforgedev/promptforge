@@ -305,7 +305,7 @@
         "placeholder": "Paste or select a template as reference..."
       },
       "category": {
-        "label": "Niche Category",
+        "label": "Category",
         "placeholder": "Select a category",
         "options": {
           "technology": "Technology",
@@ -324,6 +324,58 @@
       },
       "niche": {
         "placeholder": "e.g., A programmer working late at night, a futuristic city skyline, a family enjoying a picnic in a sunny park..."
+      },
+      "language": {
+        "label": "Language",
+        "options": {
+          "en": "English",
+          "id": "Bahasa Indonesia"
+        }
+      },
+      "aspectRatio": {
+        "label": "Aspect Ratio",
+        "random": "Random"
+      },
+      "variationLevel": {
+        "label": "Variation Level"
+      },
+      "mood": {
+        "label": "Mood",
+        "tooltip": "User Defined pins a specific mood across all prompts. System Defined lets the engine vary the mood based on the Variation Level.",
+        "systemDescription": "System will vary mood automatically based on Variation Level."
+      },
+      "colorPalette": {
+        "label": "Color Palette",
+        "tooltip": "User Defined pins a specific palette across all prompts. System Defined lets the engine vary colors based on the Variation Level.",
+        "systemDescription": "System will vary color palette automatically based on Variation Level."
+      },
+      "artStyle": {
+        "label": "Art Style",
+        "tooltip": "User Defined pins a specific art style across all prompts. System Defined lets the engine vary style based on the Variation Level.",
+        "systemDescription": "System will vary art style automatically based on Variation Level."
+      },
+      "background": {
+        "label": "Background",
+        "tooltip": "User Defined pins a specific background across all prompts. System Defined lets the engine vary the background based on the Variation Level.",
+        "systemDescription": "System will vary background automatically based on Variation Level."
+      },
+      "humanModel": {
+        "label": "Human Model",
+        "tooltip": "User Defined pins a specific human model across all prompts. System Defined lets the engine vary the model based on the Variation Level.",
+        "systemDescription": "System will vary human model automatically based on Variation Level."
+      },
+      "customInstructions": {
+        "label": "Custom Instructions",
+        "placeholder": "e.g., Focus on natural lighting, avoid cluttered backgrounds, emphasize textures..."
+      },
+      "includeHistory": {
+        "label": "Include History for Better Variations",
+        "description": "Use recent prompts from your history to avoid generating similar content",
+        "tooltip": "Includes this many recent prompts from the selected Category as context, so new generations avoid repeating them. Higher numbers use more tokens per generation.",
+        "sliderLabel": "History limit"
+      },
+      "diverseRepresentation": {
+        "disabledTooltip": "Not applicable when Human Model is set to No People"
       }
     },
     "aspectRatios": {

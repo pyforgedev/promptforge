@@ -92,12 +92,22 @@ class PromptForgeDB extends Dexie {
         const niche = item.niche || 'Unknown'
         const category = 'other'
 
-        // Create a mock GeneratorInput based on the old data
         const generatorInput: GeneratorInput = {
           niche,
           category,
           batchSize: 1,
           usageContext: 'commercial',
+          language: 'en',
+          aspectRatio: 'random',
+          variationLevel: 3,
+          mood: { mode: 'user', value: 'none' },
+          colorPalette: { mode: 'user', value: 'none' },
+          artStyle: { mode: 'user', value: 'none' },
+          background: { mode: 'user', value: 'none' },
+          humanModel: { mode: 'user', value: 'no_people' },
+          customInstructions: '',
+          includeHistory: false,
+          includeHistoryCount: 20,
           targetMarket: 'global',
           targetPlatform: 'dalle3',
           includeDiversity: true,

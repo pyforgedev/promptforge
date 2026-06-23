@@ -1,7 +1,5 @@
-// MetaPromptBuilder — constructs system + user prompts for the LLM call.
-// Implements Section 7 of the plan exactly.
-
-import type { GeneratorInput, ImagePlatform, VariationStrategy } from '../types'
+import type { GeneratorInput, ImagePlatform } from '../types'
+import { OPTION_LABELS } from '../types'
 import { PLATFORM_SPECS } from '../constants/platformSpecs'
 import {
   COMPOSITION_STYLES,
@@ -12,6 +10,13 @@ import {
   ENVIRONMENTS,
   PHOTOGRAPHIC_STYLES,
 } from '../constants/photographyDimensions'
+import {
+  buildVariationPlan,
+  resolveStatus,
+  pickRandom,
+  type VariationPlan,
+  type PoolDimension,
+} from './VariationStrategyEngine'
 
 const SYSTEM_PROMPT = `You are a senior stock photography art director and AI image prompt engineer with \
 10+ years of experience creating commercially successful images for Adobe Stock, \
@@ -79,11 +84,90 @@ const OUTPUT_JSON_SCHEMA = `{
   ]
 }`
 
+const DIMENSION_LABELS: Record<PoolDimension, string> = {
+  lighting: 'Lighting',
+  camera_angle: 'Camera Angle / Shot Type',
+  composition: 'Composition',
+  background: 'Background / Environment',
+  color_palette: 'Color Palette / Grading',
+  mood: 'Atmosphere / Mood',
+  technical: 'Technical (lens, DOF)',
+  subject_pose: 'Subject Pose / Action detail',
+}
+
+const DIMENSION_OPTIONS: Partial<Record<PoolDimension, readonly string[]>> = {
+  lighting: LIGHTING_TYPES,
+  composition: COMPOSITION_STYLES,
+  color_palette: COLOR_PALETTES,
+  mood: MOOD_DESCRIPTORS,
+  technical: TECHNICAL_STYLES,
+  background: ENVIRONMENTS,
+}
+
+function buildDimensionInstructions(input: GeneratorInput): string[] {
+  const lines: string[] = []
+
+  const moodStatus = resolveStatus(input.mood)
+  const colorPaletteStatus = resolveStatus(input.colorPalette)
+  const backgroundStatus = resolveStatus(input.background)
+  const artStyleStatus = resolveStatus(input.artStyle)
+
+  if (moodStatus === 'pinned') {
+    const label = input.mood.mode === 'user'
+      ? (OPTION_LABELS[(input.mood as { mode: 'user'; value: string }).value] ?? (input.mood as { mode: 'user'; value: string }).value)
+      : ''
+    lines.push(`Mood: ${label} — maintain this mood consistently across all variants.`)
+  }
+
+  if (colorPaletteStatus === 'pinned') {
+    const label = input.colorPalette.mode === 'user'
+      ? (OPTION_LABELS[(input.colorPalette as { mode: 'user'; value: string }).value] ?? (input.colorPalette as { mode: 'user'; value: string }).value)
+      : ''
+    lines.push(`Color Palette: ${label} — maintain this color palette consistently across all variants.`)
+  }
+
+  if (backgroundStatus === 'pinned') {
+    const label = input.background.mode === 'user'
+      ? (OPTION_LABELS[(input.background as { mode: 'user'; value: string }).value] ?? (input.background as { mode: 'user'; value: string }).value)
+      : ''
+    lines.push(`Background / Environment: ${label} — maintain this background consistently across all variants.`)
+  }
+
+  if (artStyleStatus === 'pinned') {
+    const label = input.artStyle.mode === 'user'
+      ? (OPTION_LABELS[(input.artStyle as { mode: 'user'; value: string }).value] ?? (input.artStyle as { mode: 'user'; value: string }).value)
+      : ''
+    lines.push(`Art Style: ${label} — apply this style consistently across all variants.`)
+  }
+
+  return lines
+}
+
+function buildVariantInstructions(
+  _input: GeneratorInput,
+  plan: VariationPlan,
+  variantIndex: number,
+): string[] {
+  const lines: string[] = []
+
+  for (const dim of plan.dimensionsToVary) {
+    const options = DIMENSION_OPTIONS[dim]
+    if (options && options.length > 0) {
+      const chosen = pickRandom(options, variantIndex * 7 + plan.dimensionsToVary.indexOf(dim) * 3)
+      lines.push(`${DIMENSION_LABELS[dim]}: vary across variants — this variant: ${chosen}.`)
+    } else {
+      lines.push(`${DIMENSION_LABELS[dim]}: vary this dimension creatively for this variant.`)
+    }
+  }
+
+  return lines
+}
+
 export class MetaPromptBuilder {
   static build(
     input: GeneratorInput,
-    variationMatrix: VariationStrategy[],
   ): { systemPrompt: string; userPrompt: string } {
+    const plan = buildVariationPlan(input)
     const platformDescription = TARGET_PLATFORM_DESCRIPTIONS[input.targetPlatform]
     const platformSpec = input.targetPlatform !== 'both'
       ? PLATFORM_SPECS[input.targetPlatform]
@@ -93,10 +177,6 @@ export class MetaPromptBuilder {
       : `PLATFORM NOTES: ${PLATFORM_SPECS['dalle3'].notes}`
 
     const conditionalLines: string[] = []
-
-    if (input.moodPreference) {
-      conditionalLines.push(`MOOD PREFERENCE: ${input.moodPreference}`)
-    }
 
     if (input.allowTextSpace) {
       conditionalLines.push(
@@ -132,19 +212,37 @@ export class MetaPromptBuilder {
       )
     }
 
+    if (input.language && input.language !== 'en') {
+      conditionalLines.push(
+        `LANGUAGE: Generate descriptive field values in the user's language (language code: ${input.language}). All JSON keys must remain in English — only translate the string values for descriptive fields (subject, composition, lighting, mood, style, technical, color_palette, environment, full_prompt, adobe_compliance_notes).`,
+      )
+    }
+
+    const globalDimensionLines = buildDimensionInstructions(input)
+
+    const variantBlocks: string[] = []
+    for (let i = 0; i < input.batchSize; i++) {
+      const variantLines = buildVariantInstructions(input, plan, i)
+      variantBlocks.push(`Variant ${i + 1}:\n${variantLines.map(l => `  - ${l}`).join('\n')}`)
+    }
+
     const userPrompt = `Generate exactly ${input.batchSize} UNIQUE and DIVERGENT stock image prompts for:
 
 CONCEPT: ${input.niche}
 CATEGORY HINT: ${input.category ?? 'Not specified — infer from concept'}
 USAGE CONTEXT: ${input.usageContext}
 TARGET MARKET: ${input.targetMarket}
-${conditionalLines.join('\n')}
-
+${conditionalLines.length > 0 ? conditionalLines.join('\n') + '\n' : ''}
 TARGET PLATFORM: ${platformDescription}
 ${platformNotes}
 
-VARIATION MATRIX — each prompt MUST follow its assigned strategy:
-${JSON.stringify(variationMatrix, null, 2)}
+VARIATION LEVEL: ${input.variationLevel}/5 — ${plan.numToVary} out of ${plan.availablePool.length} available dimensions are varied across variants.
+
+DIMENSION INSTRUCTIONS — CONSISTENT ACROSS ALL VARIANTS:
+${globalDimensionLines.length > 0 ? globalDimensionLines.map(l => `- ${l}`).join('\n') : '- (no pinned dimensions — all relevant dimensions are free for system to determine)'}
+
+DIMENSION INSTRUCTIONS — PER VARIANT (dimensions to vary):
+${variantBlocks.join('\n\n')}
 
 PHOTOGRAPHY DIMENSION REFERENCE (use these as vocabulary):
 ${JSON.stringify(PHOTOGRAPHY_DIMENSIONS_REFERENCE, null, 2)}
@@ -157,19 +255,16 @@ inspired by that direction.
 ---
 ${input.basePromptReference}
 ---
+` : ''}CRITICAL RULES:
+1. No two prompts should feel like minor rewrites of each other — they should represent genuinely different creative approaches to the same concept
+2. Every prompt MUST specify all 8 dimensions: subject, composition, lighting, mood, style, technical, color_palette, environment
+3. Never include: brand names, trademark symbols, celebrity likenesses, copyrighted characters, explicit content, hate symbols
+4. Think about the end buyer: who licenses this image, and for what purpose?
+5. The commercial_keywords array should contain 10–15 precise, searchable terms that a stock photo buyer would actually type
+${input.customInstructions ? `
+ADDITIONAL USER INSTRUCTIONS:
+${input.customInstructions}
 ` : ''}
-CRITICAL RULES:
-1. Each prompt uses a DISTINCT primary variation pivot as assigned in the matrix
-2. No two prompts should feel like minor rewrites of each other — they should represent \
-genuinely different creative approaches to the same concept
-3. Every prompt MUST specify all 8 dimensions: subject, composition, lighting, mood, \
-style, technical, color_palette, environment
-4. Never include: brand names, trademark symbols, celebrity likenesses, copyrighted \
-characters, explicit content, hate symbols
-5. Think about the end buyer: who licenses this image, and for what purpose?
-6. The commercial_keywords array should contain 10–15 precise, searchable terms that \
-a stock photo buyer would actually type
-
 OUTPUT REQUIREMENTS:
 - Respond ONLY with valid JSON
 - No markdown formatting, no code blocks, no backtick fences

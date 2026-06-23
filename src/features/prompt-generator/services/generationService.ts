@@ -2,7 +2,7 @@ import { PromptComposerEngine } from '../engine/PromptComposerEngine'
 import { AIService } from '@/services/ai/aiService'
 import { saveGeneratedPromptBatch, togglePromptFavorite, getRecentRelevantHistory } from '@/services/storage/indexeddb'
 import { calculateSimilarity } from '@/services/similarity/similarityService'
-import { DUPLICATE_CHECK_HISTORY_LIMIT, SIMILARITY_THRESHOLD } from '@/lib/constants'
+import { SIMILARITY_THRESHOLD } from '@/lib/constants'
 import type { AIConfig } from '@/features/settings/types'
 import type { GeneratorInput, GeneratedPromptBatch, PromptGeneratorError, GeneratedPrompt } from '../types'
 
@@ -39,10 +39,10 @@ export class GenerationService {
         )
       }
 
-      if (promptBatch.prompts.length > 0) {
+      if (promptBatch.prompts.length > 0 && input.includeHistory) {
         const historyItems = await getRecentRelevantHistory(
           input.category || 'other',
-          DUPLICATE_CHECK_HISTORY_LIMIT
+          input.includeHistoryCount
         )
 
         if (historyItems.length > 0) {

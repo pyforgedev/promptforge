@@ -15,7 +15,6 @@ import type {
   PromptSegments,
   AdobeStockScore,
 } from '../types'
-import { generateVariationMatrix } from './VariationStrategyEngine'
 import { MetaPromptBuilder } from './MetaPromptBuilder'
 import { generateNegativePrompt } from './NegativePromptGenerator'
 import { scorePrompt } from './AdobeStockScorer'
@@ -42,9 +41,8 @@ export class PromptComposerEngine {
     }
 
     const validInput = parsed.data
-    const variationMatrix = generateVariationMatrix(validInput)
 
-    const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput, variationMatrix)
+    const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput)
 
     // Calculate maxTokens dynamically based on requested batch size.
     // Standard size per prompt can be up to 600-800 tokens of JSON.

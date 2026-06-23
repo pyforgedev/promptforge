@@ -305,7 +305,7 @@
         "placeholder": "Tempel atau pilih template sebagai referensi..."
       },
       "category": {
-        "label": "Kategori Niche",
+        "label": "Kategori",
         "placeholder": "Pilih kategori",
         "options": {
           "technology": "Teknologi",
@@ -324,6 +324,58 @@
       },
       "niche": {
         "placeholder": "mis., Seorang programmer bekerja larut malam, cakrawala kota futuristik, sebuah keluarga menikmati piknik di taman yang cerah..."
+      },
+      "language": {
+        "label": "Bahasa",
+        "options": {
+          "en": "English",
+          "id": "Bahasa Indonesia"
+        }
+      },
+      "aspectRatio": {
+        "label": "Rasio Aspek",
+        "random": "Acak"
+      },
+      "variationLevel": {
+        "label": "Tingkat Variasi"
+      },
+      "mood": {
+        "label": "Suasana",
+        "tooltip": "User Defined menetapkan suasana tertentu di semua prompt. System Defined membiarkan mesin memvariasikan suasana berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan memvariasikan suasana secara otomatis berdasarkan Tingkat Variasi."
+      },
+      "colorPalette": {
+        "label": "Palet Warna",
+        "tooltip": "User Defined menetapkan palet tertentu di semua prompt. System Defined membiarkan mesin memvariasikan warna berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan memvariasikan palet warna secara otomatis berdasarkan Tingkat Variasi."
+      },
+      "artStyle": {
+        "label": "Gaya Seni",
+        "tooltip": "User Defined menetapkan gaya seni tertentu di semua prompt. System Defined membiarkan mesin memvariasikan gaya berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan memvariasikan gaya seni secara otomatis berdasarkan Tingkat Variasi."
+      },
+      "background": {
+        "label": "Latar Belakang",
+        "tooltip": "User Defined menetapkan latar belakang tertentu di semua prompt. System Defined membiarkan mesin memvariasikan latar berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan memvariasikan latar belakang secara otomatis berdasarkan Tingkat Variasi."
+      },
+      "humanModel": {
+        "label": "Model Manusia",
+        "tooltip": "User Defined menetapkan model manusia tertentu di semua prompt. System Defined membiarkan mesin memvariasikan model berdasarkan Tingkat Variasi.",
+        "systemDescription": "Sistem akan memvariasikan model manusia secara otomatis berdasarkan Tingkat Variasi."
+      },
+      "customInstructions": {
+        "label": "Instruksi Kustom",
+        "placeholder": "mis., Fokus pada pencahayaan alami, hindari latar berantakan, tekankan tekstur..."
+      },
+      "includeHistory": {
+        "label": "Sertakan Riwayat untuk Variasi Lebih Baik",
+        "description": "Gunakan prompt terbaru dari riwayat Anda untuk menghindari konten yang mirip",
+        "tooltip": "Menyertakan sejumlah prompt terbaru dari Kategori yang dipilih sebagai konteks, sehingga generasi baru tidak mengulanginya. Angka lebih tinggi menggunakan lebih banyak token per generasi.",
+        "sliderLabel": "Batas riwayat"
+      },
+      "diverseRepresentation": {
+        "disabledTooltip": "Tidak berlaku saat Model Manusia diatur ke Tanpa Orang"
       }
     },
     "aspectRatios": {

@@ -488,7 +488,67 @@ visual half of the fix; it is not a substitute for the other half.
 </TooltipProvider>
 ```
 
-## 6.9 Scrollbar
+## 6.9 Dual-Mode Select
+
+New in v1.2 — a specialized pattern for fields that can be either "user pinned"
+(constant across a batch) or "system driven" (included in the variation pool).
+
+- **Structure:** Two segmented buttons ("User Defined" / "System Defined") as a
+  toggle, followed by a conditional combobox that appears only when "User Defined"
+  is selected.
+- **Segmented buttons:** `SegmentGroup` or two `Toggle` buttons grouped together.
+  Active segment uses `brand-primary` background with `text-on-brand`; inactive
+  uses `bg-surface-hover` with `text-secondary`. The segments are separated by a
+  thin `border-subtle` divider, not spaced apart.
+- **Combobox conditional:** When "User Defined" is active, show a `Combobox`
+  (Radix/Shadcn) below the segmented control. When "System Defined" is active,
+  hide the combobox — the field will be handled by the variation engine.
+- **Empty value handling:** If the user selects "none" (or "no_people" for human
+  models) in User Defined mode, the field is treated as "excluded" — the prompt
+  will not mention that attribute at all. This is distinct from "System Defined"
+  where the engine picks a value from the pool.
+- **Why not a Switch:** This pattern needs three states (User Pinned / User
+  Excluded / System Driven) that a simple on/off toggle cannot represent cleanly.
+  The segmented control makes the user's intent explicit without ambiguity.
+- **Focus:** `focus-visible:ring-2 focus-visible:ring-brand-primary
+  focus-visible:ring-offset-2` on both the segmented buttons and the combobox
+  trigger.
+- **Implementation:** Use Radix/Shadcn `ToggleGroup` for the mode selector and
+  `Combobox` for the value selector. Wire the conditional visibility to the mode
+  state — show the combobox only when `mode === 'user'`.
+
+```tsx
+<FieldRow label="Mood" htmlFor="mood-mode">
+  <ToggleGroup
+    type="single"
+    value={field.mode}
+    onValueChange={(val) => field.onChange({ ...field, mode: val as 'user' | 'system' })}
+    className="flex gap-0"
+  >
+    <ToggleGroupItem
+      value="user"
+      className="data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand rounded-r-none border border-r-0 border-border-subtle"
+    >
+      User Defined
+    </ToggleGroupItem>
+    <ToggleGroupItem
+      value="system"
+      className="data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand rounded-l-none border border-border-subtle"
+    >
+      System Driven
+    </ToggleGroupItem>
+  </ToggleGroup>
+  {field.mode === 'user' && (
+    <Combobox
+      options={MOOD_OPTIONS.map((v) => ({ value: v, label: OPTION_LABELS[v] }))}
+      value={field.value}
+      onChange={(val) => field.onChange({ ...field, value: val })}
+    />
+  )}
+</FieldRow>
+```
+
+## 6.11 Scrollbar
 
 New in v1.1 — previously the app relied entirely on the browser's native
 scrollbar styling, which varied across platforms and ignored the project's
@@ -546,7 +606,7 @@ html::-webkit-scrollbar-thumb:hover {
 />
 ```
 
-## 6.10 Form Field Layout
+## 6.12 Form Field Layout
 
 New in v1.2 — formalizes the label+input pairing pattern that was previously
 undefined, leading to inconsistent spacing and alignment across forms.
@@ -603,7 +663,7 @@ function SectionGroup({ icon: Icon, title, children }) {
 }
 ```
 
-## 6.11 Settings Page Layout
+## 6.13 Settings Page Layout
 
 Settings pages follow a different layout from the main generator dashboard.
 Avoid reusing the generator's dense card layout in settings — settings need
@@ -636,7 +696,7 @@ more whitespace and clearer section boundaries.
   button click (never a raw `<input>` visible on the page). Read the file as
   text and open the import dialog with pre-filled content.
 
-## 6.12 List Items (Presets, Saved Items)
+## 6.14 List Items (Presets, Saved Items)
 
 - **Container:** `rounded-lg border border-border-subtle bg-surface px-4 py-3`.
   The item starts with a subtle border and flat surface — elevation comes from

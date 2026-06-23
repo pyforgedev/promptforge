@@ -1,5 +1,7 @@
 // ─── Input Types ────────────────────────────────────────────────────────────
 
+export type Language = 'en' | 'id'
+
 export type UsageContext = 'commercial' | 'editorial' | 'conceptual' | 'abstract'
 
 export type TargetMarket = 'global' | 'us' | 'eu' | 'asia' | 'latin_america'
@@ -22,19 +24,135 @@ export type NicheCategory =
   | 'architecture'
   | 'other'
 
+export type AspectRatio =
+  | 'random'
+  | '1:1'
+  | '4:5'
+  | '2:3'
+  | '9:16'
+  | '3:2'
+  | '4:3'
+  | '16:9'
+
+export const MOOD_OPTIONS = [
+  'none', 'peaceful', 'joyful', 'energetic', 'dramatic', 'dark_moody',
+  'mysterious', 'romantic', 'melancholic', 'professional_corporate',
+  'playful', 'serene', 'tense_suspenseful', 'nostalgic', 'futuristic',
+] as const
+
+export const COLOR_PALETTE_OPTIONS = [
+  'none', 'warm_tones', 'cool_tones', 'monochrome_bw', 'pastel',
+  'vibrant_saturated', 'earth_tones', 'high_contrast', 'muted_desaturated',
+  'golden_hour_warm', 'cool_blue', 'jewel_tones',
+] as const
+
+export const ART_STYLE_OPTIONS = [
+  'none', 'photorealistic', 'cinematic_photography', 'editorial_photography',
+  'minimalist', 'vintage_retro', 'modern_commercial', 'documentary_style',
+  'fine_art', 'studio_product_photography', 'lifestyle_photography',
+] as const
+
+export const BACKGROUND_OPTIONS = [
+  'none', 'studio_plain_backdrop', 'urban_cityscape', 'nature_outdoor',
+  'office_corporate_interior', 'home_domestic_interior', 'abstract_gradient',
+  'industrial', 'blurred_bokeh', 'isolated_white_transparent',
+] as const
+
+export const HUMAN_MODEL_OPTIONS = [
+  'no_people', 'any_person', 'man', 'woman', 'child', 'group_of_people',
+  'couple', 'elderly_person', 'teenager',
+] as const
+
+export type MoodOption = typeof MOOD_OPTIONS[number]
+export type ColorPaletteOption = typeof COLOR_PALETTE_OPTIONS[number]
+export type ArtStyleOption = typeof ART_STYLE_OPTIONS[number]
+export type BackgroundOption = typeof BACKGROUND_OPTIONS[number]
+export type HumanModelOption = typeof HUMAN_MODEL_OPTIONS[number]
+
+export type DualModeField<T extends string> =
+  | { mode: 'user'; value: T }
+  | { mode: 'system' }
+
+export const OPTION_LABELS: Record<string, string> = {
+  none: 'None',
+  peaceful: 'Peaceful',
+  joyful: 'Joyful',
+  energetic: 'Energetic',
+  dramatic: 'Dramatic',
+  dark_moody: 'Dark Moody',
+  mysterious: 'Mysterious',
+  romantic: 'Romantic',
+  melancholic: 'Melancholic',
+  professional_corporate: 'Professional Corporate',
+  playful: 'Playful',
+  serene: 'Serene',
+  tense_suspenseful: 'Tense Suspenseful',
+  nostalgic: 'Nostalgic',
+  futuristic: 'Futuristic',
+  warm_tones: 'Warm Tones',
+  cool_tones: 'Cool Tones',
+  monochrome_bw: 'Monochrome B&W',
+  pastel: 'Pastel',
+  vibrant_saturated: 'Vibrant Saturated',
+  earth_tones: 'Earth Tones',
+  high_contrast: 'High Contrast',
+  muted_desaturated: 'Muted Desaturated',
+  golden_hour_warm: 'Golden Hour Warm',
+  cool_blue: 'Cool Blue',
+  jewel_tones: 'Jewel Tones',
+  photorealistic: 'Photorealistic',
+  cinematic_photography: 'Cinematic Photography',
+  editorial_photography: 'Editorial Photography',
+  minimalist: 'Minimalist',
+  vintage_retro: 'Vintage Retro',
+  modern_commercial: 'Modern Commercial',
+  documentary_style: 'Documentary Style',
+  fine_art: 'Fine Art',
+  studio_product_photography: 'Studio Product Photography',
+  lifestyle_photography: 'Lifestyle Photography',
+  studio_plain_backdrop: 'Studio Plain Backdrop',
+  urban_cityscape: 'Urban Cityscape',
+  nature_outdoor: 'Nature Outdoor',
+  office_corporate_interior: 'Office Corporate Interior',
+  home_domestic_interior: 'Home Domestic Interior',
+  abstract_gradient: 'Abstract Gradient',
+  industrial: 'Industrial',
+  blurred_bokeh: 'Blurred Bokeh',
+  isolated_white_transparent: 'Isolated White Transparent',
+  no_people: 'No People',
+  any_person: 'Any Person',
+  man: 'Man',
+  woman: 'Woman',
+  child: 'Child',
+  group_of_people: 'Group of People',
+  couple: 'Couple',
+  elderly_person: 'Elderly Person',
+  teenager: 'Teenager',
+}
+
 export interface GeneratorInput {
-  niche: string                  // Required. Free-form idea/niche text.
-  category?: NicheCategory       // Optional category hint.
-  batchSize: BatchSize           // Default: 5
-  usageContext: UsageContext     // Default: 'commercial'
-  targetMarket: TargetMarket     // Default: 'global'
-  targetPlatform: ImagePlatform  // Default: 'both'
-  includeDiversity: boolean      // Default: true
-  moodPreference?: string        // Optional. e.g. 'calm', 'dramatic', 'energetic'
-  allowTextSpace: boolean        // Default: false. Reserve copy space in composition.
-  basePromptReference?: string   // Optional. Creative anchor/reference prompt for the LLM.
-  includeNegativePrompts: boolean // Default: true
-  includeKeywords: boolean       // Default: true
+  language: Language
+  niche: string
+  category?: NicheCategory
+  batchSize: BatchSize
+  usageContext: UsageContext
+  targetMarket: TargetMarket
+  targetPlatform: ImagePlatform
+  aspectRatio: AspectRatio
+  variationLevel: number
+  mood: DualModeField<MoodOption>
+  colorPalette: DualModeField<ColorPaletteOption>
+  artStyle: DualModeField<ArtStyleOption>
+  background: DualModeField<BackgroundOption>
+  humanModel: DualModeField<HumanModelOption>
+  customInstructions: string
+  includeHistory: boolean
+  includeHistoryCount: number
+  includeDiversity: boolean
+  allowTextSpace: boolean
+  basePromptReference?: string
+  includeNegativePrompts: boolean
+  includeKeywords: boolean
 }
 
 // ─── Output Types ───────────────────────────────────────────────────────────

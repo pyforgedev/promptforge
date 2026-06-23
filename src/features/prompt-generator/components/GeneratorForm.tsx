@@ -1,11 +1,7 @@
-// src/features/prompt-generator/components/GeneratorForm.tsx
-// This is the new, refactored Generator Form for the Prompt Engine V2.
-// It connects exclusively to usePromptGeneratorStore and is decoupled from result display.
-
-import { memo } from 'react'
+import { memo, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp } from 'lucide-react'
+import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
@@ -19,20 +15,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { DualModeSelect } from '@/components/ui/dual-mode-select'
 import { Switch } from '@/components/ui/switch'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import { cn } from '@/lib/utils'
 import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatform } from '../types'
+import { OPTION_LABELS, MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
+
+function makeOptions(options: readonly string[]): ComboboxOption[] {
+  return options.map((v) => ({ value: v, label: OPTION_LABELS[v] ?? v }))
+}
+
+const moodOptions = makeOptions(MOOD_OPTIONS)
+const colorPaletteOptions = makeOptions(COLOR_PALETTE_OPTIONS)
+const artStyleOptions = makeOptions(ART_STYLE_OPTIONS)
+const backgroundOptions = makeOptions(BACKGROUND_OPTIONS)
+const humanModelOptions = makeOptions(HUMAN_MODEL_OPTIONS)
 
 export const GeneratorForm = memo(function GeneratorForm() {
   const { t } = useTranslation()
   const shouldReduceMotion = useReducedMotion()
-  // advancedOptionsOpen is managed in the store so external actions
-  // (e.g. "Use as Reference" from templates) can open the panel
 
-  // Component state from the new Zustand store
   const { input, setInput, generatePrompts, isGenerating, error, advancedOptionsOpen, setAdvancedOptionsOpen } = usePromptGeneratorStore(
     useShallow((state) => ({
       input: state.input,
@@ -47,13 +55,78 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const isAIConfigReady = useAIConfigStore(useShallow(state => state.isReady && !!state.activeConfig?.apiKey))
 
+  const [customInstructionsEnabled, setCustomInstructionsEnabled] = useState(() => !!input.customInstructions)
+  const [basePromptRefEnabled, setBasePromptRefEnabled] = useState(() => !!input.basePromptReference)
+
+  const isDiverseDisabled = input.humanModel?.mode === 'user' && input.humanModel?.value === 'no_people'
+
+  const lastUserValues = useRef({
+    mood: 'none',
+    colorPalette: 'none',
+    artStyle: 'none',
+    background: 'none',
+    humanModel: 'no_people',
+  })
+
   const handleGenerate = () => {
     if (!isGenerating) {
       generatePrompts()
     }
   }
 
+  type DualFieldKey = keyof typeof lastUserValues.current
+
+  const createDualModeHandler = useCallback(
+    (field: DualFieldKey) =>
+      (mode: 'user' | 'system') => {
+        if (mode === 'user') {
+          const savedValue = lastUserValues.current[field]
+          setInput({ [field]: { mode: 'user', value: savedValue } } as Partial<typeof input>)
+        } else {
+          const current = input[field] as { mode: 'user'; value: string } | { mode: 'system' }
+          if (current.mode === 'user') {
+            lastUserValues.current[field] = current.value
+          }
+          setInput({ [field]: { mode: 'system' } } as Partial<typeof input>)
+        }
+      },
+    [input, setInput],
+  )
+
+  const createDualValueHandler = useCallback(
+    (field: DualFieldKey) =>
+      (value: string) => {
+        lastUserValues.current[field] = value
+        setInput({ [field]: { mode: 'user' as const, value } } as Partial<typeof input>)
+      },
+    [setInput],
+  )
+
+  const languageOptions: ComboboxOption[] = [
+    { value: 'en', label: t('generator.form.language.options.en') },
+    { value: 'id', label: t('generator.form.language.options.id') },
+  ]
+
+  const aspectRatioOptions: ComboboxOption[] = [
+    { value: 'random', label: t('generator.form.aspectRatio.random') },
+    { value: '1:1', label: '1:1' },
+    { value: '4:5', label: '4:5' },
+    { value: '2:3', label: '2:3' },
+    { value: '9:16', label: '9:16' },
+    { value: '3:2', label: '3:2' },
+    { value: '4:3', label: '4:3' },
+    { value: '16:9', label: '16:9' },
+  ]
+
   const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
+
+  const dualModeFields = [
+    { key: 'mood' as const, options: moodOptions },
+    { key: 'colorPalette' as const, options: colorPaletteOptions },
+    { key: 'artStyle' as const, options: artStyleOptions },
+    { key: 'background' as const, options: backgroundOptions },
+    { key: 'humanModel' as const, options: humanModelOptions },
+  ]
 
   return (
     <Card>
@@ -64,10 +137,9 @@ export const GeneratorForm = memo(function GeneratorForm() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        {/* Main Inputs */}
         <div className="grid gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="niche-category">{t('generator.form.category.label')}</Label>
               <Select
                 value={input.category}
@@ -84,24 +156,46 @@ export const GeneratorForm = memo(function GeneratorForm() {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-               <Label htmlFor="batchSize">{t('generator.generateCount')}</Label>
-                <Select
-                  value={String(input.batchSize)}
-                  onValueChange={(v) => setInput({ batchSize: Number(v) as BatchSize })}
-                >
-                  <SelectTrigger id="batchSize">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 3, 5, 10].map((n) => (
-                      <SelectItem key={n} value={String(n)}>
-                        {n} {n === 1 ? t('generator.prompt') : t('generator.prompts')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Label htmlFor="batchSize">{t('generator.generateCount')}</Label>
+              <Select
+                value={String(input.batchSize)}
+                onValueChange={(v) => setInput({ batchSize: Number(v) as BatchSize })}
+              >
+                <SelectTrigger id="batchSize">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 3, 5, 10].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n} {n === 1 ? t('generator.prompt') : t('generator.prompts')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="language">{t('generator.form.language.label')}</Label>
+              <Combobox
+                options={languageOptions}
+                value={input.language}
+                onValueChange={(v) => setInput({ language: v as 'en' | 'id' })}
+                placeholder={t('generator.form.language.label')}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="aspect-ratio">{t('generator.form.aspectRatio.label')}</Label>
+              <Combobox
+                options={aspectRatioOptions}
+                value={input.aspectRatio}
+                onValueChange={(v) => setInput({ aspectRatio: v as typeof input.aspectRatio })}
+                placeholder={t('generator.form.aspectRatio.label')}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="niche">{t('generator.niche_v2')}</Label>
             <Textarea
@@ -115,10 +209,11 @@ export const GeneratorForm = memo(function GeneratorForm() {
           </div>
         </div>
 
-        {/* Core Options */}
+        <div className="border-t border-border-subtle" />
+
         <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="usageContext">{t('generator.form.usageContext.label')}</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="usageContext">{t('generator.form.usageContext.label')}</Label>
               <Select
                 value={input.usageContext}
                 onValueChange={(v) => setInput({ usageContext: v as UsageContext })}
@@ -152,83 +247,169 @@ export const GeneratorForm = memo(function GeneratorForm() {
               </Select>
             </div>
 
-             <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
-              <div className="flex flex-col gap-0.5">
-                <Label htmlFor="includeDiversity" className="cursor-pointer">
-                  {t('generator.form.includeDiversity.label')}
-                </Label>
-                <p className="text-caption-ui text-muted-foreground">
-                  {t('generator.form.includeDiversity.description')}
-                </p>
-              </div>
-              <Switch
-                id="includeDiversity"
-                checked={input.includeDiversity}
-                onCheckedChange={(v) => setInput({ includeDiversity: v })}
-                className="data-[state=unchecked]:border"
-              />
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="variationLevel">{t('generator.form.variationLevel.label')}</Label>
+              <ToggleGroup.Root
+                type="single"
+                value={String(input.variationLevel)}
+                onValueChange={(val) => {
+                  if (val) setInput({ variationLevel: parseInt(val, 10) })
+                }}
+                className="flex gap-0"
+              >
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <ToggleGroup.Item
+                    key={level}
+                    value={String(level)}
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center border border-border-subtle bg-surface-hover text-sm font-medium text-secondary transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                      "data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand",
+                      "hover:bg-surface-hover/80",
+                      level === 1 && "rounded-l-md",
+                      level === 5 && "rounded-r-md",
+                      "border-r-0 last:border-r"
+                    )}
+                  >
+                    {level}
+                  </ToggleGroup.Item>
+                ))}
+              </ToggleGroup.Root>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
-              <div className="flex flex-col gap-0.5">
-                <Label htmlFor="allowTextSpace" className="cursor-pointer">
-                  {t('generator.form.allowTextSpace.label')}
-                </Label>
-                <p className="text-caption-ui text-muted-foreground">
-                  {t('generator.form.allowTextSpace.description')}
-                </p>
-              </div>
-              <Switch
-                id="allowTextSpace"
-                checked={input.allowTextSpace}
-                onCheckedChange={(v) => setInput({ allowTextSpace: v })}
-                className="data-[state=unchecked]:border"
-              />
-            </div>
+        <div className="border-t border-border-subtle" />
 
-            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
-              <div className="flex flex-col gap-0.5">
-                <Label htmlFor="includeNegativePrompts" className="cursor-pointer">
-                  {t('generator.form.includeNegativePrompts.label')}
-                </Label>
-                <p className="text-caption-ui text-muted-foreground">
-                  {t('generator.form.includeNegativePrompts.description')}
-                </p>
-              </div>
-              <Switch
-                id="includeNegativePrompts"
-                checked={input.includeNegativePrompts}
-                onCheckedChange={(v) => setInput({ includeNegativePrompts: v })}
-                className="data-[state=unchecked]:border"
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {dualModeFields.map(({ key, options }) => {
+              const field = input[key] ?? { mode: 'system' as const }
+              return (
+                <DualModeSelect
+                  key={key}
+                  label={t(`generator.form.${key}.label`)}
+                  htmlFor={`${key}-mode`}
+                  mode={field.mode}
+                  value={field.mode === 'user' ? field.value : 'none'}
+                  options={options}
+                  onModeChange={createDualModeHandler(key)}
+                  onValueChange={createDualValueHandler(key)}
+                  tooltip={t(`generator.form.${key}.tooltip`)}
+                  systemDescription={t(`generator.form.${key}.systemDescription`)}
+                />
+              )
+            })}
+          </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
-              <div className="flex flex-col gap-0.5">
-                <Label htmlFor="includeKeywords" className="cursor-pointer">
-                  {t('generator.form.includeKeywords.label')}
-                </Label>
-                <p className="text-caption-ui text-muted-foreground">
-                  {t('generator.form.includeKeywords.description')}
-                </p>
-              </div>
-              <Switch
-                id="includeKeywords"
-                checked={input.includeKeywords}
-                onCheckedChange={(v) => setInput({ includeKeywords: v })}
-                className="data-[state=unchecked]:border"
-              />
-            </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="customInstructions">{t('generator.form.customInstructions.label')}</Label>
+            <Switch
+              id="customInstructions-toggle"
+              checked={customInstructionsEnabled}
+              onCheckedChange={setCustomInstructionsEnabled}
+            />
+          </div>
+          {customInstructionsEnabled && (
+            <Textarea
+              id="customInstructions"
+              value={input.customInstructions}
+              onChange={(e) => setInput({ customInstructions: e.target.value })}
+              placeholder={t('generator.form.customInstructions.placeholder')}
+              className="min-h-[80px]"
+            />
+          )}
         </div>
 
-        {/* Advanced Options Accordion */}
+        <TooltipProvider delayDuration={300}>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="includeHistory" className="cursor-pointer">
+                    {t('generator.form.includeHistory.label')}
+                  </Label>
+                  <Tooltip>
+                    <TooltipTrigger type="button" className="flex cursor-help">
+                      <Info className="h-3.5 w-3.5 text-muted" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      {t('generator.form.includeHistory.tooltip')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-caption-ui text-muted">
+                  {t('generator.form.includeHistory.description')}
+                </p>
+              </div>
+              <Switch
+                id="includeHistory"
+                checked={input.includeHistory}
+                onCheckedChange={(v) => setInput({ includeHistory: v })}
+              />
+            </div>
+            {input.includeHistory && (
+              <div className="flex flex-col gap-2 px-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-caption-ui text-muted">{t('generator.form.includeHistory.sliderLabel')}</span>
+                  <span className={cn(
+                    "text-label-ui font-medium tabular-nums",
+                    input.includeHistoryCount <= 15 ? "text-brand-success" :
+                    input.includeHistoryCount <= 35 ? "text-brand-warning" :
+                    "text-brand-danger"
+                  )}>
+                    {input.includeHistoryCount}
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="range"
+                    min={5}
+                    max={50}
+                    step={1}
+                    value={input.includeHistoryCount}
+                    onChange={(e) => setInput({ includeHistoryCount: Number(e.target.value) })}
+                    className="w-full h-2 appearance-none rounded-full cursor-pointer bg-transparent"
+                    style={{
+                      background: (() => {
+                        const pct = ((input.includeHistoryCount - 5) / 45) * 100
+                        const seg1 = ((15 - 5) / 45) * 100
+                        const seg2 = ((35 - 5) / 45) * 100
+                        const activeColor =
+                          input.includeHistoryCount <= 15
+                            ? 'var(--color-brand-success)'
+                            : input.includeHistoryCount <= 35
+                            ? 'var(--color-brand-warning)'
+                            : 'var(--color-brand-danger)'
+                        if (input.includeHistoryCount <= 15) {
+                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${pct}%, color-mix(in srgb, var(--color-brand-success) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg1}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                        } else if (input.includeHistoryCount <= 35) {
+                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${pct}%, color-mix(in srgb, var(--color-brand-warning) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${seg2}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                        } else {
+                          return `linear-gradient(to right, var(--color-brand-success) 0%, var(--color-brand-success) ${seg1}%, var(--color-brand-warning) ${seg1}%, var(--color-brand-warning) ${seg2}%, var(--color-brand-danger) ${seg2}%, ${activeColor} ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) ${pct}%, color-mix(in srgb, var(--color-brand-danger) 20%, transparent) 100%)`
+                        }
+                      })()
+                    }}
+                    aria-label={t('generator.form.includeHistory.sliderLabel')}
+                  />
+                </div>
+                <div className="flex justify-between text-caption-ui text-muted px-0.5">
+                  <span>5</span>
+                  <span>50</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </TooltipProvider>
+
+        <div className="border-t border-border-subtle" />
+
         <div>
           <button
             type="button"
             onClick={() => setAdvancedOptionsOpen(!advancedOptionsOpen)}
             aria-expanded={advancedOptionsOpen}
             aria-controls="advanced-options-panel"
-            className="flex items-center gap-1.5 text-label-ui font-medium text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-label-ui font-medium text-muted hover:text-primary transition-colors"
           >
             {advancedOptionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {t('generator.form.advancedOptions.toggle')}
@@ -261,38 +442,127 @@ export const GeneratorForm = memo(function GeneratorForm() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="moodPreference">{t('generator.form.moodPreference.label')}</Label>
-                    <Input
-                      id="moodPreference"
-                      value={input.moodPreference ?? ''}
-                      onChange={(e) => setInput({ moodPreference: e.target.value || undefined })}
-                      placeholder={t('generator.form.moodPreference.placeholder')}
+
+                  <TooltipProvider delayDuration={300}>
+                    <div className={cn(
+                      "flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3",
+                      isDiverseDisabled && "opacity-50"
+                    )}>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <Label
+                            htmlFor="includeDiversity"
+                            className={cn("cursor-pointer", isDiverseDisabled && "cursor-not-allowed")}
+                          >
+                            {t('generator.form.includeDiversity.label')}
+                          </Label>
+                          {isDiverseDisabled && (
+                            <Tooltip>
+                              <TooltipTrigger type="button" className="flex cursor-help">
+                                <Info className="h-3.5 w-3.5 text-muted" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                {t('generator.form.diverseRepresentation.disabledTooltip')}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                        <p className="text-caption-ui text-muted">
+                          {t('generator.form.includeDiversity.description')}
+                        </p>
+                      </div>
+                      <Switch
+                        id="includeDiversity"
+                        checked={input.includeDiversity}
+                        onCheckedChange={(v) => setInput({ includeDiversity: v })}
+                        disabled={isDiverseDisabled}
+                      />
+                    </div>
+                  </TooltipProvider>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <Label htmlFor="allowTextSpace" className="cursor-pointer">
+                        {t('generator.form.allowTextSpace.label')}
+                      </Label>
+                      <p className="text-caption-ui text-muted">
+                        {t('generator.form.allowTextSpace.description')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="allowTextSpace"
+                      checked={input.allowTextSpace}
+                      onCheckedChange={(v) => setInput({ allowTextSpace: v })}
+                      className="data-[state=unchecked]:border"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <Label htmlFor="includeNegativePrompts" className="cursor-pointer">
+                        {t('generator.form.includeNegativePrompts.label')}
+                      </Label>
+                      <p className="text-caption-ui text-muted">
+                        {t('generator.form.includeNegativePrompts.description')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="includeNegativePrompts"
+                      checked={input.includeNegativePrompts}
+                      onCheckedChange={(v) => setInput({ includeNegativePrompts: v })}
+                      className="data-[state=unchecked]:border"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <Label htmlFor="includeKeywords" className="cursor-pointer">
+                        {t('generator.form.includeKeywords.label')}
+                      </Label>
+                      <p className="text-caption-ui text-muted">
+                        {t('generator.form.includeKeywords.description')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="includeKeywords"
+                      checked={input.includeKeywords}
+                      onCheckedChange={(v) => setInput({ includeKeywords: v })}
+                      className="data-[state=unchecked]:border"
                     />
                   </div>
                 </div>
-                {/* Base Prompt Reference */}
-                <div className="flex flex-col gap-1.5 pt-4">
-                  <Label htmlFor="basePromptReference">
-                    {t('generator.form.basePromptReference.label')}
-                  </Label>
-                <p className="text-caption-ui text-muted-foreground">
-                    {t('generator.form.basePromptReference.description')}
-                  </p>
-                  <Textarea
-                    id="basePromptReference"
-                    value={input.basePromptReference ?? ''}
-                    onChange={(e) => setInput({ basePromptReference: e.target.value || undefined })}
-                    placeholder={t('generator.form.basePromptReference.placeholder')}
-                    className="min-h-[80px]"
-                  />
+
+                <div className="flex flex-col gap-3 pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="basePromptReference">
+                      {t('generator.form.basePromptReference.label')}
+                    </Label>
+                    <Switch
+                      id="basePromptReference-toggle"
+                      checked={basePromptRefEnabled}
+                      onCheckedChange={setBasePromptRefEnabled}
+                    />
+                  </div>
+                  {basePromptRefEnabled && (
+                    <>
+                      <p className="text-caption-ui text-muted">
+                        {t('generator.form.basePromptReference.description')}
+                      </p>
+                      <Textarea
+                        id="basePromptReference"
+                        value={input.basePromptReference ?? ''}
+                        onChange={(e) => setInput({ basePromptReference: e.target.value || undefined })}
+                        placeholder={t('generator.form.basePromptReference.placeholder')}
+                        className="min-h-[80px]"
+                      />
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Action Button & Errors */}
         <div className="flex flex-col gap-4">
           {!isAIConfigReady ? (
             <div className="overlay-glass border-l-[3px] border-l-brand-warning flex flex-col w-full gap-3 p-4 rounded-r-lg text-brand-warning">
