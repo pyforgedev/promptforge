@@ -32,8 +32,8 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
       )}
 
       <aside
-        className={`fixed left-0 top-14 z-drawer h-[calc(100dvh-3.5rem)] w-[260px] transform border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-transform duration-200 lg:static lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed left-0 top-14 z-drawer h-[calc(100dvh-3.5rem)] w-[260px] border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-transform duration-200 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <nav className="flex flex-col gap-0.5 p-3">

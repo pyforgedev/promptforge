@@ -352,7 +352,12 @@
         "random": "Random"
       },
       "variationLevel": {
-        "label": "Variation Level"
+        "label": "Variation Level",
+        "level1": "Minimal — only 1 dimension varies. Subtle differences between variants.",
+        "level2": "Slight — 2 dimensions vary. Noticeable but restrained variation.",
+        "level3": "Moderate — about half of available dimensions vary. Balanced variety.",
+        "level4": "High — most dimensions vary. Significant differences between variants.",
+        "level5": "Maximum — all available dimensions vary. Maximum diversity across variants."
       },
       "styleMode": {
         "label": "Scene Mode",

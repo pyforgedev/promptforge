@@ -352,7 +352,12 @@
         "random": "Acak"
       },
       "variationLevel": {
-        "label": "Tingkat Variasi"
+        "label": "Tingkat Variasi",
+        "level1": "Minimal — hanya 1 dimensi yang bervariasi. Perbedaan halus antar varian.",
+        "level2": "Ringan — 2 dimensi bervariasi. Variasi terlihat namun terkendali.",
+        "level3": "Sedang — sekitar setengah dari dimensi yang tersedia bervariasi. Variasi seimbang.",
+        "level4": "Tinggi — sebagian besar dimensi bervariasi. Perbedaan signifikan antar varian.",
+        "level5": "Maksimal — semua dimensi yang tersedia bervariasi. Keanekaragaman maksimum."
       },
       "styleMode": {
         "label": "Mode Adegan",

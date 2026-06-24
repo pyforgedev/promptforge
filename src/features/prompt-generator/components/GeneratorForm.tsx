@@ -296,23 +296,41 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 }}
                 className="flex gap-0"
               >
-                {[1, 2, 3, 4, 5].map((level) => (
-                  <ToggleGroup.Item
-                    key={level}
-                    value={String(level)}
-                    className={cn(
-                      "flex h-9 w-9 items-center justify-center border border-border-subtle bg-surface-hover text-sm font-medium text-secondary transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                      "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
-                      "hover:bg-surface-hover/80",
-                      level === 1 && "rounded-l-md",
-                      level === 5 && "rounded-r-md",
-                      "border-r-0 last:border-r"
-                    )}
-                  >
-                    {level}
-                  </ToggleGroup.Item>
-                ))}
+                {[1, 2, 3, 4, 5].map((level) => {
+                  const levelColors = [
+                    'bg-blue-500',
+                    'bg-emerald-500',
+                    'bg-yellow-500',
+                    'bg-orange-500',
+                    'bg-red-500',
+                  ]
+                  return (
+                    <ToggleGroup.Item
+                      key={level}
+                      value={String(level)}
+                      className={cn(
+                        "group relative flex h-9 w-9 cursor-pointer items-center justify-center border border-border-subtle bg-surface-hover text-sm font-medium text-secondary transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                        "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
+                        "hover:bg-surface-hover/80",
+                        level === 1 && "rounded-l-md",
+                        level === 5 && "rounded-r-md",
+                        "border-r-0 last:border-r"
+                      )}
+                    >
+                      {level}
+                      <span
+                        className={cn(
+                          "absolute bottom-0.5 left-1/2 h-0.5 w-3 -translate-x-1/2 rounded-full",
+                          levelColors[level - 1]
+                        )}
+                      />
+                      <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border-strong bg-surface/80 px-2.5 py-1 text-caption-ui text-primary opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100">
+                        {t(`generator.form.variationLevel.level${level}`)}
+                      </div>
+                    </ToggleGroup.Item>
+                  )
+                })}
               </ToggleGroup.Root>
             </div>
           </div>
@@ -345,7 +363,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
               <ToggleGroup.Item
                 value="user"
                 className={cn(
-                  "flex h-9 items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
+                  "flex h-9 cursor-pointer items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
                   "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
                   "hover:bg-surface-hover/80"
@@ -356,7 +374,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
               <ToggleGroup.Item
                 value="system"
                 className={cn(
-                  "flex h-9 items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
+                  "flex h-9 cursor-pointer items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
                   "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
                   "hover:bg-surface-hover/80"

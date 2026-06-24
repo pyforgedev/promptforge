@@ -149,7 +149,7 @@ function detectWarnings(prompt: GeneratedPrompt, allText: string): string[] {
     warnings.push('Lighting specification is vague — add specific light source and quality descriptors')
   }
 
-  if (prompt.negativePrompt.length < 20) {
+  if (prompt.generatorInput.includeNegativePrompts && prompt.negativePrompt.length < 20) {
     warnings.push('Negative prompt is very short — add more suppression terms for cleaner results')
   }
 

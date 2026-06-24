@@ -17,7 +17,7 @@ export function Layout() {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="z-base flex-1 overflow-auto p-4 md:p-6 animate-fade-in">
+        <main className="z-base flex-1 overflow-auto p-4 md:p-6 lg:ml-[260px] animate-fade-in">
           <div className="mx-auto w-full max-w-[1280px]">
             <Outlet />
           </div>
