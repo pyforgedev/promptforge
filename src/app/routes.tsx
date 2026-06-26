@@ -6,7 +6,8 @@ import {
   History, 
   Templates, 
   SettingsPage,
-  ErrorPage
+  ErrorPage,
+  FormatterPage,
 } from './pages'
 
 export const routes = [
@@ -34,6 +35,10 @@ export const routes = [
       {
         path: '/templates',
         element: <Templates />,
+      },
+      {
+        path: '/formatter',
+        element: <FormatterPage />,
       },
       {
         path: '/settings',

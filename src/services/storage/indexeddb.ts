@@ -29,6 +29,27 @@ export interface PromptBatchRecord extends Omit<GeneratedPromptBatch, 'prompts'>
   // batchId is the primary key
 }
 
+export type FormatterSourceType = 'paste' | 'file'
+export type FormatterItemStatus = 'pending' | 'copied'
+
+export interface FormatterBatch {
+  id?: number
+  sourceType: FormatterSourceType
+  originalFileName: string | null
+  createdAt: Date
+  totalCount: number
+  currentIndex: number
+}
+
+export interface FormatterItem {
+  id?: number
+  order: number
+  promptText: string
+  status: FormatterItemStatus
+  copiedAt: Date | null
+  detectedAspectRatio: string | null
+}
+
 
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
@@ -39,6 +60,8 @@ class PromptForgeDB extends Dexie {
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
   generatorState!: EntityTable<{ key: string; value: unknown }, 'key'>
   idea_cache!: EntityTable<IdeaCacheEntry, 'cacheKey'>
+  formatter_batch!: EntityTable<FormatterBatch, 'id'>
+  formatter_items!: EntityTable<FormatterItem, 'id'>
 
   constructor() {
     super(DB_NAME)
@@ -167,6 +190,18 @@ class PromptForgeDB extends Dexie {
       settings: 'key',
       generatorState: 'key',
       idea_cache: 'cacheKey, lastUpdated',
+    })
+
+    this.version(8).stores({
+      prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy, category, folderId',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+      prompts: 'id, name, category, createdAt',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+      formatter_batch: '++id, createdAt',
+      formatter_items: '++id, order, status',
     })
   }
 }
@@ -394,4 +429,3 @@ export async function clearExpiredIdeaCache(threshold: number): Promise<void> {
 }
 
 export default db
-

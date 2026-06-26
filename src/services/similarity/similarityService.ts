@@ -6,7 +6,7 @@ export interface SimilarityResult {
   matches: string[]
 }
 
-const HIGH_THRESHOLD = 0.7
+export const HIGH_THRESHOLD = 0.7
 const MEDIUM_THRESHOLD = 0.4
 
 function tokenize(text: string): Set<string> {

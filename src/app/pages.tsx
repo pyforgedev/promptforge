@@ -7,6 +7,7 @@ const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
 const TemplatesPage = lazy(() => import('@/pages/TemplatesPage'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const ErrorPageContent = lazy(() => import('@/pages/ErrorPage'))
+const FormatterPageContent = lazy(() => import('@/pages/FormatterPage'))
 
 export const HomePage = () => <Suspense fallback={<LazyFallback />}><Home /></Suspense>
 export const Generator = () => <Suspense fallback={<LazyFallback />}><GeneratorPage /></Suspense>
@@ -14,3 +15,5 @@ export const History = () => <Suspense fallback={<LazyFallback />}><HistoryPage 
 export const Templates = () => <Suspense fallback={<LazyFallback />}><TemplatesPage /></Suspense>
 export const SettingsPage = () => <Suspense fallback={<LazyFallback />}><Settings /></Suspense>
 export const ErrorPage = () => <Suspense fallback={<LazyFallback />}><ErrorPageContent /></Suspense>
+export const FormatterPage = () => <Suspense fallback={<LazyFallback />}><FormatterPageContent /></Suspense>
+

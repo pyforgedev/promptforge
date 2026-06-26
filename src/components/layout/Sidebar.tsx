@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Home, Settings, Wand2, FileText, Clock,
+  Home, Settings, Wand2, FileText, Clock, ListChecks,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/generator', icon: Wand2, label: 'nav.generator' },
   { to: '/history', icon: Clock, label: 'nav.history' },
   { to: '/templates', icon: FileText, label: 'nav.templates' },
+  { to: '/formatter', icon: ListChecks, label: 'nav.formatter' },
   { to: '/settings', icon: Settings, label: 'nav.settings' },
 ]
 

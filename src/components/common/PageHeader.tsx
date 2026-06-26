@@ -6,13 +6,13 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, action }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-heading text-primary">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between animate-stagger-1">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-display text-primary">
           {title}
         </h1>
         {description && (
-          <p className="text-body-ui text-muted">
+          <p className="text-body-ui text-secondary max-w-prose">
             {description}
           </p>
         )}

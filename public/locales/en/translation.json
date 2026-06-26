@@ -10,6 +10,7 @@
     "generator": "Generator",
     "history": "History",
     "templates": "Templates",
+    "formatter": "Formatter",
     "settings": "Settings"
   },
   "theme": {
@@ -40,6 +41,51 @@
     "recentPrompts": "Recent Prompts",
     "createPrompt": "Create Prompt",
     "subtitle": "Manage your prompt collection"
+  },
+  "formatter": {
+    "pageTitle": "Prompt Formatter",
+    "pageDescription": "Batch-format and queue prompts from text or CSV files",
+    "emptyTitle": "No batch loaded",
+    "emptyDescription": "Paste prompts or upload a CSV file to get started",
+    "emptyAction": "Start formatting",
+    "inputMode": {
+      "paste": "Paste",
+      "upload": "Upload"
+    },
+    "pastePlaceholder": "Paste one prompt per line...",
+    "uploadLabel": "Choose a file",
+    "uploadHint": ".txt or .csv files",
+    "csvColumnPicker": "Select prompt column",
+    "csvPreviewTitle": "Preview (first 5 rows)",
+    "confirmColumn": "Use this column",
+    "process": "Process",
+    "replaceTitle": "Replace existing batch?",
+    "replaceDescription": "You have {{copied}} of {{total}} prompts copied. Processing new input will reset all progress.",
+    "replaceContinue": "Replace & continue",
+    "summaryTitle": "Processing complete",
+    "summaryClean": "Clean prompts",
+    "summarySkipped": "Skipped blanks",
+    "summaryDuplicates": "Duplicates",
+    "queueTitle": "Prompt queue",
+    "copyPrompt": "Copy",
+    "prevPrompt": "Previous",
+    "progress": "{{copied}} of {{total}} copied",
+    "resetProgress": "Reset progress",
+    "resetTitle": "Reset all progress?",
+    "resetDescription": "This will mark all prompts as pending and reset the queue to the beginning.",
+    "resetConfirm": "Reset",
+    "downloadTitle": "Download",
+    "downloadFormat": "Format",
+    "downloadScope": "Scope",
+    "download": "Download",
+    "scopeAll": "All",
+    "scopeRemaining": "Remaining",
+    "scopeCompleted": "Completed",
+    "statusCopied": "Copied",
+    "statusPending": "Pending",
+    "batchCreated": "Batch created",
+    "batchError": "Failed to create batch",
+    "csvColumnSelected": "CSV column selected"
   },
   "common": {
     "add": "Add",
@@ -169,7 +215,10 @@
     "presetDeleted": "Preset deleted",
     "deleteFailed": "Failed to delete preset",
     "themeChanged": "Theme updated",
-    "languageChanged": "Language updated"
+    "languageChanged": "Language updated",
+    "copyFailed": "Failed to copy",
+    "resetSuccess": "Progress reset",
+    "downloadSuccess": "File downloaded"
   },
   "templates": {
     "pageTitle": "Prompt Templates",

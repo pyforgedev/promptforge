@@ -10,6 +10,7 @@
     "generator": "Generator",
     "history": "Riwayat",
     "templates": "Template",
+    "formatter": "Formatter",
     "settings": "Pengaturan"
   },
   "theme": {
@@ -40,6 +41,51 @@
     "recentPrompts": "Prompt Terbaru",
     "createPrompt": "Buat Prompt",
     "subtitle": "Kelola koleksi prompt Anda"
+  },
+  "formatter": {
+    "pageTitle": "Pemformat Prompt",
+    "pageDescription": "Format massal dan antrekan prompt dari teks atau file CSV",
+    "emptyTitle": "Tidak ada batch yang dimuat",
+    "emptyDescription": "Tempelkan prompt atau unggah file CSV untuk memulai",
+    "emptyAction": "Mulai memformat",
+    "inputMode": {
+      "paste": "Tempel",
+      "upload": "Unggah"
+    },
+    "pastePlaceholder": "Tempelkan satu prompt per baris...",
+    "uploadLabel": "Pilih file",
+    "uploadHint": "File .txt atau .csv",
+    "csvColumnPicker": "Pilih kolom prompt",
+    "csvPreviewTitle": "Pratinjau (5 baris pertama)",
+    "confirmColumn": "Gunakan kolom ini",
+    "process": "Proses",
+    "replaceTitle": "Ganti batch yang ada?",
+    "replaceDescription": "Anda telah menyalin {{copied}} dari {{total}} prompt. Memproses input baru akan mereset seluruh kemajuan.",
+    "replaceContinue": "Ganti & lanjutkan",
+    "summaryTitle": "Pemrosesan selesai",
+    "summaryClean": "Prompt bersih",
+    "summarySkipped": "Melewati baris kosong",
+    "summaryDuplicates": "Duplikat",
+    "queueTitle": "Antrean prompt",
+    "copyPrompt": "Salin",
+    "prevPrompt": "Sebelumnya",
+    "progress": "{{copied}} dari {{total}} tersalin",
+    "resetProgress": "Reset kemajuan",
+    "resetTitle": "Reset semua kemajuan?",
+    "resetDescription": "Ini akan menandai semua prompt sebagai tertunda dan mereset antrean ke awal.",
+    "resetConfirm": "Reset",
+    "downloadTitle": "Unduh",
+    "downloadFormat": "Format",
+    "downloadScope": "Cakupan",
+    "download": "Unduh",
+    "scopeAll": "Semua",
+    "scopeRemaining": "Tersisa",
+    "scopeCompleted": "Selesai",
+    "statusCopied": "Disalin",
+    "statusPending": "Tertunda",
+    "batchCreated": "Batch berhasil dibuat",
+    "batchError": "Gagal membuat batch",
+    "csvColumnSelected": "Kolom CSV dipilih"
   },
   "common": {
     "add": "Tambah",
@@ -169,7 +215,10 @@
     "presetDeleted": "Prasetel dihapus",
     "deleteFailed": "Gagal menghapus prasetel",
     "themeChanged": "Tema diperbarui",
-    "languageChanged": "Bahasa diperbarui"
+    "languageChanged": "Bahasa diperbarui",
+    "copyFailed": "Gagal menyalin",
+    "resetSuccess": "Kemajuan direset",
+    "downloadSuccess": "File diunduh"
   },
   "templates": {
     "pageTitle": "Template Prompt",
