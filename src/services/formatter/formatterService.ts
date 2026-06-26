@@ -124,6 +124,16 @@ export function detectAspectRatio(promptText: string): string | null {
   return promptText.match(ASPECT_RATIO_REGEX)?.[1] ?? null
 }
 
+export function getUniqueAspectRatios(items: FormatterItem[]): string[] {
+  const ratios = new Set<string>()
+  for (const item of items) {
+    if (item.detectedAspectRatio) {
+      ratios.add(item.detectedAspectRatio)
+    }
+  }
+  return Array.from(ratios).sort()
+}
+
 export function checkSanityLimit(count: number): SanityLevel {
   if (count >= 500) return 'blocked'
   if (count >= 300) return 'warning_high'
@@ -216,8 +226,14 @@ export function exportBatch(
   items: FormatterItem[],
   format: 'txt' | 'csv' | 'json',
   scope: 'all' | 'remaining' | 'completed',
+  aspectRatio: string | null = null,
 ): string {
-  const filteredItems = filterItemsByScope(items, scope)
+  let filteredItems = filterItemsByScope(items, scope)
+  
+  if (aspectRatio) {
+    filteredItems = filteredItems.filter((item) => item.detectedAspectRatio === aspectRatio)
+  }
+
   const rows = filteredItems.map((item) => ({
     index: item.order,
     prompt: item.promptText,

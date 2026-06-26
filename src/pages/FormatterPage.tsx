@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -21,6 +21,7 @@ import {
   parseCsvPreview,
   parseCsvWithColumn,
   detectDuplicates,
+  getUniqueAspectRatios,
 } from '@/services/formatter/formatterService'
 import { Sparkles } from 'lucide-react'
 import type { InputMode, DownloadFormat, DownloadScope, CsvPreviewResult } from '@/features/formatter/types'
@@ -43,14 +44,23 @@ export default function FormatterPage() {
   } | null>(null)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
   const [downloadScope, setDownloadScope] = useState<DownloadScope>('all')
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string | null>(null)
+  const [lastBatchId, setLastBatchId] = useState<number | undefined>(undefined)
   const [showReplace, setShowReplace] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [pendingPrompts, setPendingPrompts] = useState<string[] | null>(null)
 
   const activeBatch = useLiveQuery(() => getActiveBatch())
   const batch = activeBatch?.batch ?? null
-  const items = activeBatch?.items ?? []
+  const items = useMemo(() => activeBatch?.items ?? [], [activeBatch?.items])
   const currentIndex = batch?.currentIndex ?? 0
+
+  const detectedAspectRatios = useMemo(() => getUniqueAspectRatios(items), [items])
+
+  if (batch?.id !== lastBatchId) {
+    setLastBatchId(batch?.id)
+    setSelectedAspectRatio(null)
+  }
 
   const hasBatch = batch !== null
   const copiedCount = items.filter((i) => i.status === 'copied').length
@@ -161,12 +171,15 @@ export default function FormatterPage() {
   }
 
   const handleDownload = () => {
-    const content = exportBatch(items, downloadFormat, downloadScope)
+    const content = exportBatch(items, downloadFormat, downloadScope, selectedAspectRatio)
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `formatter-export-${downloadScope}.${downloadFormat}`
+    
+    const arSuffix = selectedAspectRatio ? `-${selectedAspectRatio.replace(/:/g, 'x')}` : ''
+    a.download = `formatter-export-${downloadScope}${arSuffix}.${downloadFormat}`
+    
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -252,8 +265,11 @@ export default function FormatterPage() {
           <DownloadSection
             format={downloadFormat}
             scope={downloadScope}
+            detectedAspectRatios={detectedAspectRatios}
+            selectedAspectRatio={selectedAspectRatio}
             onFormatChange={setDownloadFormat}
             onScopeChange={setDownloadScope}
+            onAspectRatioChange={setSelectedAspectRatio}
             onDownload={handleDownload}
             disabled={items.length === 0}
           />

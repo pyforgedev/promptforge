@@ -81,6 +81,8 @@
     "scopeAll": "Semua",
     "scopeRemaining": "Tersisa",
     "scopeCompleted": "Selesai",
+    "aspectRatio": "Rasio Aspek",
+    "aspectRatioNone": "Tanpa filter",
     "statusCopied": "Disalin",
     "statusPending": "Tertunda",
     "batchCreated": "Batch berhasil dibuat",

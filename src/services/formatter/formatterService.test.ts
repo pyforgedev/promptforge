@@ -13,6 +13,7 @@ import {
   markItemCopied,
   resetAllProgress,
   setCurrentIndex,
+  getUniqueAspectRatios,
 } from './formatterService'
 
 describe('parseRawText', () => {
@@ -301,6 +302,26 @@ describe('createFormatterBatch', () => {
     expect(batchData!.items[2].detectedAspectRatio).toBe('1:1')
   })
 
+  it('getUniqueAspectRatios returns unique sorted ratios', async () => {
+    const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1', 'another --ar 16:9']
+    await createFormatterBatch(prompts, 'paste')
+    const batchData = await getActiveBatch()
+    
+    const ratios = getUniqueAspectRatios(batchData!.items)
+    expect(ratios).toHaveLength(2)
+    expect(ratios).toContain('16:9')
+    expect(ratios).toContain('1:1')
+  })
+
+  it('getUniqueAspectRatios returns empty array when no ratios detected', async () => {
+    const prompts = ['plain prompt', 'another plain prompt']
+    await createFormatterBatch(prompts, 'paste')
+    const batchData = await getActiveBatch()
+    
+    const ratios = getUniqueAspectRatios(batchData!.items)
+    expect(ratios).toEqual([])
+  })
+
   it('preserves order field correctly', async () => {
     const prompts = ['first', 'second', 'third']
     await createFormatterBatch(prompts, 'paste')
@@ -388,6 +409,37 @@ describe('exportBatch', () => {
     const txt = exportBatch(batchData!.items, 'txt', 'all')
 
     expect(txt).toBe('prompt1\ncomma, prompt\npending item')
+  })
+
+  it('exportBatch filters by aspect ratio', async () => {
+    const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
+    await createFormatterBatch(prompts, 'paste')
+    const batchData = await getActiveBatch()
+
+    const txt169 = exportBatch(batchData!.items, 'txt', 'all', '16:9')
+    expect(txt169).toBe('prompt --ar 16:9')
+
+    const txt11 = exportBatch(batchData!.items, 'txt', 'all', '1:1')
+    expect(txt11).toBe('aspect ratio 1:1')
+
+    const txtNone = exportBatch(batchData!.items, 'txt', 'all', null)
+    expect(txtNone).toBe('prompt --ar 16:9\nplain prompt\naspect ratio 1:1')
+  })
+
+  it('exportBatch combines scope and aspect ratio filters', async () => {
+    const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
+    await createFormatterBatch(prompts, 'paste')
+    const batchData = await getActiveBatch()
+    
+    const itemId = batchData!.items[0].id!
+    await markItemCopied(itemId)
+
+    const freshBatch = await getActiveBatch()
+    const completed169 = exportBatch(freshBatch!.items, 'txt', 'completed', '16:9')
+    expect(completed169).toBe('prompt --ar 16:9')
+
+    const remainingAll = exportBatch(freshBatch!.items, 'txt', 'remaining', null)
+    expect(remainingAll).toBe('plain prompt\naspect ratio 1:1')
   })
 
   it('csv format includes index,prompt,status columns with proper quoting', async () => {

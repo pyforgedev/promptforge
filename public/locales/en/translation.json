@@ -81,6 +81,8 @@
     "scopeAll": "All",
     "scopeRemaining": "Remaining",
     "scopeCompleted": "Completed",
+    "aspectRatio": "Aspect Ratio",
+    "aspectRatioNone": "No filter",
     "statusCopied": "Copied",
     "statusPending": "Pending",
     "batchCreated": "Batch created",
