@@ -6,7 +6,8 @@ import db, {
   saveFolder,
   deleteFolder,
   bulkUpdateHistoryFolder,
-  queryHistoryItems
+  queryHistoryItems,
+  resetDatabase,
 } from '@/services/storage/indexeddb'
 import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
@@ -52,6 +53,20 @@ interface HistoryState {
   removeFolder: (id: string) => Promise<void>
 }
 
+function _isSchemaError(err: unknown): boolean {
+  const msg = (err as Error)?.message?.toLowerCase() ?? ''
+  const name = (err as DOMException)?.name ?? ''
+  return (
+    msg.includes('schema') ||
+    msg.includes('version') ||
+    msg.includes('upgrade') ||
+    msg.includes('migration') ||
+    msg.includes('corruption') ||
+    name === 'VersionError' ||
+    name === 'InvalidStateError'
+  )
+}
+
 const defaultFilters: HistoryFilters = {
   aspectRatio: 'all',
   stylePreset: 'all',
@@ -73,6 +88,24 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   hasMore: false,
   offset: 0,
 
+  /**
+   * Check if the error looks like a Dexie schema/migration issue
+   * that can be fixed by clearing IndexedDB.
+   */
+  _isSchemaError(err: unknown): boolean {
+    const msg = (err as Error)?.message?.toLowerCase() ?? ''
+    const name = (err as DOMException)?.name ?? ''
+    return (
+      msg.includes('schema') ||
+      msg.includes('version') ||
+      msg.includes('upgrade') ||
+      msg.includes('migration') ||
+      msg.includes('corruption') ||
+      name === 'VersionError' ||
+      name === 'InvalidStateError'
+    )
+  },
+
   fetchHistory: async () => {
     set({ loading: true, error: null, offset: 0, items: [] })
     try {
@@ -87,8 +120,29 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       })
       set({ items, hasMore, offset: items.length, loading: false })
     } catch (err) {
+      if (_isSchemaError(err)) {
+        console.warn('[HistoryStore] fetchHistory failed with schema error, resetting DB...', err)
+        try {
+          await resetDatabase()
+          const { currentFolderId, searchMode, filters } = get()
+          const { items, hasMore } = await queryHistoryItems({
+            folderId: currentFolderId,
+            searchMode,
+            minRating: filters.minRating,
+            search: filters.search,
+            offset: 0,
+            limit: 20
+          })
+          set({ items, hasMore, offset: items.length, loading: false })
+          return
+        } catch (retryErr) {
+          console.error('[HistoryStore] fetchHistory failed after DB reset:', retryErr)
+          set({ error: (retryErr as Error).message, loading: false })
+          return
+        }
+      }
+      console.warn('[HistoryStore] fetchHistory failed:', err)
       set({ error: (err as Error).message, loading: false })
-      throw err
     }
   },
 
@@ -112,8 +166,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         loading: false
       })
     } catch (err) {
+      console.warn('[HistoryStore] loadMore failed:', err)
       set({ error: (err as Error).message, loading: false })
-      throw err
     }
   },
 
@@ -123,8 +177,21 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       const folders = await getFolders()
       set({ folders })
     } catch (err) {
+      if (_isSchemaError(err)) {
+        console.warn('[HistoryStore] fetchFolders failed with schema error, resetting DB...', err)
+        try {
+          await resetDatabase()
+          const folders = await getFolders()
+          set({ folders })
+          return
+        } catch (retryErr) {
+          console.error('[HistoryStore] fetchFolders failed after DB reset:', retryErr)
+          set({ error: (retryErr as Error).message })
+          return
+        }
+      }
+      console.warn('[HistoryStore] fetchFolders failed:', err)
       set({ error: (err as Error).message })
-      throw err
     }
   },
 

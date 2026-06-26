@@ -428,4 +428,15 @@ export async function clearExpiredIdeaCache(threshold: number): Promise<void> {
   await db.idea_cache.bulkDelete(expiredKeys)
 }
 
+/**
+ * Delete and recreate the entire IndexedDB database.
+ * Use this as a last resort when schema migration fails for users
+ * with stale/corrupted data from previous versions.
+ *
+ * After calling this, the `db` instance will auto-recreate on next access.
+ */
+export async function resetDatabase(): Promise<void> {
+  await db.delete()
+}
+
 export default db
