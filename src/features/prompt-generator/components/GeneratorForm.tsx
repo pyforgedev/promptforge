@@ -537,9 +537,8 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
-                className="overflow-hidden"
+                className="overflow-hidden pt-4"
               >
-                <SectionGroup icon={Globe} title="Advanced Options">
                 <div className="grid gap-4">
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="targetMarket">{t('generator.form.targetMarket.label')}</Label>
@@ -673,7 +672,6 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     </>
                   )}
                 </div>
-                </SectionGroup>
               </motion.div>
             )}
           </AnimatePresence>

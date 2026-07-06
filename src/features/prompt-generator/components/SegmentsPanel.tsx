@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Copy, Check, ChevronDown } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import type { PromptSegments } from '../types'
 
@@ -37,18 +38,25 @@ function SegmentRow({ label, value }: SegmentRowProps) {
     <div className="flex items-start gap-2 py-1.5">
       <span className="w-28 shrink-0 text-caption-ui font-medium text-muted">{label}</span>
       <span className="flex-1 text-body-ui leading-relaxed text-primary">{value}</span>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="mt-0.5 shrink-0 rounded p-0.5 text-muted opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
-        aria-label={t('promptCard.copySegment', { segment: label })}
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-brand-success" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="mt-0.5 shrink-0 cursor-pointer rounded p-0.5 text-muted opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+            aria-label={t('promptCard.copySegment', { segment: label })}
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-brand-success" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {t('promptCard.copySegment', { segment: label })}
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }
@@ -86,21 +94,23 @@ export function SegmentsPanel({ segments, unavailable }: SegmentsPanelProps) {
             transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="group flex flex-col divide-y divide-border-subtle px-4 pb-3">
-              {unavailable ? (
-                <p className="py-2 text-body-ui text-muted">
-                  {t('promptCard.segments.unavailable')}
-                </p>
-              ) : (
-                SEGMENT_KEYS.map((key) => (
-                  <SegmentRow
-                    key={key}
-                    label={t(`promptCard.segments.${key}`)}
-                    value={segments[key]}
-                  />
-                ))
-              )}
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="group flex flex-col divide-y divide-border-subtle px-4 pb-3">
+                {unavailable ? (
+                  <p className="py-2 text-body-ui text-muted">
+                    {t('promptCard.segments.unavailable')}
+                  </p>
+                ) : (
+                  SEGMENT_KEYS.map((key) => (
+                    <SegmentRow
+                      key={key}
+                      label={t(`promptCard.segments.${key}`)}
+                      value={segments[key]}
+                    />
+                  ))
+                )}
+              </div>
+            </TooltipProvider>
           </motion.div>
         )}
       </AnimatePresence>
