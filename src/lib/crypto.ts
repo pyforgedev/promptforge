@@ -1,7 +1,17 @@
+/**
+ * SECURITY NOTE: The master encryption key is stored in sessionStorage
+ * to survive page reloads within a single browser session. This is NOT
+ * secure against XSS attacks — an attacker with script execution can
+ * read both the key and encrypted data.
+ *
+ * Use for non-sensitive user preferences only, NOT for credential storage.
+ * API keys should be handled server-side or via secure OAuth flows.
+ * The key is automatically cleared when the tab/browser is closed.
+ */
 const ENCRYPTION_KEY_NAME = 'pf-master-key'
 
 async function getOrCreateKey(): Promise<CryptoKey> {
-  const storedKey = localStorage.getItem(ENCRYPTION_KEY_NAME)
+  const storedKey = sessionStorage.getItem(ENCRYPTION_KEY_NAME)
   if (storedKey) {
     const keyData = JSON.parse(storedKey)
     return await crypto.subtle.importKey(
@@ -19,8 +29,12 @@ async function getOrCreateKey(): Promise<CryptoKey> {
     ['encrypt', 'decrypt']
   )
   const exported = await crypto.subtle.exportKey('jwk', key)
-  localStorage.setItem(ENCRYPTION_KEY_NAME, JSON.stringify(exported))
+  sessionStorage.setItem(ENCRYPTION_KEY_NAME, JSON.stringify(exported))
   return key
+}
+
+export function clearEncryptionKey(): void {
+  sessionStorage.removeItem(ENCRYPTION_KEY_NAME)
 }
 
 export async function encrypt(text: string): Promise<string> {

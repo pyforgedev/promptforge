@@ -114,28 +114,28 @@ function buildDimensionInstructions(input: GeneratorInput): string[] {
 
   if (moodStatus === 'pinned') {
     const label = input.mood.mode === 'user'
-      ? (OPTION_LABELS[(input.mood as { mode: 'user'; value: string }).value] ?? (input.mood as { mode: 'user'; value: string }).value)
+      ? OPTION_LABELS[input.mood.value] ?? input.mood.value
       : ''
     lines.push(`Mood: ${label} — maintain this mood consistently across all variants.`)
   }
 
   if (colorPaletteStatus === 'pinned') {
     const label = input.colorPalette.mode === 'user'
-      ? (OPTION_LABELS[(input.colorPalette as { mode: 'user'; value: string }).value] ?? (input.colorPalette as { mode: 'user'; value: string }).value)
+      ? OPTION_LABELS[input.colorPalette.value] ?? input.colorPalette.value
       : ''
     lines.push(`Color Palette: ${label} — maintain this color palette consistently across all variants.`)
   }
 
   if (backgroundStatus === 'pinned') {
     const label = input.background.mode === 'user'
-      ? (OPTION_LABELS[(input.background as { mode: 'user'; value: string }).value] ?? (input.background as { mode: 'user'; value: string }).value)
+      ? OPTION_LABELS[input.background.value] ?? input.background.value
       : ''
     lines.push(`Background / Environment: ${label} — maintain this background consistently across all variants.`)
   }
 
   if (artStyleStatus === 'pinned') {
     const label = input.artStyle.mode === 'user'
-      ? (OPTION_LABELS[(input.artStyle as { mode: 'user'; value: string }).value] ?? (input.artStyle as { mode: 'user'; value: string }).value)
+      ? OPTION_LABELS[input.artStyle.value] ?? input.artStyle.value
       : ''
     lines.push(`Art Style: ${label} — apply this style consistently across all variants.`)
   }

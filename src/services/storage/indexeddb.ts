@@ -23,11 +23,7 @@ export interface PromptHistoryRecord extends Omit<GeneratedPrompt, 'generatorInp
   category: string
 }
 
-// Note: This interface is intentionally empty as it extends an Omit type.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface PromptBatchRecord extends Omit<GeneratedPromptBatch, 'prompts'> {
-  // batchId is the primary key
-}
+export type PromptBatchRecord = Omit<GeneratedPromptBatch, 'prompts'>
 
 export type FormatterSourceType = 'paste' | 'file'
 export type FormatterItemStatus = 'pending' | 'copied'
@@ -92,18 +88,18 @@ class PromptForgeDB extends Dexie {
       generatorState: 'key',
       idea_cache: 'cacheKey, lastUpdated',
     }).upgrade(async (trans) => {
-      console.log('Upgrading Dexie schema to version 6...')
+      if (import.meta.env.DEV) console.log('Upgrading Dexie schema to version 6...')
       const oldHistoryTable = trans.table('history')
       const newHistoryTable = trans.table('prompt_history')
       const newBatchesTable = trans.table('prompt_batches')
 
       const legacyItems = await oldHistoryTable.toArray()
       if (legacyItems.length === 0) {
-        console.log('No legacy history items to migrate.')
+        if (import.meta.env.DEV) console.log('No legacy history items to migrate.')
         return
       }
 
-      console.log(`Found ${legacyItems.length} legacy items to migrate.`)
+      if (import.meta.env.DEV) console.log(`Found ${legacyItems.length} legacy items to migrate.`)
 
       const newHistoryRecords: PromptHistoryRecord[] = []
       const newBatchRecords: PromptBatchRecord[] = []
@@ -173,13 +169,13 @@ class PromptForgeDB extends Dexie {
         })
       }
       
-      console.log(`Migrating ${newBatchRecords.length} new batch records...`)
+      if (import.meta.env.DEV) console.log(`Migrating ${newBatchRecords.length} new batch records...`)
       await newBatchesTable.bulkAdd(newBatchRecords)
       
-      console.log(`Migrating ${newHistoryRecords.length} new history records...`)
+      if (import.meta.env.DEV) console.log(`Migrating ${newHistoryRecords.length} new history records...`)
       await newHistoryTable.bulkAdd(newHistoryRecords)
       
-      console.log('Migration to version 6 complete.')
+      if (import.meta.env.DEV) console.log('Migration to version 6 complete.')
     })
 
     this.version(7).stores({
@@ -208,8 +204,28 @@ class PromptForgeDB extends Dexie {
 
 const db = new PromptForgeDB()
 
+// Initialization promise to ensure database is open before any access
+let dbInitPromise: Promise<void> | null = null
+
+async function ensureDbReady(): Promise<void> {
+  if (!dbInitPromise) {
+    dbInitPromise = db.open()
+      .then(() => undefined)
+      .catch((err) => {
+        if (import.meta.env.DEV) {
+          console.error('[Dexie] Failed to open database:', err)
+        }
+        // Continue despite error to allow graceful degradation
+      })
+  }
+  return dbInitPromise
+}
+
 // Helper for retries with exponential backoff
 export async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise<T> {
+  // Ensure database is initialized before attempting operation
+  await ensureDbReady()
+  
   try {
     return await fn()
   } catch (error) {
@@ -236,6 +252,7 @@ export async function deletePrompt(id: string): Promise<void> {
 }
 
 export async function getSetting(key: string): Promise<unknown> {
+  await ensureDbReady()
   const record = await db.settings.get(key)
   if (!record) return undefined
   
@@ -244,13 +261,14 @@ export async function getSetting(key: string): Promise<unknown> {
       const decrypted = await decrypt(record.value as string)
       return JSON.parse(decrypted)
     } catch {
-      return record.value
+      return undefined
     }
   }
   return record.value
 }
 
 export async function saveSetting(key: string, value: unknown): Promise<void> {
+  await ensureDbReady()
   let valToSave = value
   if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
     const json = JSON.stringify(value)
@@ -331,7 +349,6 @@ export async function queryHistoryItems(params: HistoryQueryParams): Promise<{ i
 
   const q = search ? search.toLowerCase() : ''
   collection = collection.filter(item => {
-    if (searchMode === 'local' && item.folderId !== folderId) return false
     if (minRating > 0 && (item.adobeScore?.total ?? 0) < minRating) return false
     if (q) {
       if (
@@ -400,11 +417,13 @@ export async function updateFolder(id: string, updates: Partial<Pick<Folder, 'na
 }
 
 export async function getGeneratorState(key: string): Promise<unknown> {
+  await ensureDbReady()
   const record = await db.generatorState.get(key)
   return record?.value
 }
 
 export async function saveGeneratorState(key: string, value: unknown): Promise<void> {
+  await ensureDbReady()
   await db.generatorState.put({ key, value })
 }
 

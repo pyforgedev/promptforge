@@ -119,6 +119,5 @@ beforeEach(async () => {
     error: null,
     hasMore: false,
     offset: 0,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+  })
 })

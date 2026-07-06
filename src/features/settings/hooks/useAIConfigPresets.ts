@@ -9,23 +9,15 @@ import {
   saveCustomModel,
   deleteCustomModel,
 } from '../services/settingsService'
+import { sanitizeError } from '@/lib/sanitizeError'
 import type { AIConfigPreset, AIConfig } from '../types'
 import { validateAIConfig } from '@/lib/validation'
 
-const CSRF_TOKEN = 'promptforge-csrf-token'
-
-function getCSRFToken(): string {
-  let token = localStorage.getItem(CSRF_TOKEN)
-  if (!token) {
-    token = crypto.randomUUID()
-    localStorage.setItem(CSRF_TOKEN, token)
+function handleError(error: unknown, context: string): string {
+  if (import.meta.env.DEV) {
+    console.warn(`[AIConfigPresets] ${context} failed:`, sanitizeError(error))
   }
-  return token
-}
-
-function handleError(error: unknown): string {
-  const debugMsg = error instanceof Error ? error.message : String(error)
-  return import.meta.env.DEV ? debugMsg : 'An unexpected error occurred'
+  return `Failed to ${context}`
 }
 
 interface UseAIConfigPresetsReturn {
@@ -63,7 +55,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       setActive(c)
       setCustomModels(m)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load settings')
+      setError(handleError(err, 'load settings'))
     } finally {
       setLoading(false)
     }
@@ -84,14 +76,10 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       if (validationError) {
         throw new Error(validationError)
       }
-      const csrfToken = getCSRFToken()
-      if (!csrfToken) {
-        throw new Error('CSRF token missing')
-      }
       await savePreset(name, config)
       await refresh()
     } catch (err) {
-      setError(handleError(err))
+      setError(handleError(err, 'save preset'))
     } finally {
       setSaving(false)
     }
@@ -103,7 +91,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       await deletePreset(id)
       setPresets((prev) => prev.filter((p) => p.id !== id))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete preset')
+      setError(handleError(err, 'delete preset'))
     }
   }, [])
 
@@ -119,7 +107,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       await setActiveConfig(config)
       setActive(config)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load preset')
+      setError(handleError(err, 'load preset'))
     }
   }, [])
 
@@ -129,7 +117,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       await setActiveConfig(config)
       setActive(config)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save config')
+      setError(handleError(err, 'save config'))
     }
   }, [])
 
@@ -156,7 +144,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       }
       await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import presets')
+      setError(handleError(err, 'import presets'))
     }
   }, [refresh])
 
@@ -166,7 +154,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       const updated = await saveCustomModel(model)
       setCustomModels(updated)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add custom model')
+      setError(handleError(err, 'add custom model'))
     }
   }, [])
 
@@ -176,7 +164,7 @@ export function useAIConfigPresets(): UseAIConfigPresetsReturn {
       const updated = await deleteCustomModel(model)
       setCustomModels(updated)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete custom model')
+      setError(handleError(err, 'delete custom model'))
     }
   }, [])
 

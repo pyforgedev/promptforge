@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { LazyFallback } from '@/components/common/LazyFallback'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 const Home = lazy(() => import('@/pages/Home'))
 const GeneratorPage = lazy(() => import('@/pages/GeneratorPage'))
@@ -9,11 +10,21 @@ const Settings = lazy(() => import('@/pages/Settings'))
 const ErrorPageContent = lazy(() => import('@/pages/ErrorPage'))
 const FormatterPageContent = lazy(() => import('@/pages/FormatterPage'))
 
-export const HomePage = () => <Suspense fallback={<LazyFallback />}><Home /></Suspense>
-export const Generator = () => <Suspense fallback={<LazyFallback />}><GeneratorPage /></Suspense>
-export const History = () => <Suspense fallback={<LazyFallback />}><HistoryPage /></Suspense>
-export const Templates = () => <Suspense fallback={<LazyFallback />}><TemplatesPage /></Suspense>
-export const SettingsPage = () => <Suspense fallback={<LazyFallback />}><Settings /></Suspense>
-export const ErrorPage = () => <Suspense fallback={<LazyFallback />}><ErrorPageContent /></Suspense>
-export const FormatterPage = () => <Suspense fallback={<LazyFallback />}><FormatterPageContent /></Suspense>
+function withErrorBoundary(Component: React.LazyExoticComponent<React.ComponentType>) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<LazyFallback />}>
+        <Component />
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
+
+export const HomePage = () => withErrorBoundary(Home)
+export const Generator = () => withErrorBoundary(GeneratorPage)
+export const History = () => withErrorBoundary(HistoryPage)
+export const Templates = () => withErrorBoundary(TemplatesPage)
+export const SettingsPage = () => withErrorBoundary(Settings)
+export const ErrorPage = () => withErrorBoundary(ErrorPageContent)
+export const FormatterPage = () => withErrorBoundary(FormatterPageContent)
 

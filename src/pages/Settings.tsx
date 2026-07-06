@@ -108,20 +108,32 @@ export default function Settings() {
   useEffect(() => {
     const load = async () => {
       setCustomModelsLoading(true)
-      const models = await getCustomModels()
-      setCustomModels(models)
-      setCustomModelsLoading(false)
+      try {
+        const models = await getCustomModels()
+        setCustomModels(models)
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn('[Settings] Failed to load custom models:', err)
+        setCustomModels([])
+      } finally {
+        setCustomModelsLoading(false)
+      }
     }
     load()
   }, [])
 
   useEffect(() => {
     const load = async () => {
-      await loadMasterPrompt()
-      const store = useMasterPromptStore.getState()
-      const promptValue = store.customPrompt ?? DEFAULT_SYSTEM_PROMPT
-      setMasterPromptText(typeof promptValue === 'string' ? promptValue : String(promptValue))
-      setMasterPromptLoaded(true)
+      try {
+        await loadMasterPrompt()
+        const store = useMasterPromptStore.getState()
+        const promptValue = store.customPrompt ?? DEFAULT_SYSTEM_PROMPT
+        setMasterPromptText(typeof promptValue === 'string' ? promptValue : String(promptValue))
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn('[Settings] Failed to load master prompt:', err)
+        setMasterPromptText(DEFAULT_SYSTEM_PROMPT)
+      } finally {
+        setMasterPromptLoaded(true)
+      }
     }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps

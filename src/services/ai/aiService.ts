@@ -36,6 +36,7 @@ class GeminiAdapter implements ProviderAdapter {
         'x-goog-api-key': config.apiKey
       },
       signal,
+      timeout: 30000,
     })
 
     if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
@@ -87,7 +88,7 @@ class OpenAIAdapter implements ProviderAdapter {
         temperature: request.temperature || 0.7,
         max_tokens: request.maxTokens || 2048,
       },
-      { headers, signal }
+      { headers, signal, timeout: 30000 }
     )
 
     if (!response.data?.choices?.[0]?.message?.content) {
@@ -137,10 +138,10 @@ class OpenAIAdapter implements ProviderAdapter {
         max_tokens: request.maxTokens || 2048,
         stream: true,
       },
-      { 
+      {
         headers,
         responseType: 'stream',
-        adapter: 'fetch' // Use fetch adapter for streaming in browser
+        timeout: 30000,
       }
     )
 

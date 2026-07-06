@@ -240,7 +240,7 @@ export interface VariationStrategy {
 }
 
 export interface PromptGeneratorError {
-  code: 'LLM_TIMEOUT' | 'PARSE_FAILURE' | 'PARTIAL_BATCH' | 'PROVIDER_ERROR'
+  code: 'LLM_TIMEOUT' | 'PARSE_FAILURE' | 'PARTIAL_BATCH' | 'PROVIDER_ERROR' | 'NOT_IMPLEMENTED' | 'RATE_LIMITED'
   message: string
   rawResponse?: string       // For PARSE_FAILURE — attach raw LLM output
   partialPrompts?: GeneratedPrompt[]  // For PARTIAL_BATCH

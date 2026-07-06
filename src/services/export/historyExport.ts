@@ -46,8 +46,8 @@ export function downloadFile(content: string, filename: string, mimeType: string
 }
 
 export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | 'json' | 'csv') {
-  const promise = new Promise((resolve) => {
-    setTimeout(() => {
+  const promise = new Promise<void>((resolve, reject) => {
+    try {
       let content = ''
       let filename = `promptforge_export_${Date.now()}`
       let mimeType = ''
@@ -71,8 +71,10 @@ export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | '
       }
 
       downloadFile(content, filename, mimeType)
-      resolve(true)
-    }, 1000)
+      resolve()
+    } catch (err) {
+      reject(err)
+    }
   })
 
   toast.promise(promise, {

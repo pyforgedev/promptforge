@@ -46,11 +46,10 @@ export class PromptComposerEngine {
     const masterPromptOverride = useMasterPromptStore.getState().customPrompt
     const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput, masterPromptOverride ?? undefined)
 
-    // Calculate maxTokens dynamically based on requested batch size.
-    // Standard size per prompt can be up to 600-800 tokens of JSON.
-    // We scale up baseline to 4096 or batchSize * 1000 to prevent truncation on smaller batches.
+    const BASE_MAX_TOKENS = 4096
+    const TOKENS_PER_PROMPT = 1000
     const batchSize = validInput.batchSize || 1
-    const maxTokens = Math.max(4096, batchSize * 1000)
+    const maxTokens = Math.max(BASE_MAX_TOKENS, batchSize * TOKENS_PER_PROMPT)
 
     let rawResponse: string
     try {

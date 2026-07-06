@@ -189,7 +189,8 @@
     "loadMore": "Load More",
     "deleteFolderTitle": "Delete Folder",
     "deleteFolderConfirmation": "Are you sure you want to delete this folder and all its contents? This action cannot be undone.",
-    "deselectAll": "Deselect all"
+    "deselectAll": "Deselect all",
+    "emptyFolderDescription": "No prompts found in this folder. Start generating to fill it up!"
   },
   "toast": {
     "copySuccess": "Prompt copied",

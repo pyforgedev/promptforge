@@ -1,6 +1,7 @@
 import { PromptComposerEngine } from '../engine/PromptComposerEngine'
 import { AIService } from '@/services/ai/aiService'
 import { saveGeneratedPromptBatch, togglePromptFavorite, getRecentRelevantHistory } from '@/services/storage/indexeddb'
+import { sanitizeError } from '@/lib/sanitizeError'
 import { calculateSimilarity } from '@/services/similarity/similarityService'
 import { SIMILARITY_THRESHOLD } from '@/lib/constants'
 import type { AIConfig } from '@/features/settings/types'
@@ -68,12 +69,14 @@ export class GenerationService {
       }
 
       // Fallback for unexpected errors
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      if (import.meta.env.DEV) {
+        console.warn('[GenerationService] generatePrompts failed:', sanitizeError(err))
+      }
       return {
         data: null,
         error: {
           code: 'PROVIDER_ERROR',
-          message: import.meta.env.DEV ? debugMsg : 'An unexpected error occurred during prompt generation.',
+          message: 'An unexpected error occurred during prompt generation.',
         },
       }
     }
@@ -89,20 +92,14 @@ export class GenerationService {
     _batchId: string,
     _variantIndex: number
   ): Promise<{ data: GeneratedPrompt | null; error: PromptGeneratorError | null }> {
-    try {
-      // TODO: Implement regeneratePrompt
-      void _batchId
-      void _variantIndex
-      return { data: null, error: null }
-    } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
-      return {
-        data: null,
-        error: {
-          code: 'PROVIDER_ERROR',
-          message: import.meta.env.DEV ? debugMsg : 'An unexpected error occurred during prompt regeneration.',
-        },
-      }
+    void _batchId
+    void _variantIndex
+    return {
+      data: null,
+      error: {
+        code: 'NOT_IMPLEMENTED',
+        message: 'Regenerate prompt is not yet implemented.',
+      },
     }
   }
 
@@ -141,12 +138,14 @@ export class GenerationService {
       const batchId = await saveGeneratedPromptBatch(batch)
       return { data: batchId, error: null }
     } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      if (import.meta.env.DEV) {
+        console.warn('[GenerationService] saveBatch failed:', sanitizeError(err))
+      }
       return {
         data: null,
         error: {
           code: 'PROVIDER_ERROR',
-          message: import.meta.env.DEV ? debugMsg : 'An unexpected error occurred while saving the batch.',
+          message: 'An unexpected error occurred while saving the batch.',
         },
       }
     }

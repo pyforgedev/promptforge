@@ -7,6 +7,9 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { GenerationService } from '../services/generationService'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { getGeneratorState, saveGeneratorState, withRetry } from '@/services/storage/indexeddb'
+import { on } from '@/lib/eventBus'
+import { globalRateLimiter } from '@/lib/rateLimiter'
+import { sanitizeError } from '@/lib/sanitizeError'
 import type { GeneratorInput, GeneratedPromptBatch, PromptGeneratorError } from '../types'
 import { generatorInputDefaults } from '../schemas/generatorInputSchema'
 
@@ -45,6 +48,17 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
 
       generatePrompts: async () => {
         if (get().isGenerating) return
+
+        if (!globalRateLimiter.tryRequest()) {
+          const waitSeconds = Math.ceil(globalRateLimiter.remainingWindow / 1000)
+          const error: PromptGeneratorError = {
+            code: 'RATE_LIMITED',
+            message: `Too many requests. Please wait ${waitSeconds} seconds before generating again.`,
+          }
+          set({ error, isGenerating: false })
+          return
+        }
+
         set({ isGenerating: true, error: null, batch: null })
 
         const activeConfig = useAIConfigStore.getState().activeConfig
@@ -61,13 +75,13 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
         const { data, error } = await generationService.generatePrompts(get().input)
 
         if (error) {
-          console.error('Prompt Generation Error:', error)
+          if (import.meta.env.DEV) console.warn('[PromptGenerator] generation failed:', sanitizeError(error))
         }
 
         if (data) {
           const { error: saveError } = await generationService.saveBatch(data)
           if (saveError) {
-            console.error('Failed to auto-save batch:', saveError)
+            if (import.meta.env.DEV) console.warn('[PromptGenerator] auto-save failed:', sanitizeError(saveError))
           }
         }
 
@@ -137,3 +151,11 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
     },
   ),
 )
+
+on('history:items-deleted', (ids) => {
+  usePromptGeneratorStore.getState().removePromptsFromBatch(ids as string[])
+})
+
+on('history:all-deleted', () => {
+  usePromptGeneratorStore.getState().clearBatch()
+})

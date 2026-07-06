@@ -6,6 +6,8 @@ import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { Analytics } from '@vercel/analytics/react'
 import { useSpotlightBorder } from '@/hooks/useSpotlightBorder'
 
+import '@/lib/axiosSetup'
+
 function App() {
   const loadConfigs = useAIConfigStore(state => state.loadConfigs)
   useSpotlightBorder()

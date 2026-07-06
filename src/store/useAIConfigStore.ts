@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { getSetting, saveSetting } from '@/services/storage/indexeddb'
+import { sanitizeError } from '@/lib/sanitizeError'
 import type { AIConfig, AIConfigPreset } from '@/features/settings/types'
 
 interface AIConfigState {
@@ -37,17 +38,19 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       
       set({ 
         activeConfig: activeConfig || null, 
-        presets: presets || [],
+        presets: Array.isArray(presets) ? presets : [],
         isReady: true,
         isLoading: false 
       })
     } catch (error) {
-      const debugMsg = error instanceof Error ? error.message : String(error)
       set({ 
-        error: import.meta.env.DEV ? debugMsg : 'Failed to load configs',
+        error: 'Failed to load configs',
         isLoading: false,
-        isReady: true // Still ready even if error, just empty
+        isReady: true
       })
+      if (import.meta.env.DEV) {
+        console.warn('[AIConfigStore] loadConfigs failed:', sanitizeError(error))
+      }
     }
   },
 
@@ -57,9 +60,11 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(ACTIVE_CONFIG_KEY, config)
       set({ activeConfig: config, isLoading: false })
     } catch (error) {
-      const debugMsg = error instanceof Error ? error.message : String(error)
+      if (import.meta.env.DEV) {
+        console.warn('[AIConfigStore] setActiveConfig failed:', sanitizeError(error))
+      }
       set({ 
-        error: import.meta.env.DEV ? debugMsg : 'Failed to save active config',
+        error: 'Failed to save active config',
         isLoading: false
       })
       throw error
@@ -83,9 +88,11 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(PRESETS_KEY, newPresets)
       set({ presets: newPresets, isLoading: false })
     } catch (error) {
-      const debugMsg = error instanceof Error ? error.message : String(error)
+      if (import.meta.env.DEV) {
+        console.warn('[AIConfigStore] savePreset failed:', sanitizeError(error))
+      }
       set({ 
-        error: import.meta.env.DEV ? debugMsg : 'Failed to save preset',
+        error: 'Failed to save preset',
         isLoading: false
       })
       throw error
@@ -98,8 +105,10 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       await saveSetting(PRESETS_KEY, newPresets)
       set({ presets: newPresets })
     } catch (error) {
-      const debugMsg = error instanceof Error ? error.message : String(error)
-      set({ error: import.meta.env.DEV ? debugMsg : 'Failed to delete preset' })
+      if (import.meta.env.DEV) {
+        console.warn('[AIConfigStore] deletePreset failed:', sanitizeError(error))
+      }
+      set({ error: 'Failed to delete preset' })
       throw error
     }
   }

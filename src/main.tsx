@@ -4,8 +4,15 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from './i18n'
 import { AppProvider } from '@/app/providers'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { globalRateLimiter } from '@/lib/rateLimiter'
 import App from './App'
 import './index.css'
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    globalRateLimiter.reset()
+  }
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { AlertCircle, Copy, Trash2, Star, Clock } from 'lucide-react'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +21,26 @@ interface HistoryListProps {
   onDelete: (id: string) => void
 }
 
+const historyListPropsSchema = z.object({
+  items: z.array(z.object({
+    id: z.string(),
+    fullPrompt: z.string(),
+    niche: z.string(),
+    category: z.string(),
+    createdAt: z.union([z.date(), z.string()]),
+  }).passthrough()),
+  loading: z.boolean(),
+  error: z.string().nullable(),
+})
+
+function validateHistoryListProps(props: HistoryListProps): void {
+  if (!import.meta.env.DEV) return
+  const result = historyListPropsSchema.safeParse(props)
+  if (!result.success) {
+    console.warn('[HistoryList] Prop validation failed:', result.error.issues)
+  }
+}
+
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -34,6 +55,7 @@ export const HistoryList = memo(function HistoryList({
   onCopy,
   onDelete,
 }: HistoryListProps) {
+  validateHistoryListProps({ items, loading, error })
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { selectedIds, toggleSelect, searchMode, hasMore, loadMore } = useHistoryStore()
@@ -66,7 +88,7 @@ export const HistoryList = memo(function HistoryList({
     return (
       <EmptyState
         title={t('history.emptyTitle')}
-        description={searchMode === 'local' ? "No prompts found in this folder. Start generating to fill it up!" : t('history.emptyDescription')}
+        description={searchMode === 'local' ? t('history.emptyFolderDescription', "No prompts found in this folder. Start generating to fill it up!") : t('history.emptyDescription')}
         action={
           <Button asChild variant="default" className="mt-2">
             <Link to="/">

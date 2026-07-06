@@ -9,7 +9,8 @@ import db, {
   queryHistoryItems,
   resetDatabase,
 } from '@/services/storage/indexeddb'
-import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
+import { emit } from '@/lib/eventBus'
+import { sanitizeError } from '@/lib/sanitizeError'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import type { HistoryFilters, Folder } from '@/features/history/types'
 
@@ -137,12 +138,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           return
         } catch (retryErr) {
           console.error('[HistoryStore] fetchHistory failed after DB reset:', retryErr)
-          set({ error: (retryErr as Error).message, loading: false })
+          if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory DB reset failed:', sanitizeError(retryErr))
+          set({ error: 'Failed to load history after database reset.', loading: false })
           return
         }
       }
-      console.warn('[HistoryStore] fetchHistory failed:', err)
-      set({ error: (err as Error).message, loading: false })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory failed:', sanitizeError(err))
+      set({ error: 'Failed to load history.', loading: false })
     }
   },
 
@@ -166,8 +168,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         loading: false
       })
     } catch (err) {
-      console.warn('[HistoryStore] loadMore failed:', err)
-      set({ error: (err as Error).message, loading: false })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] loadMore failed:', sanitizeError(err))
+      set({ error: 'Failed to load more history.', loading: false })
     }
   },
 
@@ -185,13 +187,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           set({ folders })
           return
         } catch (retryErr) {
-          console.error('[HistoryStore] fetchFolders failed after DB reset:', retryErr)
-          set({ error: (retryErr as Error).message })
+          if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders DB reset failed:', sanitizeError(retryErr))
+          set({ error: 'Failed to load folders after database reset.' })
           return
         }
       }
-      console.warn('[HistoryStore] fetchFolders failed:', err)
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders failed:', sanitizeError(err))
+      set({ error: 'Failed to load folders.' })
     }
   },
 
@@ -227,38 +229,44 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   bulkDelete: async () => {
     const { selectedIds } = get()
-    set({ error: null })
+    set({ error: null, loading: true })
     try {
-      await db.transaction('rw', db.prompt_history, async () => {
-        await Promise.all(selectedIds.map(id => db.prompt_history.delete(id)))
-      })
-      usePromptGeneratorStore.getState().removePromptsFromBatch(selectedIds)
-      set((state) => ({
-        items: state.items.filter(item => !selectedIds.includes(item.id)),
-        selectedIds: []
-      }))
+      const CHUNK_SIZE = 50
+      for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
+        const chunk = selectedIds.slice(i, i + CHUNK_SIZE)
+        await db.transaction('rw', db.prompt_history, async () => {
+          await Promise.all(chunk.map(id => db.prompt_history.delete(id)))
+        })
+      }
+      emit('history:items-deleted', selectedIds)
+      get().fetchHistory()
+      set({ selectedIds: [], loading: false })
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] bulkDelete failed:', sanitizeError(err))
+      get().fetchHistory()
+      set({ error: 'Failed to delete items.', loading: false })
       throw err
     }
   },
 
   bulkMove: async (folderId) => {
     const { selectedIds } = get()
-    set({ error: null })
+    set({ error: null, loading: true })
     try {
       await bulkUpdateHistoryFolder(selectedIds, folderId)
       set((state) => ({
         items: state.items.map(item => 
           selectedIds.includes(item.id) ? { ...item, folderId } : item
         ),
-        selectedIds: []
+        selectedIds: [],
+        loading: false
       }))
       if (get().searchMode === 'local') {
         get().fetchHistory()
       }
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] bulkMove failed:', sanitizeError(err))
+      set({ error: 'Failed to move items.', loading: false })
       throw err
     }
   },
@@ -267,10 +275,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteAllHistory()
-      usePromptGeneratorStore.getState().clearBatch()
+      emit('history:all-deleted')
       set({ items: [], selectedIds: [] })
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] removeAll failed:', sanitizeError(err))
+      set({ error: 'Failed to clear history.' })
       throw err
     }
   },
@@ -279,13 +288,14 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteHistoryItem(id)
-      usePromptGeneratorStore.getState().removePromptsFromBatch([id])
+      emit('history:items-deleted', [id])
       set((state) => ({
         items: state.items.filter(item => item.id !== id),
         selectedIds: state.selectedIds.filter(i => i !== id)
       }))
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] removeItem failed:', sanitizeError(err))
+      set({ error: 'Failed to delete item.' })
       throw err
     }
   },
@@ -302,7 +312,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       await saveFolder(newFolder)
       set((state) => ({ folders: [...state.folders, newFolder] }))
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] createFolder failed:', sanitizeError(err))
+      set({ error: 'Failed to create folder.' })
       throw err
     }
   },
@@ -316,7 +327,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         folders: state.folders.map(f => f.id === id ? { ...f, name } : f)
       }))
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] renameFolder failed:', sanitizeError(err))
+      set({ error: 'Failed to rename folder.' })
       throw err
     }
   },
@@ -337,7 +349,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         get().fetchHistory()
       }
     } catch (err) {
-      set({ error: (err as Error).message })
+      if (import.meta.env.DEV) console.warn('[HistoryStore] removeFolder failed:', sanitizeError(err))
+      set({ error: 'Failed to remove folder.' })
       throw err
     }
   }

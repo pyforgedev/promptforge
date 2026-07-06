@@ -5,28 +5,24 @@
 import { z } from 'zod'
 
 export const llmPromptOutputSchema = z.object({
-  variant_id: z.number().int().catch(1),
+  variant_id: z.number().int(),
   variation_anchors: z.object({
-    primary_variation: z.string().catch(''),
-    composition_style: z.string().catch(''),
-    lighting_type: z.string().catch(''),
-  }).catch(() => ({
-    primary_variation: '',
-    composition_style: '',
-    lighting_type: '',
-  })),
-  subject: z.string().catch(''),
-  composition: z.string().catch(''),
-  lighting: z.string().catch(''),
-  mood: z.string().catch(''),
-  style: z.string().catch(''),
-  technical: z.string().catch(''),
-  color_palette: z.string().catch(''),
-  environment: z.string().catch(''),
-  negative_prompt: z.string().catch(''),
-  full_prompt: z.string().catch(''),
-  commercial_keywords: z.array(z.string()).catch([]),
-  adobe_compliance_notes: z.string().catch(''),
+    primary_variation: z.string(),
+    composition_style: z.string(),
+    lighting_type: z.string(),
+  }),
+  subject: z.string(),
+  composition: z.string(),
+  lighting: z.string(),
+  mood: z.string(),
+  style: z.string(),
+  technical: z.string(),
+  color_palette: z.string(),
+  environment: z.string(),
+  negative_prompt: z.string(),
+  full_prompt: z.string(),
+  commercial_keywords: z.array(z.string()),
+  adobe_compliance_notes: z.string(),
 })
 
 export const llmBatchOutputSchema = z.object({

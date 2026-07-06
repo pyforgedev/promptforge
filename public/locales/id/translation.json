@@ -189,7 +189,8 @@
     "loadMore": "Muat Lebih Banyak",
     "deleteFolderTitle": "Hapus Folder",
     "deleteFolderConfirmation": "Apakah Anda yakin ingin menghapus folder ini beserta semua isinya? Tindakan ini tidak dapat dibatalkan.",
-    "deselectAll": "Batalkan semua pilihan"
+    "deselectAll": "Batalkan semua pilihan",
+    "emptyFolderDescription": "Tidak ada prompt di folder ini. Mulai hasilkan prompt untuk mengisinya!"
   },
   "toast": {
     "copySuccess": "Prompt disalin",

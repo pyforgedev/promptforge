@@ -3,7 +3,7 @@ import { encrypt, decrypt } from './crypto'
 
 describe('crypto utilities', () => {
   beforeEach(() => {
-    localStorage.clear()
+    sessionStorage.clear()
   })
 
   it('encrypts and decrypts text successfully', async () => {
@@ -16,11 +16,11 @@ describe('crypto utilities', () => {
     expect(decrypted).toBe(originalText)
   })
 
-  it('generates master key in localStorage and reuses it', async () => {
+  it('generates master key in sessionStorage and reuses it', async () => {
     const text = 'hello'
     const encrypted1 = await encrypt(text)
     
-    const keyInStorage = localStorage.getItem('pf-master-key')
+    const keyInStorage = sessionStorage.getItem('pf-master-key')
     expect(keyInStorage).toBeDefined()
     expect(JSON.parse(keyInStorage!)).toHaveProperty('kty', 'oct')
 
