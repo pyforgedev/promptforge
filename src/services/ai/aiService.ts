@@ -4,6 +4,7 @@ import type { AIRequest, AIResponse } from '@/types'
 import type { AIConfig } from '@/features/settings/types'
 import type { LLMClientInterface } from '@/features/prompt-generator/engine/PromptComposerEngine'
 import { AI_ENDPOINTS } from '@/lib/constants'
+import { sanitizeError } from '@/lib/sanitizeError'
 
 // Provider Adapter Interface
 interface ProviderAdapter {
@@ -21,36 +22,41 @@ class GeminiAdapter implements ProviderAdapter {
     const contents: unknown[] = []
     if (request.systemPrompt) {
       contents.push({ role: 'user', parts: [{ text: request.systemPrompt }] })
-      contents.push({ role: 'model', parts: [{ text: 'OK' }] }) // Simulate Gemini acknowledging system prompt
+      contents.push({ role: 'model', parts: [{ text: 'OK' }] })
     }
     contents.push({ role: 'user', parts: [{ text: request.prompt }] })
 
-    const response = await axios.post(url, {
-      contents,
-      generationConfig: {
-        temperature: request.temperature || 0.7,
-        maxOutputTokens: request.maxTokens || 2048,
+    try {
+      const response = await axios.post(url, {
+        contents,
+        generationConfig: {
+          temperature: request.temperature || 0.7,
+          maxOutputTokens: request.maxTokens || 2048,
+        }
+      }, {
+        headers: {
+          'x-goog-api-key': config.apiKey
+        },
+        signal,
+        timeout: 30000,
+      })
+
+      if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid response from Gemini API.')
       }
-    }, {
-      headers: {
-        'x-goog-api-key': config.apiKey
-      },
-      signal,
-      timeout: 30000,
-    })
 
-    if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('Invalid response from Gemini API.')
-    }
-
-    return {
-      content: response.data.candidates[0].content.parts[0].text,
-      model: config.model,
-      usage: {
-        promptTokens: response.data.usageMetadata?.promptTokenCount || 0,
-        completionTokens: response.data.usageMetadata?.candidatesTokenCount || 0,
-        totalTokens: response.data.usageMetadata?.totalTokenCount || 0,
-      },
+      return {
+        content: response.data.candidates[0].content.parts[0].text,
+        model: config.model,
+        usage: {
+          promptTokens: response.data.usageMetadata?.promptTokenCount || 0,
+          completionTokens: response.data.usageMetadata?.candidatesTokenCount || 0,
+          totalTokens: response.data.usageMetadata?.totalTokenCount || 0,
+        },
+      }
+    } catch (error) {
+      const sanitized = sanitizeError(error)
+      throw new Error(sanitized, { cause: error })
     }
   }
 }
@@ -80,29 +86,34 @@ class OpenAIAdapter implements ProviderAdapter {
     }
     messages.push({ role: 'user', content: request.prompt })
 
-    const response = await axios.post(
-      url,
-      {
+    try {
+      const response = await axios.post(
+        url,
+        {
+          model: config.model,
+          messages,
+          temperature: request.temperature || 0.7,
+          max_tokens: request.maxTokens || 2048,
+        },
+        { headers, signal, timeout: 30000 }
+      )
+
+      if (!response.data?.choices?.[0]?.message?.content) {
+        throw new Error('Invalid response from AI API.')
+      }
+
+      return {
+        content: response.data.choices[0].message.content,
         model: config.model,
-        messages,
-        temperature: request.temperature || 0.7,
-        max_tokens: request.maxTokens || 2048,
-      },
-      { headers, signal, timeout: 30000 }
-    )
-
-    if (!response.data?.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from AI API.')
-    }
-
-    return {
-      content: response.data.choices[0].message.content,
-      model: config.model,
-      usage: response.data.usage || {
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
-      },
+        usage: response.data.usage || {
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+      }
+    } catch (error) {
+      const sanitized = sanitizeError(error)
+      throw new Error(sanitized, { cause: error })
     }
   }
 
@@ -129,47 +140,52 @@ class OpenAIAdapter implements ProviderAdapter {
     }
     messages.push({ role: 'user', content: request.prompt })
 
-    const response = await axios.post(
-      url,
-      {
-        model: config.model,
-        messages,
-        temperature: request.temperature || 0.7,
-        max_tokens: request.maxTokens || 2048,
-        stream: true,
-      },
-      {
-        headers,
-        responseType: 'stream',
-        timeout: 30000,
-      }
-    )
+    try {
+      const response = await axios.post(
+        url,
+        {
+          model: config.model,
+          messages,
+          temperature: request.temperature || 0.7,
+          max_tokens: request.maxTokens || 2048,
+          stream: true,
+        },
+        {
+          headers,
+          responseType: 'stream',
+          timeout: 30000,
+        }
+      )
 
-    const reader = response.data.getReader()
-    const decoder = new TextDecoder('utf-8')
-    let buffer = ''
+      const reader = response.data.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
 
-      for (const line of lines) {
-        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-          try {
-            const data = JSON.parse(line.slice(6))
-            const chunk = data.choices?.[0]?.delta?.content
-            if (chunk) {
-              onChunk(chunk)
+        for (const line of lines) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            try {
+              const data = JSON.parse(line.slice(6))
+              const chunk = data.choices?.[0]?.delta?.content
+              if (chunk) {
+                onChunk(chunk)
+              }
+            } catch {
+              // Ignore parse errors on partial chunks
             }
-          } catch {
-            // Ignore parse errors on partial chunks
           }
         }
       }
+    } catch (error) {
+      const sanitized = sanitizeError(error)
+      throw new Error(sanitized, { cause: error })
     }
   }
 }
@@ -208,36 +224,41 @@ async function sendPrompt(request: AIRequest, config: AIConfig, signal?: AbortSi
 }
 
 export async function testConnection(config: AIConfig): Promise<boolean> {
-  const knownEndpoints: Record<string, string> = { ...AI_ENDPOINTS }
-  const baseUrl = (config.endpoint || knownEndpoints[config.provider] || AI_ENDPOINTS.openai).replace(/\/+$/, '')
+  try {
+    const knownEndpoints: Record<string, string> = { ...AI_ENDPOINTS }
+    const baseUrl = (config.endpoint || knownEndpoints[config.provider] || AI_ENDPOINTS.openai).replace(/\/+$/, '')
 
-  if (config.provider === 'gemini') {
-    const url = `${baseUrl}/models/${config.model}:generateContent`
-    await axios.post(url, { contents: [{ parts: [{ text: 'hi' }] }] }, {
-      headers: { 'x-goog-api-key': config.apiKey },
+    if (config.provider === 'gemini') {
+      const url = `${baseUrl}/models/${config.model}:generateContent`
+      await axios.post(url, { contents: [{ parts: [{ text: 'hi' }] }] }, {
+        headers: { 'x-goog-api-key': config.apiKey },
+        timeout: 10000,
+      })
+      return true
+    }
+
+    const url = baseUrl.includes('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`
+    const res: AxiosResponse = await axios.post(url, {
+      model: config.model,
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 1,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
       timeout: 10000,
     })
+
+    if (!res.data?.choices?.[0]) {
+      throw new Error('Invalid response from AI API.')
+    }
+
     return true
-  }
-
-  const url = baseUrl.includes('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`
-  const res: AxiosResponse = await axios.post(url, {
-    model: config.model,
-    messages: [{ role: 'user', content: 'hi' }],
-    max_tokens: 1,
-  }, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    timeout: 10000,
-  })
-
-  if (!res.data?.choices?.[0]) {
-    throw new Error('Invalid response from AI API.')
-  }
-
-  return true
+    } catch (error) {
+      const sanitized = sanitizeError(error)
+      throw new Error(sanitized, { cause: error })
+    }
 }
 
 export async function generateCompletion(prompt: string, config: AIConfig, signal?: AbortSignal, systemPrompt?: string, maxTokens?: number): Promise<string> {

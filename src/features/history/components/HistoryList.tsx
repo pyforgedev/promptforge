@@ -55,7 +55,7 @@ export const HistoryList = memo(function HistoryList({
   onCopy,
   onDelete,
 }: HistoryListProps) {
-  validateHistoryListProps({ items, loading, error })
+  validateHistoryListProps({ items, loading, error, onCopy, onDelete })
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { selectedIds, toggleSelect, searchMode, hasMore, loadMore } = useHistoryStore()
