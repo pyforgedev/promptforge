@@ -38,7 +38,7 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
       isGenerating: false,
       error: null,
       advancedOptionsOpen: false,
-      _hasHydrated: false,
+      _hasHydrated: true,
 
       setInput: (partial) =>
         set((state) => ({ input: { ...state.input, ...partial } })),

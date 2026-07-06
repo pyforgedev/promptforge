@@ -5,8 +5,6 @@ import type { Prompt } from '@/types'
 import type { Folder } from '@/features/history/types'
 import type { GeneratedPrompt, GeneratedPromptBatch, GeneratorInput } from '@/features/prompt-generator/types'
 
-import { encrypt, decrypt } from '@/lib/crypto'
-
 const DB_NAME = 'promptforge'
 
 export interface IdeaCacheEntry {
@@ -256,25 +254,27 @@ export async function getSetting(key: string): Promise<unknown> {
   const record = await db.settings.get(key)
   if (!record) return undefined
   
-  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+  if (
+    typeof record.value === 'string' && 
+    (key.includes('config') || key.includes('preset'))
+  ) {
     try {
-      const decrypted = await decrypt(record.value as string)
-      return JSON.parse(decrypted)
+      return JSON.parse(record.value)
     } catch {
+      if (import.meta.env.DEV) {
+        console.warn(`[Storage] Clearing corrupted/encrypted legacy data for key: ${key}`)
+      }
+      await db.settings.delete(key)
       return undefined
     }
   }
+  
   return record.value
 }
 
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   await ensureDbReady()
-  let valToSave = value
-  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
-    const json = JSON.stringify(value)
-    valToSave = await encrypt(json)
-  }
-  await db.settings.put({ key, value: valToSave })
+  await db.settings.put({ key, value })
 }
 
 // === HISTORY REFACTOR - Functions below need updating or removal ===
