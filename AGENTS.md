@@ -17,12 +17,22 @@
 - **Rule**: Avoid large monolithic components. Extract reusable logic into hooks, services, or shared utilities.
 
 ## Commands
-All development runs inside Docker. `node_modules` and `dist` are not kept locally.
+All development runs inside Docker. `node_modules` and `dist` are **never** stored locally — they only exist inside the Docker container.
+
+### STRICT RULES — Docker Only, No Local npm
+1. **NEVER run `npm`, `npx`, `node`, or any Node.js command directly on the host.** Always use `docker compose exec promptforge <command>`.
+2. `node_modules` and `dist` are **ephemeral** — they live only inside the container. If you need to clear them, run: `docker compose exec promptforge rm -rf /app/node_modules /app/dist`
+3. If you accidentally run `npm install` locally, immediately run `sudo rm -rf node_modules` to avoid permission conflicts with Docker.
+4. **Allowed patterns:**
+   - `docker compose exec promptforge npm install <pkg>`
+   - `docker compose exec promptforge npm run build`
+   - `docker compose exec promptforge npm run lint`
+   - `docker compose exec promptforge npm run test:run`
+   - `docker compose exec promptforge npx <command>`
+5. **Forbidden patterns:**
+   - `npm install`, `npm run`, `npx` — any Node.js tool without `docker compose exec promptforge`
 
 - **Dev**: `docker compose up -d` — starts Vite dev server at `http://localhost:5173`
-- **Build**: `docker compose exec promptforge npm run build`
-- **Lint**: `docker compose exec promptforge npm run lint`
-- **Testing**: Uses Vitest. Run with: `docker compose exec promptforge npm run test:run`
 
 ## Product Context: Premium Prompt Generator for Microstock Creators
 **Goal**: Generate high-quality stock-image prompts with minimum repetition and high variation.
