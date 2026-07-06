@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/header-banner.png" alt="PromptForge Banner" width="100%" />
+  <img src="docs/assets/header-banner.png" alt="PromptForge Banner" width="100%" />
   <h1>PromptForge</h1>
   <p><strong>A high-performance, IDE-inspired design language and application for AI Prompt Engineering.</strong></p>
 </div>
