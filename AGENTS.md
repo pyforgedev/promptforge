@@ -17,10 +17,12 @@
 - **Rule**: Avoid large monolithic components. Extract reusable logic into hooks, services, or shared utilities.
 
 ## Commands
-- **Dev**: `npm run dev`
-- **Build**: `npm run build`
-- **Lint**: `npm run lint`
-- **Testing**: No test runner (e.g., Jest/Vitest) is configured yet. Root-level `test_*.ts` files are ad-hoc scripts. Note that running them directly via `npx tsx` may fail due to Vite/tsconfig path alias (`@/*`) resolution.
+All development runs inside Docker. `node_modules` and `dist` are not kept locally.
+
+- **Dev**: `docker compose up -d` — starts Vite dev server at `http://localhost:5173`
+- **Build**: `docker compose exec promptforge npm run build`
+- **Lint**: `docker compose exec promptforge npm run lint`
+- **Testing**: Uses Vitest. Run with: `docker compose exec promptforge npm run test:run`
 
 ## Product Context: Premium Prompt Generator for Microstock Creators
 **Goal**: Generate high-quality stock-image prompts with minimum repetition and high variation.
