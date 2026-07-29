@@ -1,58 +1,58 @@
-import { MonitorCogIcon, MoonStarIcon, SunIcon } from 'lucide-react'
+'use client'
+
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
 import { useAppContext } from '@/hooks/useAppContext'
+import { cn } from '@/lib/utils'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 const THEME_OPTIONS = [
-  {
-    icon: MonitorCogIcon,
-    value: 'system' as const,
-  },
-  {
-    icon: SunIcon,
-    value: 'light' as const,
-  },
-  {
-    icon: MoonStarIcon,
-    value: 'dark' as const,
-  },
-]
+  { icon: Monitor, value: 'system', label: 'System' },
+  { icon: Sun, value: 'light', label: 'Light' },
+  { icon: Moon, value: 'dark', label: 'Dark' },
+] as const
 
 export function ToggleTheme() {
-  const { preferences, setTheme } = useAppContext()
+  const { preferences, setTheme, isReady } = useAppContext()
+
+  if (!isReady) {
+    return <div className="flex h-8 w-24" />
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="bg-muted/80 inline-flex items-center overflow-hidden rounded-md border"
+    <div
+      className="inline-flex items-center overflow-hidden rounded-md border border-border-subtle bg-surface"
       role="radiogroup"
     >
-      {THEME_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          className={cn(
-            'relative flex size-7 cursor-pointer items-center justify-center rounded-md transition-all',
-            preferences.theme === option.value
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-          role="radio"
-          aria-checked={preferences.theme === option.value}
-          aria-label={`Switch to ${option.value} theme`}
-          onClick={() => setTheme(option.value)}
-        >
-          {preferences.theme === option.value && (
-            <motion.div
-              layoutId="theme-option"
-              transition={{ type: 'spring', bounce: 0.1, duration: 0.75 }}
-              className="border-muted-foreground/50 absolute inset-0 rounded-md border"
-            />
-          )}
-          <option.icon className="size-3.5" />
-        </button>
+      {THEME_OPTIONS.map(({ icon: Icon, value, label }) => (
+        <Tooltip key={value}>
+          <TooltipTrigger asChild>
+            <button
+              className={cn(
+                'relative flex size-7 cursor-pointer items-center justify-center rounded-md transition-none',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface',
+                preferences.theme === value
+                  ? 'text-primary'
+                  : 'text-muted hover:text-primary',
+              )}
+              role="radio"
+              aria-checked={preferences.theme === value}
+              aria-label={`Switch to ${value} theme`}
+              onClick={() => setTheme(value)}
+            >
+              {preferences.theme === value && (
+                <motion.div
+                  layoutId="theme-option"
+                  transition={{ type: 'spring', bounce: 0.1, duration: 0.75 }}
+                  className="absolute inset-0 rounded-md border border-border-strong"
+                />
+              )}
+              <Icon className="relative size-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
       ))}
-    </motion.div>
+    </div>
   )
 }

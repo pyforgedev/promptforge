@@ -33,11 +33,11 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
       )}
 
       <aside
-        className={`fixed left-0 top-14 z-drawer h-[calc(100dvh-3.5rem)] w-[260px] border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-transform duration-200 ${
+        className={`fixed left-0 top-14 z-drawer flex h-[calc(100dvh-3.5rem)] w-[260px] flex-col border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-transform duration-200 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <nav className="flex flex-col gap-0.5 p-3">
+        <nav className="flex flex-1 flex-col gap-0.5 p-3">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -64,6 +64,10 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
             </NavLink>
           ))}
         </nav>
+
+        <div className="border-t border-border-subtle px-3 py-2.5">
+          <span className="font-mono text-caption-ui text-muted tabular">v{__APP_VERSION__}</span>
+        </div>
       </aside>
     </>
   )

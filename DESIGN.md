@@ -384,14 +384,22 @@ direct example of what this section prevents going forward).
 
 ## 6.1 Iconography
 
-- **Library:** `lucide-react` exclusively — don't mix in another icon set,
+- **Primary library:** `lucide-react` — used for all UI/chrome icons (actions,
+  indicators, navigation). Don't mix in another general-purpose icon set;
   stroke weights won't match.
-- **Stroke width:** `1.75` as the project default (slightly heavier than
-  Lucide's default `2` reads better at small UI sizes against this typeface).
+- **Brand icons:** `@icons-pack/react-simple-icons` — used exclusively for
+  third-party brand logos (GitHub, etc.). These are imported as `Si*`
+  components and sized identically to lucide icons at the same context
+  (`size-3.5` inline with text, `size-4` in nav bars).
+- **Stroke width:** `1.75` as the project default for lucide icons (slightly
+  heavier than Lucide's default `2` reads better at small UI sizes against
+  this typeface). Simple-icons use their native SVG geometry — no stroke-width
+  override.
 - **Sizes:** `16px` inline with `label`/`body` text, `20px` in standalone
-  buttons/action bars, `24px` for empty-state illustrations.
-- **Color:** icons inherit `currentColor` — never hardcode an icon fill/stroke
-  color separately from the text it sits beside.
+  buttons/action bars, `24px` for empty-state illustrations. Brand icons match
+  the adjacent lucide icon size at each context.
+- **Color:** all icons inherit `currentColor` — never hardcode an icon
+  fill/stroke color separately from the text it sits beside.
 - **Sidebar navigation:** nav items use `tracking-tight` for tighter label
   spacing alongside the icon.
 

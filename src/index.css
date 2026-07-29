@@ -339,6 +339,13 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Disable all transitions during theme switch to prevent FOUC */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

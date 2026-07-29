@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next'
 import {
   Plus, RefreshCw, X, CheckCircle2, AlertCircle,
   Upload, Download, Save, Key, Network, FileJson,
-  Palette, Cpu, Trash2, RotateCcw, Play,
+  Cpu, Trash2, RotateCcw, Play,
 } from 'lucide-react'
-import { useAppContext } from '@/hooks/useAppContext'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { useMasterPromptStore } from '@/store/useMasterPromptStore'
@@ -56,8 +55,7 @@ import {
 import { validateAIConfig } from '@/lib/validation'
 
 export default function Settings() {
-  const { t, i18n } = useTranslation()
-  const { preferences, setTheme, setLanguage } = useAppContext()
+  const { t } = useTranslation()
 
   const {
     presets,
@@ -289,59 +287,6 @@ export default function Settings() {
         title={t('nav.settings')}
         description={t('settings.pageDescription')}
       />
-
-      {/* Preferences */}
-      <Card className="card-spotlight">
-        <CardHeader className="flex flex-row items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
-            <Palette className="h-4 w-4 text-brand-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-heading">
-              {t('settings.preferences')}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <FieldRow label={t('settings.theme')} htmlFor="theme">
-            <Select
-              value={preferences.theme}
-                onValueChange={(v) => {
-                  setTheme(v as 'light' | 'dark' | 'system')
-                  showToast('success', t('toast.themeChanged', { defaultValue: 'Theme updated' }))
-                }}
-            >
-              <SelectTrigger id="theme" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t('theme.light')}</SelectItem>
-                <SelectItem value="dark">{t('theme.dark')}</SelectItem>
-                <SelectItem value="system">{t('theme.system')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </FieldRow>
-
-          <FieldRow label={t('settings.language')} htmlFor="language">
-            <Select
-              value={i18n.language?.startsWith('id') ? 'id' : 'en'}
-              onValueChange={(v) => {
-                setLanguage(v)
-                  i18n.changeLanguage(v)
-                  showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated' }))
-                }}
-            >
-              <SelectTrigger id="language" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">{t('language.en')}</SelectItem>
-                <SelectItem value="id">{t('language.id')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </FieldRow>
-        </CardContent>
-      </Card>
 
       {/* AI Configuration */}
       <Card className="card-spotlight">

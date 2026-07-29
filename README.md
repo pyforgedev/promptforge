@@ -64,6 +64,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 
 - **Framework:** React 19 + TypeScript + Vite 8
 - **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + Framer Motion 12
+- **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
 - **State Management:** Zustand 5
 - **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks`
 - **Form & Validation:** React Hook Form + Zod 4
