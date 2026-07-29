@@ -6,9 +6,9 @@
 
 ## UI/UX
 
-> Wajib baca [`DESIGN.md`](./DESIGN.md) sebelum melakukan perubahan UI/UX apa pun — berisi design tokens, aturan glassmorphism, aksesibilitas, dan pattern komponen yang harus diikuti.
+> Must read [`DESIGN.md`](./DESIGN.md) before making any UI/UX changes — it contains design tokens, glassmorphism rules, accessibility guidelines, and component patterns that must be followed.
 
 ## Git & Deployment
 
 > [!IMPORTANT]
-> Dilarang push, release, atau deploy tanpa konfirmasi eksplisit dari user. Setiap operasi git yang bersifat write (commit, push, tag) dan deployment (vercel, npm run release*) WAJIB meminta persetujuan user terlebih dahulu. Kebijakan ini juga ditegakkan melalui permission rules di `opencode.json`.
+> Do not push, release, or deploy without explicit user confirmation. Every write git operation (commit, push, tag) and deployment command (vercel, npm run release*) MUST ask for user approval first. This policy is also enforced through permission rules in `opencode.json`.
