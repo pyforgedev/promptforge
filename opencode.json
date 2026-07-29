@@ -13,6 +13,7 @@
     { "action": "shell", "resource": "npm run dev*", "effect": "allow" },
     { "action": "shell", "resource": "npm run release*", "effect": "ask" },
     { "action": "shell", "resource": "npx vercel *", "effect": "ask" },
-    { "action": "shell", "resource": "npx vercel", "effect": "ask" }
+    { "action": "shell", "resource": "npx vercel", "effect": "ask" },
+    { "action": "shell", "resource": "gh *", "effect": "ask" }
   ]
 }
