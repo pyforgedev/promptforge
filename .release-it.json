@@ -12,5 +12,8 @@
   },
   "npm": {
     "publish": false
+  },
+  "hooks": {
+    "after:release": "vercel deploy --prod --token=$VERCEL_TOKEN"
   }
 }
