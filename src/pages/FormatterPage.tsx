@@ -37,11 +37,6 @@ export default function FormatterPage() {
   const [uploadedFileContent, setUploadedFileContent] = useState<string | null>(null)
   const [csvPreview, setCsvPreview] = useState<CsvPreviewResult | null>(null)
   const [selectedCsvColumn, setSelectedCsvColumn] = useState<string | null>(null)
-  const [processSummary, setProcessSummary] = useState<{
-    cleanCount: number
-    skippedBlanks: number
-    duplicateCount: number
-  } | null>(null)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
   const [downloadScope, setDownloadScope] = useState<DownloadScope>('all')
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string | null>(null)
@@ -65,6 +60,16 @@ export default function FormatterPage() {
   const hasBatch = batch !== null
   const copiedCount = items.filter((i) => i.status === 'copied').length
 
+  const processSummary = useMemo(() => {
+    if (!batch) return null
+    
+    const cleanCount = items.length
+    const skippedBlanks = 0
+    const duplicateCount = detectDuplicates(items.map(i => i.promptText)).length
+    
+    return { cleanCount, skippedBlanks, duplicateCount }
+  }, [batch, items])
+
   const getPromptsFromInput = (): string[] => {
     if (inputMode === 'paste') {
       return parseRawText(pasteText)
@@ -85,17 +90,8 @@ export default function FormatterPage() {
     const sourceType = inputMode === 'paste' ? 'paste' : 'file'
     const fileName = inputMode === 'upload' ? uploadedFileName ?? undefined : undefined
 
-    const duplicates = detectDuplicates(prompts)
-
     try {
       await createFormatterBatch(prompts, sourceType, fileName)
-
-      setProcessSummary({
-        cleanCount: prompts.length,
-        skippedBlanks: 0,
-        duplicateCount: duplicates.length,
-      })
-
       showToast('success', t('formatter.batchCreated'))
     } catch (error) {
       showToast('error', t('formatter.batchError'), String(error))
