@@ -15,7 +15,7 @@ import { PromptCard } from './PromptCard'
 import { BatchActionBar } from './BatchActionBar'
 import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 import { ServerCrash, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { CardSkeleton } from '@/components/ui/skeleton'
 import type { GeneratedPrompt } from '../types'
 
 export function PromptResultsDisplay() {
@@ -86,9 +86,8 @@ export function PromptResultsDisplay() {
 
   if (isGenerating && !batch) {
     const batchSize = usePromptGeneratorStore.getState().input.batchSize || 3
-    const pulse = shouldReduceMotion ? 'bg-border-subtle' : 'animate-pulse bg-border-subtle'
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" role="status" aria-live="polite">
         <AnimatePresence>
           {Array.from({ length: batchSize }).map((_, i) => (
             <motion.div
@@ -96,29 +95,8 @@ export function PromptResultsDisplay() {
               initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: shouldReduceMotion ? 0 : 0.25, delay: i * 0.05 }}
-              className="relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface"
             >
-              <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
-                <div className={cn('h-4 w-32 rounded', pulse)} />
-                <div className={cn('h-5 w-16 rounded-full', pulse)} />
-              </div>
-              <div className="flex gap-4 border-b border-border-subtle px-4 py-2">
-                <div className={cn('h-4 w-16 rounded', pulse)} />
-                <div className={cn('h-4 w-20 rounded', pulse)} />
-              </div>
-              <div className="space-y-3 px-4 py-4">
-                <div className={cn('h-4 w-full rounded', pulse)} />
-                <div className={cn('h-4 w-[92%] rounded', pulse)} />
-                <div className={cn('h-4 w-[85%] rounded', pulse)} />
-                <div className={cn('h-4 w-[70%] rounded', pulse)} />
-              </div>
-              <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2.5">
-                <div className="flex gap-2">
-                  <div className={cn('h-8 w-16 rounded-md', pulse)} />
-                  <div className={cn('h-8 w-20 rounded-md', pulse)} />
-                </div>
-                <div className={cn('h-8 w-24 rounded-md', pulse)} />
-              </div>
+              <CardSkeleton />
             </motion.div>
           ))}
         </AnimatePresence>

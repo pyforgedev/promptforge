@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { Copy, Check, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { RecentPromptItemSkeleton } from '@/components/ui/skeleton'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 
 export const RecentPrompts = memo(function RecentPrompts() {
@@ -26,7 +27,20 @@ export const RecentPrompts = memo(function RecentPrompts() {
     setTimeout(() => setCopiedId(null), 1500)
   }
 
-  if (!recentItems || recentItems.length === 0) {
+  if (!recentItems) {
+    return (
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4" role="status" aria-live="polite">
+        <h3 className="text-heading">{t('history.recentPrompts')}</h3>
+        <div className="grid gap-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <RecentPromptItemSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (recentItems.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4">
         <h3 className="text-heading">{t('history.recentPrompts')}</h3>

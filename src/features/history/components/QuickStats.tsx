@@ -3,10 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { useLiveQuery } from 'dexie-react-hooks'
 import db from '@/services/storage/indexeddb'
 import { Image, Star } from 'lucide-react'
+import { MetricTileSkeleton } from '@/components/ui/skeleton'
 
 export const QuickStats = memo(function QuickStats() {
   const { t } = useTranslation()
   const items = useLiveQuery(() => db.prompt_history.toArray(), [])
+
+  if (!items) {
+    return (
+      <div className="mx-auto grid w-full max-w-4xl gap-4 px-4 sm:grid-cols-2" role="status" aria-live="polite">
+        <MetricTileSkeleton />
+        <MetricTileSkeleton />
+      </div>
+    )
+  }
 
   const totalPrompts = items?.length ?? 0
 

@@ -108,6 +108,7 @@
   --border-subtle: 42 46 52;
   --border-strong: 58 63 70;
   --border-danger: 127 29 29;
+  --shimmer: rgba(255, 255, 255, 0.08);
 
   --background: 216 19% 5%;
   --foreground: 220 14% 96%;

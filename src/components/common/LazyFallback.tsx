@@ -1,9 +1,5 @@
-import { LoadingSpinner } from './LoadingSpinner'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 export function LazyFallback() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <LoadingSpinner />
-    </div>
-  )
+  return <PageSkeleton />
 }

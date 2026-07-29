@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EmptyState } from '@/components/common/EmptyState'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { HistoryCardSkeleton } from '@/components/ui/skeleton'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
@@ -73,7 +73,15 @@ export const HistoryList = memo(function HistoryList({
     }
   }
 
-  if (loading && items.length === 0) return <LoadingSpinner />
+  if (loading && items.length === 0) {
+    return (
+      <div className="flex flex-col gap-3" role="status" aria-live="polite">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <HistoryCardSkeleton key={i} />
+        ))}
+      </div>
+    )
+  }
 
   if (error) {
     return (

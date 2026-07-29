@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { Prompt } from '@/types'
 import { PromptCard } from './PromptCard'
 import { EmptyState } from '@/components/common/EmptyState'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { CardSkeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
 
 interface PromptListProps {
@@ -24,7 +24,15 @@ export function PromptList({
 }: PromptListProps) {
   const { t } = useTranslation()
 
-  if (loading) return <LoadingSpinner />
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    )
+  }
 
   if (error) {
     return (

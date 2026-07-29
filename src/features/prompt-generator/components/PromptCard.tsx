@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Check, Heart, RotateCcw, ChevronDown, Tag, Bookmark, AlertTriangle } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -166,9 +167,9 @@ export function PromptCard({
     >
       {isRegenerating && (
         <div className="absolute inset-0 z-10 flex flex-col gap-3 rounded-xl bg-surface/80 p-4 backdrop-blur-sm">
-          <div className="h-4 w-3/4 animate-pulse rounded bg-border-subtle" />
-          <div className="h-4 w-1/2 animate-pulse rounded bg-border-subtle" />
-          <div className="h-4 w-2/3 animate-pulse rounded bg-border-subtle" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       )}
 

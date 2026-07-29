@@ -1,5 +1,5 @@
 ---
-version: 1.3.0
+version: 1.4.0
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -62,7 +62,7 @@ live in §2 so they can change without anyone hunting through components.
 | `border-strong` | Overlay rings, dividers that must read clearly |
 | `border-danger` | Invalid input border |
 
-> `brand-danger` and `text-on-brand` are new in v1.1 — the previous version had
+> `brand-danger` and `text-on-brand` fill a gap from v1.0 — the previous version had
 > no error color and no explicit rule for text-on-color, which is why error
 > states in the generator form were inconsistent.
 
@@ -78,7 +78,7 @@ live in §2 so they can change without anyone hunting through components.
 | `body-mono` | JetBrains Mono / Geist Mono | 14px | 400 | 1.6 | 0 |
 | `metric-score` | JetBrains Mono / Geist Mono | 24px | 600 | 1.0 | -0.02em |
 
-`caption` is new — use it for timestamps, item counts, and metadata in
+`caption` — use it for timestamps, item counts, and metadata in
 `HistoryList`, instead of reusing `label` at a smaller size.
 
 **Font features:** Geist OpenType features are enabled via
@@ -316,13 +316,16 @@ components, which is what rule §3.1 below depends on.
    low-contrast (separates surfaces without visual noise); `border-strong` and
    `border-danger` must stay clearly visible against `bg-surface` in both modes
    — verify visually after any value change, don't assume the same ratio holds.
-5. **Test every new component in both themes before merging.** This was a rule
-   in v1.0 and remains one — it's the cheapest bug class to prevent and the
-   easiest to skip under deadline pressure.
+5. **Test every new component in both themes before merging.** — it's the
+   cheapest bug class to prevent and the easiest to skip under deadline pressure.
+6. **Never use `text-muted-foreground`** — it's not a DESIGN.md token. Use
+   `text-muted` (which maps to the `text-muted` semantic token in §2.3).
+   `text-muted-foreground` is a shadcn default that bypasses the project's
+   semantic color system.
 
 ---
 
-## 4. 🚨 Critical Rule: Overlays & Transparency (Glassmorphism)
+## 4. Overlays & Transparency (Glassmorphism)
 
 Pure transparency on floating elements (dropdowns, modals, tooltips, sticky
 headers) is forbidden — it causes background text to visually clash with
@@ -357,18 +360,22 @@ direct example of what this section prevents going forward).
    `focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2`.
    Never `outline-none` without a replacement focus style.
 3. **Color is never the only signal.** An error state pairs `border-danger`
-   with an icon and text, not just a red border — the duplicate-detection
-   warning (see §6.4) follows this too: icon + text + color, not color alone.
+   with an icon and text, not just a red border — this applies to all
+   warning and error patterns throughout the app.
 4. **Respect `prefers-reduced-motion`** per §1.4 for every animation that
    isn't strictly necessary to convey state.
 5. **Contrast is checked, not assumed.** Any new color value added to §2.1
    gets verified against the AA targets stated there before merging.
 6. **Touch targets ≥ 40px** on interactive elements in mobile/drawer contexts
    (action bar icon buttons, close buttons).
+7. **Every icon-only button needs two labels.** `aria-label` for screen readers
+   & touch devices (they don't see tooltips), plus a `<Tooltip>` for sighted
+   mouse/keyboard users (they can't see `aria-label`). Both are required per
+   §6.8.
 
 ---
 
-## 6. Typography Strategy
+## 6. UI Component Patterns
 
 - **UI labels & navigation:** `label` token (Geist, 13px, Medium) — keeps
   interface chrome minimal and out of the way.
@@ -407,11 +414,9 @@ direct example of what this section prevents going forward).
 
 - On "Generate", the output panel appears immediately with a blinking cursor.
 - As `stream: true` data arrives, characters append in `body-mono`.
-- **Skeleton loading:** while streaming, "AI Quality Score" shows a pulsing
-  box (`animate-pulse bg-border-subtle`). The numeric score replaces it only
-  once the stream completes.
-- Under reduced motion, skip the pulse animation and show a static placeholder
-  block instead.
+- **Skeleton loading:** while streaming, "AI Quality Score" shows a `<Skeleton />`
+  block (see §6.17 — uses Framer Motion shimmer with reduced-motion support).
+  The numeric score replaces it only once the stream completes.
 
 ## 6.3 Action Bars & Copy Buttons
 
@@ -421,8 +426,8 @@ direct example of what this section prevents going forward).
 
 ## 6.4 Form Validation & Error States
 
-New in v1.1 — directly addresses the missing-translation-key and error-handling
-issues found in code review.
+Directly addresses the missing-translation-key and error-handling issues found
+in code review.
 
 - **Invalid input:** `border-danger` border, `brand-danger` helper text below
   the field, plus a small danger-colored icon — never border color alone.
@@ -433,11 +438,13 @@ issues found in code review.
 - **Error copy** states what happened and what to do next in the interface's
   voice — e.g. "Couldn't reach the prompt provider. Check your connection and
   retry," not "PROVIDER_ERROR" or a bare exclamation mark.
+- **Success confirmation** uses confident language without exclamation marks:
+  "Configuration applied" not "Configuration applied!"
 
 ## 6.5 Duplicate-Detection Warning (Badge & Banner)
 
-New in v1.1 — UI spec for the feature being implemented separately; defined
-here so it's built with existing tokens instead of one-off styles.
+UI spec for a feature being implemented separately; defined here so it's built
+with existing tokens instead of one-off styles.
 
 - **Badge** (on a result that's flagged similar): pill shape (`rounded-full`),
   `brand-warning` text on `brand-warning/10` background, `12px` icon + caption
@@ -458,11 +465,11 @@ here so it's built with existing tokens instead of one-off styles.
 
 ## 6.7 Switch / Toggle
 
-New in v1.1 — this pattern previously shipped with no spec at all, which led
-to a real bug: toggles rendered with the unstyled primitive default (plain
-white when on, bare outline when off) instead of the project's actual
-`brand-primary`, making on/off states nearly impossible to tell apart at a
-glance. The rule below exists specifically to prevent that regression.
+This pattern previously shipped with no spec, which led to a real bug: toggles
+rendered with the unstyled primitive default (plain white when on, bare outline
+when off) instead of the project's actual `brand-primary`, making on/off states
+nearly impossible to tell apart at a glance. The rules below exist specifically
+to prevent that regression.
 
 - **On (checked):** track filled `brand-primary` (the project's blue accent
   — see §2.1; never a generic white/light fill), knob `text-on-brand` for
@@ -490,49 +497,159 @@ glance. The rule below exists specifically to prevent that regression.
 />
 ```
 
-## 6.8 Tooltip
+## 6.8 Tooltip — Icon-Only Buttons
 
-New in v1.1 — added because several icon-only buttons in the app currently
-have no accessible label at all, visual or otherwise. A tooltip is the
-visual half of the fix; it is not a substitute for the other half.
+Icon-only buttons without text labels are the most common accessibility gap
+in the app. Every one MUST carry **both** a visual tooltip (for sighted
+mouse/keyboard users) AND an `aria-label` (for screen readers and touch
+devices).
 
-- **Every icon-only button gets an `aria-label`** describing the action
-  (e.g. `"Copy prompt"`, `"Delete from history"`) — this is required
-  regardless of whether a tooltip is attached. Screen readers don't read
-  tooltips, and tooltips don't appear on touch devices (no hover state), so
-  the label is the part that actually has to carry the meaning.
-- **Primitive:** Radix/Shadcn `Tooltip` (per §5.1) — don't hand-roll one.
-  It shows on keyboard focus as well as hover, which a custom
-  `onMouseEnter` implementation typically misses.
-- **Tooltips are floating elements** — per §4, they're subject to the same
-  glassmorphism rule as dropdowns and modals. The shadcn default ships
-  `TooltipContent` as a solid `bg-primary` block; override it to the
-  `overlay-glass` pattern so it doesn't diverge from the rest of the system.
-- **Delay:** `delayDuration={300}` on the `TooltipProvider` — long enough to
-  not fire on every incidental hover while scanning the toolbar, short
-  enough to still feel responsive (`motion-base`, §1.4).
-- **Copy:** short, verb-led, matches the actual action — "Copy prompt," not
-  "Copy" alone if there's more than one copy-able thing on screen.
+### 6.8.1 The Rule (Non-Negotiable)
+
+> **Every icon-only button MUST have a `<Tooltip>` wrapping AND an
+> `aria-label` on the trigger. Neither is a substitute for the other.**
+
+Rationale:
+- **Screen readers don't read tooltips** — `aria-label` is the only way a
+  blind user knows what the button does.
+- **Tooltips don't appear on touch devices** — there is no hover state on
+  mobile. The `aria-label` is the only label, and AssistiveTouch / VoiceOver
+  reads it.
+- **Tooltips don't appear on keyboard focus by default** — the Radix
+  `Tooltip` primitive shows on focus, but a hand-rolled
+  `onMouseEnter`-only implementation misses this entirely. Always use the
+  Radix/Shadcn `Tooltip` (per §5.1).
+- **Sighted mouse users can't see `aria-label`** — the tooltip provides the
+  visual label they need.
+
+### 6.8.2 Implementation
+
+**Primitive:** `Tooltip` from `@/components/ui/tooltip` (Radix/Shadcn).
+**Icon button sizing:**
+
+| Context | Size | Button Class | Icon Class |
+|---|---|---|---|
+| Standalone (toolbar, header) | 32×32 | `h-8 w-8` | `h-4 w-4` |
+| Compact (action bar, list item) | 28×28 | `h-7 w-7` | `h-3.5 w-3.5` |
+| Inline (tag, chip) | 20×20 | `h-5 w-5` | `h-3 w-3` |
+| Mobile-safe (touch target ≥ 44px) | 44×44 | `min-h-[44px] min-w-[44px]` | `h-5 w-5` |
+
+**TooltipContent text MUST match the `aria-label` verbatim** —
+inconsistent labels (e.g. `aria-label="Copy"` + tooltip "Copy to clipboard")
+confuse users who rely on both. Use the same translation key for both.
 
 ```tsx
+// ✅ CORRECT — Tooltip + aria-label, text matches, glassmorphism
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8"
+      aria-label={t('common.delete')}
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>
+    {t('common.delete')}
+  </TooltipContent>
+</Tooltip>
+
+// ✅ CORRECT — compact size for list item action bar
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7"
+      aria-label={t('common.edit')}
+    >
+      <Pencil className="h-3.5 w-3.5" />
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>{t('common.edit')}</TooltipContent>
+</Tooltip>
+```
+
+**TooltipProvider** goes at the app root (`src/main.tsx`) with
+`delayDuration={300}` — do not repeat it in every component.
+
+```tsx
+// src/main.tsx — single instance at root
 <TooltipProvider delayDuration={300}>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button variant="ghost" size="icon" aria-label="Copy prompt">
-        <Copy className="size-4" />
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent className="bg-surface/80 backdrop-blur-md border border-strong text-text-primary">
-      Copy prompt
-    </TooltipContent>
-  </Tooltip>
+  <App />
 </TooltipProvider>
 ```
 
+### 6.8.3 Glassmorphism (Required)
+
+Tooltips are floating elements — per §4, they MUST use the `overlay-glass`
+pattern. The shadcn default ships `TooltipContent` as a solid `bg-primary`
+block; override it:
+
+```tsx
+<TooltipContent className="bg-surface/80 backdrop-blur-md border border-strong text-primary text-caption-ui px-2.5 py-1.5">
+  {t('common.delete')}
+</TooltipContent>
+```
+
+Default styling in `src/components/ui/tooltip.tsx` already applies this —
+verify after any shadcn upgrade that the override hasn't been reverted.
+
+### 6.8.4 When to Skip the Tooltip
+
+A tooltip is NOT needed when the button already has visible text:
+
+```tsx
+// ✅ NO tooltip needed — text label is visible
+<Button variant="outline">
+  <Download className="mr-2 h-4 w-4" />
+  {t('history.export')}
+</Button>
+
+// ✅ Tooltip NOT needed — DropdownMenuTrigger has its own accessible pattern
+<DropdownMenuTrigger asChild>
+  <Button variant="ghost" size="icon" aria-label={t('common.options')}>
+    <MoreVertical className="h-4 w-4" />
+  </Button>
+</DropdownMenuTrigger>
+```
+
+A tooltip MAY be omitted for **inline remove buttons inside tags** (tiny
+`<button>` chips where a tooltip would be distracting), but `aria-label` is
+still REQUIRED:
+
+```tsx
+// ⚠️ Exception: tiny inline remove button — aria-label required, tooltip optional
+<button
+  onClick={() => handleRemove(m)}
+  className="rounded p-0.5 text-muted hover:text-primary"
+  aria-label={`Remove ${m}`}
+>
+  <X className="h-3 w-3" />
+</button>
+```
+
+### 6.8.5 Enforcement Checklist
+
+Every icon-only button in a PR diff MUST pass all of these:
+
+| # | Check | How |
+|---|---|---|
+| 1 | `aria-label` present | `grep 'aria-label'` on new/changed files |
+| 2 | `<Tooltip>` wraps the trigger | Visual scan or `grep -B5 'aria-label'` |
+| 3 | Text matches `aria-label` | `grep -A1 'aria-label'` and check TooltipContent |
+| 4 | Glassmorphism on TooltipContent | No solid background — verify `bg-surface/80 backdrop-blur-md` or equivalent |
+| 5 | Radix/Shadcn `Tooltip` primitive | No hand-rolled `onMouseEnter/onMouseLeave` |
+| 6 | Reduced motion respected | Radix handles this — no custom animation overrides |
+| 7 | Touch target ≥ 44px on mobile | `min-h-[44px] min-w-[44px]` or `lg:` override for mobile buttons |
+| 8 | TooltipProvider at root | Single instance in `main.tsx`, not duplicated per component |
+
 ## 6.9 Dual-Mode Select
 
-New in v1.2 — a specialized pattern for fields that can be either "user pinned"
-(constant across a batch) or "system driven" (included in the variation pool).
+A specialized pattern for fields that can be either "user pinned" (constant
+across a batch) or "system driven" (included in the variation pool).
 
 - **Structure:** Two segmented buttons ("User Defined" / "System Defined") as a
   toggle, followed by a conditional combobox that appears only when "User Defined"
@@ -591,10 +708,10 @@ New in v1.2 — a specialized pattern for fields that can be either "user pinned
 
 ## 6.11 Scrollbar
 
-New in v1.1 — previously the app relied entirely on the browser's native
-scrollbar styling, which varied across platforms and ignored the project's
-semantic color tokens. The rules below apply to both the native page scrollbar
-(controlled via global CSS) and the custom Radix `ScrollArea` component.
+Previously the app relied entirely on the browser's native scrollbar styling,
+which varied across platforms and ignored the project's semantic color tokens.
+The rules below apply to both the native page scrollbar (controlled via global
+CSS) and the custom Radix `ScrollArea` component.
 
 - **Thumb color:** `border-strong` token (see §1.1, §2.1) — the same token used
   for overlay borders. In light mode this resolves to `#D1D5DB`; in dark mode
@@ -649,8 +766,8 @@ html::-webkit-scrollbar-thumb:hover {
 
 ## 6.12 Form Field Layout
 
-New in v1.2 — formalizes the label+input pairing pattern that was previously
-undefined, leading to inconsistent spacing and alignment across forms.
+Formalizes the label+input pairing pattern that was previously undefined,
+leading to inconsistent spacing and alignment across forms.
 
 - **Layout:** Labels sit left of their input on a shared row, right-aligned
   mentally but implemented as a flex row with `justify-between`. The input
@@ -673,6 +790,9 @@ undefined, leading to inconsistent spacing and alignment across forms.
   below the field (per §6.4). The helper text is `text-caption-ui`.
 - **Disabled fields:** `opacity-50 cursor-not-allowed` is handled by the
   Input/Select components. Never add a separate disabled label.
+- **Skeleton fields:** use `<Skeleton className="h-10 w-full rounded-lg" />`
+  (matching the `h-10` input height) when a form field is loading. Use the
+  `FormSkeleton` composed variant (§6.17.2) for entire form loading states.
 - **Enter to submit:** fields that trigger an action (preset name, custom model
   name) respond to Enter via `onKeyDown` — don't require the user to click a
   button if they're already typing in a single-field form.
@@ -728,7 +848,7 @@ more whitespace and clearer section boundaries.
 - **Action buttons:** group primary actions (Apply, Test Connection) with
   the fields they act on, not at the very bottom of a long card. Place them
   after the last related field group, before saved presets.
-- **List items** (presets, saved configs) use the `group` pattern (§6.12)
+- **List items** (presets, saved configs) use the `group` pattern (§6.14)
   with actions revealed on hover. Never show delete/load buttons at full
   opacity on every item — it creates visual clutter.
 - **Empty state:** use the `EmptyState` component (§6.6), not a dashed-border
@@ -782,8 +902,8 @@ more whitespace and clearer section boundaries.
 
 ## 6.15 Grain Overlay & Texture
 
-New in v1.3 — a subtle noise texture overlays the entire application to add
-visual depth without distracting from content.
+A subtle noise texture overlays the entire application to add visual depth
+without distracting from content.
 
 - **Position:** fixed-position pseudo-element on `body::before`, covering the
   full viewport.
@@ -819,8 +939,8 @@ body::before {
 
 ## 6.16 Card Spotlight Border
 
-New in v1.3 — interactive cards gain a luminous border effect that follows the
-cursor position, providing visual feedback on hover.
+Interactive cards gain a luminous border effect that follows the cursor
+position, providing visual feedback on hover.
 
 - **Utility class:** `.card-spotlight` applies to any interactive card component.
 - **Effect:** a `::after` pseudo-element with a `radial-gradient` centered at
@@ -848,6 +968,117 @@ const spotlightRef = useSpotlightBorder();
 
 ---
 
+## 6.17 Skeleton Loading System
+
+A centralized skeleton system built with Framer Motion, replacing all ad-hoc
+`LoadingSpinner` and inline pulse divs. Skeletons are the only loading state
+pattern in the app (per §1.4).
+
+### 6.17.1 Base Skeleton
+
+`src/components/ui/skeleton.tsx` exports a `Skeleton` component that renders a
+`bg-border-subtle` block with an animated shimmer overlay.
+
+- **Shimmer effect:** a `linear-gradient` overlay sweeps left-to-right across
+  the skeleton block using Framer Motion. The gradient uses `--shimmer` CSS
+  variable:
+  - Light mode: `rgba(255,255,255,0.5)` — a bright highlight that creates
+    visible contrast against `border-subtle` (`#E5E7EB`).
+  - Dark mode: `rgba(255,255,255,0.08)` — a subtle glow on the dark
+    `border-subtle` (`#2A2E34`).
+  - `mix-blend-mode: overlay` ensures the shimmer reads correctly across both
+    themes without separate gradient definitions.
+- **Reduced motion:** when `prefers-reduced-motion: reduce` is active,
+  `useReducedMotion()` from Framer Motion disables the shimmer entirely.
+  The skeleton renders as a static `bg-border-subtle` block.
+- **Accessibility:** every skeleton container gets `aria-hidden="true"` (the
+  skeleton is decorative, not content). Parent containers wrapping multiple
+  skeletons use `role="status" aria-live="polite"` so assistive technology
+  announces "loading" once, not on every skeleton element.
+- **Prop:** `withShimmer` (default `true`) allows opting out on a per-instance
+  basis if shimmer feels distracting in a specific context (e.g., tiny
+  skeleton elements where the sweep is barely visible).
+
+```tsx
+import { Skeleton } from '@/components/ui/skeleton'
+
+// Basic usage
+<Skeleton className="h-4 w-32" />
+
+// Without shimmer (for tiny elements)
+<Skeleton className="h-3 w-12" withShimmer={false} />
+```
+
+### 6.17.2 Composed Skeleton Variants
+
+Six pre-composed skeleton layouts match the dimensions and structure of their
+real content counterparts. Each uses the same `border border-border-subtle
+bg-surface` container as the real component so the transition from skeleton
+to content is seamless.
+
+| Variant | File | Matches | Used In |
+|---|---|---|---|
+| `CardSkeleton` | `skeleton.tsx` | `PromptCard` (generator output) | `PromptList.tsx`, `PromptResultsDisplay.tsx` |
+| `HistoryCardSkeleton` | `skeleton.tsx` | History list items | `HistoryList.tsx` |
+| `MetricTileSkeleton` | `skeleton.tsx` | `QuickStats` metric tiles | `QuickStats.tsx` |
+| `RecentPromptItemSkeleton` | `skeleton.tsx` | Recent prompt items | `RecentPrompts.tsx` |
+| `PageSkeleton` | `skeleton.tsx` | Generic page layout | `LazyFallback.tsx` (Suspense) |
+| `FormSkeleton` | `skeleton.tsx` | Form with fields | Reserved for future use |
+
+**CardSkeleton layout** (mirrors `PromptCard`):
+```
+┌─────────────────────────────────────┐
+│ [━━━━━━━━━━━]              [━━━━━━] │  ← header + badge
+├─────────────────────────────────────┤
+│ [━━━━]    [━━━━━━━━━━]              │  ← platform tabs
+├─────────────────────────────────────┤
+│ [━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━] │
+│ [━━━━━━━━━━━━━━━━━━━━━━━━━━]       │  ← prompt text lines
+│ [━━━━━━━━━━━━━━━━━━━━]             │
+│ [━━━━━━━━━━━]                      │
+├─────────────────────────────────────┤
+│ [button] [button]     [button]     │  ← action bar
+└─────────────────────────────────────┘
+```
+
+### 6.17.3 Where Skeletons Appear
+
+| Page / Component | Loading Trigger | Skeleton Used | Previous State |
+|---|---|---|---|
+| **Home** — QuickStats | `useLiveQuery` returns `undefined` | 2× `MetricTileSkeleton` | Rendered `0` / `0.0` |
+| **Home** — RecentPrompts | `useLiveQuery` returns `undefined` | 2× `RecentPromptItemSkeleton` | Showed empty state immediately |
+| **Generator** — form hydration | Zustand `_hasHydrated === false` | `Skeleton` blocks (existing) | Same, now with shimmer |
+| **Generator** — generating | `isGenerating && !batch` | `CardSkeleton` × batchSize | Inline pulse divs |
+| **Generator** — regenerating | `isRegenerating` (per card) | `<Skeleton />` lines | Inline `animate-pulse` divs |
+| **History** — initial load | `loading && items.length === 0` | 5× `HistoryCardSkeleton` | `LoadingSpinner` |
+| **Templates** — initial load | `loading` | 6× `CardSkeleton` in grid | `LoadingSpinner` |
+| **Settings** — custom models | `customModelsLoading` | `<Skeleton />` tags | Same, now with shimmer |
+| **Settings** — master prompt | `!masterPromptLoaded` | `<Skeleton />` textarea | Same, now with shimmer |
+| **All pages** (Suspense) | Lazy-loading chunk | `PageSkeleton` | `LoadingSpinner` (3 dots) |
+
+### 6.17.4 Do's and Don'ts
+
+- **Do** use composed variants (`CardSkeleton`, `HistoryCardSkeleton`) whenever
+  the loading state replaces a known content shape — they match real layout
+  dimensions, making the transition invisible.
+- **Do** wrap skeleton groups in `role="status" aria-live="polite"` so screen
+  readers announce loading state once.
+- **Do** check `useReducedMotion` (via `shouldReduceMotion`) in any custom
+  skeleton animation that isn't handled by the base `Skeleton` component.
+  The base component handles reduced motion automatically — custom wrappers
+  must do the same.
+- **Don't** use `LoadingSpinner` anywhere. It has been fully replaced by
+  skeleton loading. The component file remains only for backwards compatibility
+  and will be removed in a future version.
+- **Don't** use inline `animate-pulse bg-border-subtle` divs — always use the
+  `<Skeleton />` component or one of its composed variants. Inline pulse divs
+  bypass the shimmer effect and reduced-motion handling.
+- **Don't** render a skeleton and the real content at the same time — the
+  loading condition must be mutually exclusive with the content condition.
+  Use early returns (e.g., `if (loading) return <Skeleton />`).
+
+---
+
 ## 7. Layout & Spacing
 
 - **Container:** max-width `1280px` (`xl` breakpoint, §1.5) for the main
@@ -863,15 +1094,14 @@ const spotlightRef = useSpotlightBorder();
   8×8 rounded box at `bg-brand-primary/10`. This visually separates cards
   in a multi-card layout without relying on background color changes.
 
-**Layout updates (v1.3):**
+**Layout refinements:**
 
 - **Viewport height:** `min-h-dvh` on the main layout container to fix iOS
   Safari's viewport jump on address bar hide/show.
-- **Main content padding:** tightened to `p-4 md:p-6` (was `p-6`) for denser
+- **Main content padding:** `p-4 md:p-6` (tightened from `p-6`) for denser
   information density.
-- **Header:** reduced to `h-14`. Background changed to `bg-surface/80
-  backdrop-blur-md`. App name uses `text-label-ui font-semibold tracking-tight`
-  instead of `text-heading`.
+- **Header:** `h-14`. Background is `bg-surface/80 backdrop-blur-md`. App name
+  uses `text-label-ui font-semibold tracking-tight` instead of `text-heading`.
 - **Sidebar:** navigation container uses `gap-0.5` and `p-3`. Nav items use
   `rounded-lg` (was `rounded-md`). Active items get a left accent bar
   (`absolute left-0 h-5 w-0.5 rounded-full bg-brand-primary`). Icons transition
@@ -881,58 +1111,12 @@ const spotlightRef = useSpotlightBorder();
 
 ---
 
-## 8. Do's and Don'ts
+## Appendix: Change History
 
-### Do
-
-- **Do** use `bg-app` for the outermost container, `bg-surface` for
-  cards/panels.
-- **Do** use `backdrop-blur-md` on dropdowns so underlying text never visually
-  collides with menu items.
-- **Do** reach for a Radix/Shadcn primitive before hand-rolling an interactive
-  pattern (§5.1).
-- **Do** test every new component in both `data-theme="light"` and
-  `data-theme="dark"`, with keyboard-only navigation, before merging.
-- **Do** use stagger animations (`animate-stagger-*`) for sequential entry
-  effects on hero elements, feature grids, and list items.
-- **Do** apply `btn-press` class to primary action buttons for tactile feedback.
-
-### Don't
-
-- **Don't** use standard shadows (`shadow-md`) on flat resting cards — rely on
-  `border-subtle`. Shadows are reserved for floating overlays at their `z-*`
-  layer.
-- **Don't** use loading spinners for text generation — streaming text and
-  skeletons only.
-- **Don't** use the monospace font for UI buttons or navigation — reserved
-  for AI outputs, prompt syntax, and scores.
-- **Don't** define a new color value without adding it to §2.1 and checking
-  contrast — no inline one-off hex values, ever.
-- **Don't** ship a custom dropdown/accordion/modal when a Radix/Shadcn
-  primitive already covers the pattern.
-- **Don't** leave a `Switch`/toggle on the primitive's default un-themed
-  colors — always wire `checked`/`unchecked` to `brand-primary` and
-  `bg-surface-hover` per §6.7, never plain white/transparent.
-- **Don't** ship an icon-only button without `aria-label` — a tooltip alone
-  doesn't make it accessible (§6.8).
-- **Don't** use `text-muted-foreground` — this is not a DESIGN.md token. Use
-  `text-muted` (which maps to the `text-muted` semantic token in §2.3).
-  `text-muted-foreground` is a shadcn default that bypasses the project's
-  semantic color system.
-- **Don't** show destructive action buttons (delete, remove) at full color at
-  rest — use `text-muted` and transition to `text-brand-danger` on hover to
-  avoid alarming the user during normal browsing (§6.12).
-- **Don't** put success confirmation text in exclamation marks. Be confident,
-  not loud: "Configuration applied" not "Configuration applied!" (§8
-  Content rules).
-- **Don't** leave action buttons permanently visible on list items in a
-  settings page — reveal them on hover via `group-hover:opacity-100` to
-  reduce visual noise (§6.12).
-- **Don't** use all-caps labels — labels should be sentence case. The
-  `SectionGroup` header uses `text-caption-ui text-secondary font-semibold`
-  without `uppercase` or `tracking-wide`.
-- **Don't** let the grain overlay (`z-grain: 1`) visually interfere with
-  modals, dropdowns, or toasts — these components render at `z-sticky` (10)
-  and above, ensuring proper stacking order.
-
-(End of file - total 946 lines)
+| Version | Changes |
+|---|---|
+| v1.0 | Initial design system |
+| v1.1 | Added `brand-danger`, `text-on-brand` tokens, form validation, duplicate-detection warning, switch/toggle spec, tooltip rule, scrollbar styling |
+| v1.2 | Added dual-mode select pattern, form field layout spec, settings page layout |
+| v1.3 | Added grain overlay, card spotlight border, layout refinements |
+| v1.4 | Added centralized skeleton loading system, strengthened tooltip rule |
