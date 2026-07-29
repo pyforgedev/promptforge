@@ -10,7 +10,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://promptforge-woad.vercel.app/)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://promptforge.pyforgedev.web.id/)
 
 ## Features
 
@@ -91,7 +91,7 @@ src/
 │   ├── layout/                       # Header, Layout, Sidebar
 │   └── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
 ├── features/
-│   ├── generator/                    # Legacy (empty)
+│   ├── formatter/                    # Prompt formatting & queue (components, types)
 │   ├── history/                      # Prompt history (components, hooks, types)
 │   ├── prompt-generator/             # V2 prompt composer (components, engine, hooks, schemas, services, store, types, constants)
 │   ├── prompts/                      # Prompt utilities (components, hooks, services, types, utils)
