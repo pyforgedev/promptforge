@@ -1,4 +1,10 @@
-# Changelog 
+# Changelog
+
+## [0.1.2](https://github.com/pyforgedev/promptforge/compare/v0.1.1...v0.1.2) (2026-07-29)
+
+### Bug Fixes
+
+* keep process summary visible for active batch in formatter ([f4f3084](https://github.com/pyforgedev/promptforge/commit/f4f308452e099cbc37926c7e1823b72b5b1e0f86))
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
