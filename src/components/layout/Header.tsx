@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Menu } from 'lucide-react'
 import { SiGithub } from '@icons-pack/react-simple-icons'
-import { useToast } from '@/hooks/useToast'
+import { US, ID } from 'country-flag-icons/react/3x2'
 import { AppLogo } from '@/components/common/AppLogo'
 import {
   Select,
@@ -16,11 +16,9 @@ import { ToggleTheme } from '@/components/ui/toggle-theme'
 
 export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
   const { t, i18n } = useTranslation()
-  const { showToast } = useToast()
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)
-    showToast('success', t('toast.languageChanged', { defaultValue: 'Language updated' }))
   }
 
   return (
@@ -49,7 +47,7 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app"
               aria-label="GitHub"
             >
-              <SiGithub className="h-4 w-4" />
+              <SiGithub className="h-4 w-4" title="" />
             </button>
           </TooltipTrigger>
           <TooltipContent>
@@ -60,15 +58,34 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
           value={i18n.language?.startsWith('id') ? 'id' : 'en'}
           onValueChange={(v) => changeLanguage(v)}
         >
-          <SelectTrigger className="h-8 w-[130px] border-border-subtle bg-transparent px-3 text-caption-ui transition-colors hover:bg-surface-hover" aria-label={t('common.selectLanguage')}>
-            <SelectValue />
-          </SelectTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SelectTrigger className="flex h-9 w-11 items-center justify-center rounded-md border border-border-subtle bg-transparent p-1 text-muted transition-all duration-150 hover:bg-surface-hover hover:text-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app" aria-label={t('common.selectLanguage')}>
+                <SelectValue>
+                  {i18n.language?.startsWith('id') ? (
+                    <ID className="h-3 w-5" />
+                  ) : (
+                    <US className="h-3 w-5" />
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('common.selectLanguage', { defaultValue: 'Select language' })}
+            </TooltipContent>
+          </Tooltip>
           <SelectContent>
             <SelectItem value="en" className={i18n.language?.startsWith('en') ? 'font-semibold' : ''}>
-              {t('language.en')}
+              <span className="flex items-center gap-2">
+                <US className="h-3 w-5" />
+                <span>{t('language.en')}</span>
+              </span>
             </SelectItem>
             <SelectItem value="id" className={i18n.language?.startsWith('id') ? 'font-semibold' : ''}>
-              {t('language.id')}
+              <span className="flex items-center gap-2">
+                <ID className="h-3 w-5" />
+                <span>{t('language.id')}</span>
+              </span>
             </SelectItem>
           </SelectContent>
         </Select>

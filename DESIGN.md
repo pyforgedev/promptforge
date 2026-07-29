@@ -1,5 +1,5 @@
 ---
-version: 1.4.0
+version: 1.5.0
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -398,6 +398,19 @@ direct example of what this section prevents going forward).
   third-party brand logos (GitHub, etc.). These are imported as `Si*`
   components and sized identically to lucide icons at the same context
   (`size-3.5` inline with text, `size-4` in nav bars).
+  - **Native tooltip suppression:** every `Si*` component renders a `<title>`
+    element inside its SVG by default (e.g. `SiGithub` → `<title>GitHub</title>`),
+    which creates a native browser tooltip. When the icon is wrapped in a
+    `<Tooltip>` (per §6.8), this produces a double tooltip. Pass `title=""` to
+    every `Si*` usage to suppress the native SVG tooltip. This is mandatory,
+    not optional — treat it the same as `aria-label` on icon-only buttons.
+    ```tsx
+    // ✅ CORRECT — native title suppressed
+    <SiGithub className="h-4 w-4" title="" />
+
+    // ❌ WRONG — native tooltip + Radix tooltip = double
+    <SiGithub className="h-4 w-4" />
+    ```
 - **Stroke width:** `1.75` as the project default for lucide icons (slightly
   heavier than Lucide's default `2` reads better at small UI sizes against
   this typeface). Simple-icons use their native SVG geometry — no stroke-width
@@ -1119,4 +1132,5 @@ to content is seamless.
 | v1.1 | Added `brand-danger`, `text-on-brand` tokens, form validation, duplicate-detection warning, switch/toggle spec, tooltip rule, scrollbar styling |
 | v1.2 | Added dual-mode select pattern, form field layout spec, settings page layout |
 | v1.3 | Added grain overlay, card spotlight border, layout refinements |
+| v1.5 | Added native tooltip suppression rule for simple-icons (title="") to prevent double tooltips |
 | v1.4 | Added centralized skeleton loading system, strengthened tooltip rule |

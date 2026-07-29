@@ -21,7 +21,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="top-right"
       offset={{ top: 64 }}
       visibleToasts={3}
-      expand={true}
+      expand={false}
       icons={{
         success: <CircleCheck className="h-4 w-4" />,
         info: <Info className="h-4 w-4" />,
