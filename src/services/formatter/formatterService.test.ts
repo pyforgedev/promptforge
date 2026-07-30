@@ -79,6 +79,35 @@ describe('parseRawText', () => {
     const result = parseRawText(input)
     expect(result).toEqual(['command one', 'command two', 'command three'])
   })
+
+  it('extracts Prompt: from markdown bold list format', () => {
+    const input = [
+      '- **Judul/Tema Niche:** Labor Day Modern Corporate Sale Banner',
+      '- **Type:** Image',
+      '- **Commercial Rationale:** Ultra-high demand for US Labor Day retail',
+      '- **Prompt:** A sleek modern promotional hero banner with abstract curved red panels',
+    ].join('\n')
+    const result = parseRawText(input)
+    expect(result).toEqual([
+      'A sleek modern promotional hero banner with abstract curved red panels',
+    ])
+  })
+
+  it('extracts Prompt: from mixed markdown list (multiple prompts)', () => {
+    const input = [
+      '- **Prompt:** First prompt here',
+      '- **Type:** Image',
+      '- **Prompt:** Second prompt here',
+    ].join('\n')
+    const result = parseRawText(input)
+    expect(result).toEqual(['First prompt here', 'Second prompt here'])
+  })
+
+  it('falls back to line-based split when no markdown Prompt found either', () => {
+    const input = '- **Judul:** something\n- **Type:** image'
+    const result = parseRawText(input)
+    expect(result).toEqual(['- **Judul:** something', '- **Type:** image'])
+  })
 })
 
 describe('parseCsvPreview', () => {

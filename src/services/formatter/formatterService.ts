@@ -72,6 +72,11 @@ export function parseRawText(input: string): string[] {
     return promptLines.map((line) => line.replace(/^prompt\s*:\s*/i, '').trim())
   }
 
+  const mdPromptLines = normalized.filter((line) => /^-\s*\*\*prompt\s*:\*\*/i.test(line))
+  if (mdPromptLines.length > 0) {
+    return mdPromptLines.map((line) => line.replace(/^-\s*\*\*prompt\s*:\*\*\s*/i, '').trim())
+  }
+
   return normalized
 }
 
