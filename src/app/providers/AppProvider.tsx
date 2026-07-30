@@ -4,7 +4,7 @@ import { getSetting, saveSetting } from '@/services/storage/indexeddb'
 import { AppContext } from './AppContext'
 
 const defaultPreferences: AppPreferences = {
-  theme: 'system',
+  theme: 'dark',
   language: 'en',
 }
 
