@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/pyforgedev/promptforge/compare/v0.1.3...v0.2.0) (2026-07-30)
+
+### Features
+
+* add browser language detection with localStorage ([817e25f](https://github.com/pyforgedev/promptforge/commit/817e25fe1ce3e3a1281cc822d13b1c1ef16b57db))
+* add clear button to paste input area ([4e04612](https://github.com/pyforgedev/promptforge/commit/4e04612ec5ab50ab5ed2326f865ce2886ea6c401))
+* add markdown bold list prompt extraction to formatter ([d50245a](https://github.com/pyforgedev/promptforge/commit/d50245a4e8f76485c2792ff5e6d61903d4fad2e1))
+
 ## [0.1.3](https://github.com/pyforgedev/promptforge/compare/v0.1.2...v0.1.3) (2026-07-29)
 
 ## [0.1.2](https://github.com/pyforgedev/promptforge/compare/v0.1.1...v0.1.2) (2026-07-29)
