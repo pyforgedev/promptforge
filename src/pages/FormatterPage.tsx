@@ -217,6 +217,7 @@ export default function FormatterPage() {
         selectedCsvColumn={selectedCsvColumn}
         onInputModeChange={setInputMode}
         onPasteTextChange={setPasteText}
+        onClear={() => setPasteText('')}
         onFileUpload={handleFileUpload}
         onSelectCsvColumn={setSelectedCsvColumn}
         onConfirmCsvColumn={() => {

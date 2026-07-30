@@ -87,7 +87,8 @@
     "statusPending": "Tertunda",
     "batchCreated": "Batch berhasil dibuat",
     "batchError": "Gagal membuat batch",
-    "csvColumnSelected": "Kolom CSV dipilih"
+    "csvColumnSelected": "Kolom CSV dipilih",
+    "clear": "Bersihkan"
   },
   "common": {
     "add": "Tambah",

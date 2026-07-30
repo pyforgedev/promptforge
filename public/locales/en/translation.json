@@ -87,7 +87,8 @@
     "statusPending": "Pending",
     "batchCreated": "Batch created",
     "batchError": "Failed to create batch",
-    "csvColumnSelected": "CSV column selected"
+    "csvColumnSelected": "CSV column selected",
+    "clear": "Clear"
   },
   "common": {
     "add": "Add",

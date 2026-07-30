@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Upload, FileText, Sparkles } from 'lucide-react'
+import { Upload, FileText, Sparkles, X } from 'lucide-react'
 import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CsvColumnPicker } from './CsvColumnPicker'
 import type { CsvPreviewResult, InputMode } from '../types'
 
@@ -14,6 +15,7 @@ interface InputSectionProps {
   selectedCsvColumn: string | null
   onInputModeChange: (mode: InputMode) => void
   onPasteTextChange: (text: string) => void
+  onClear: () => void
   onFileUpload: (name: string, content: string) => void
   onSelectCsvColumn: (col: string) => void
   onConfirmCsvColumn: () => void
@@ -28,6 +30,7 @@ export function InputSection({
   selectedCsvColumn,
   onInputModeChange,
   onPasteTextChange,
+  onClear,
   onFileUpload,
   onSelectCsvColumn,
   onConfirmCsvColumn,
@@ -83,13 +86,32 @@ export function InputSection({
       </div>
 
       {inputMode === 'paste' ? (
-        <textarea
-          value={pasteText}
-          onChange={(e) => onPasteTextChange(e.target.value)}
-          placeholder={t('formatter.pastePlaceholder')}
-          className="w-full max-h-[280px] resize-none overflow-y-auto rounded-lg border border-border-subtle bg-surface-hover/50 px-4 py-3 font-mono text-sm leading-relaxed text-primary placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 focus:bg-surface"
-          rows={8}
-        />
+        <div className="relative">
+          <textarea
+            value={pasteText}
+            onChange={(e) => onPasteTextChange(e.target.value)}
+            placeholder={t('formatter.pastePlaceholder')}
+            className="w-full max-h-[280px] resize-none overflow-y-auto rounded-lg border border-border-subtle bg-surface-hover/50 px-4 py-3 pr-10 font-mono text-sm leading-relaxed text-primary placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 focus:bg-surface"
+            rows={8}
+          />
+          {pasteText.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild type="button">
+                <button
+                  type="button"
+                  onClick={onClear}
+                  className="absolute top-2 right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted hover:text-primary hover:bg-surface-hover transition-colors"
+                  aria-label={t('formatter.clear')}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {t('formatter.clear')}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
           <div
