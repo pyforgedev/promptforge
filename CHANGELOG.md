@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0](https://github.com/pyforgedev/promptforge/compare/v0.2.0...v0.3.0) (2026-07-30)
+
+### Features
+
+* add clear queue button to formatter ([18a06f0](https://github.com/pyforgedev/promptforge/commit/18a06f05ab008b6c51a088af99729c72c9015321))
+
 ## [0.2.0](https://github.com/pyforgedev/promptforge/compare/v0.1.3...v0.2.0) (2026-07-30)
 
 ### Features
