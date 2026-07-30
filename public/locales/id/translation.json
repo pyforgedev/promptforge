@@ -88,7 +88,10 @@
     "batchCreated": "Batch berhasil dibuat",
     "batchError": "Gagal membuat batch",
     "csvColumnSelected": "Kolom CSV dipilih",
-    "clear": "Bersihkan"
+    "clear": "Bersihkan",
+    "clearQueueTitle": "Bersihkan seluruh antrean?",
+    "clearQueueDescription": "Ini akan menghapus semua prompt dari antrean secara permanen. Tindakan ini tidak dapat dibatalkan.",
+    "clearQueueConfirm": "Bersihkan antrean"
   },
   "common": {
     "add": "Tambah",
@@ -222,6 +225,7 @@
     "languageChanged": "Bahasa diperbarui",
     "copyFailed": "Gagal menyalin",
     "resetSuccess": "Kemajuan direset",
+    "queueCleared": "Antrean dibersihkan",
     "downloadSuccess": "File diunduh"
   },
   "templates": {

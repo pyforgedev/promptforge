@@ -4,7 +4,7 @@ import { QueueControls } from './QueueControls'
 import { OverviewList } from './OverviewList'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, List } from 'lucide-react'
+import { RotateCcw, List, Trash2 } from 'lucide-react'
 import type { FormatterItem } from '../types'
 import { useState, useEffect } from 'react'
 
@@ -15,6 +15,7 @@ interface QueueViewProps {
   onPrev: () => void
   onJump: (index: number) => void
   onResetPrompt: () => void
+  onClearQueue: () => void
 }
 
 export function QueueView({
@@ -24,6 +25,7 @@ export function QueueView({
   onPrev,
   onJump,
   onResetPrompt,
+  onClearQueue,
 }: QueueViewProps) {
   const { t } = useTranslation()
   const [copySuccess, setCopySuccess] = useState(false)
@@ -49,10 +51,16 @@ export function QueueView({
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h2 className="text-heading text-primary">{t('formatter.queueTitle')}</h2>
-          <Button variant="ghost" size="sm" onClick={onResetPrompt} className="gap-1.5 text-muted hover:text-primary">
-            <RotateCcw className="h-3.5 w-3.5" />
-            {t('formatter.resetProgress')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={onClearQueue} className="gap-1.5 text-muted hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+              {t('formatter.clear')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onResetPrompt} className="gap-1.5 text-muted hover:text-primary">
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('formatter.resetProgress')}
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2">

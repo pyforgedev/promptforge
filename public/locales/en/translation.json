@@ -88,7 +88,10 @@
     "batchCreated": "Batch created",
     "batchError": "Failed to create batch",
     "csvColumnSelected": "CSV column selected",
-    "clear": "Clear"
+    "clear": "Clear",
+    "clearQueueTitle": "Clear entire queue?",
+    "clearQueueDescription": "This will permanently remove all prompts from the queue. This action cannot be undone.",
+    "clearQueueConfirm": "Clear queue"
   },
   "common": {
     "add": "Add",
@@ -222,6 +225,7 @@
     "languageChanged": "Language updated",
     "copyFailed": "Failed to copy",
     "resetSuccess": "Progress reset",
+    "queueCleared": "Queue cleared",
     "downloadSuccess": "File downloaded"
   },
   "templates": {

@@ -201,6 +201,13 @@ export async function setCurrentIndex(index: number): Promise<void> {
   await db.formatter_batch.update(activeBatch.id, { currentIndex: index })
 }
 
+export async function clearQueue(): Promise<void> {
+  await db.transaction('rw', db.formatter_batch, db.formatter_items, async () => {
+    await db.formatter_items.clear()
+    await db.formatter_batch.clear()
+  })
+}
+
 export async function resetAllProgress(): Promise<void> {
   await db.transaction('rw', db.formatter_batch, db.formatter_items, async () => {
     await db.formatter_items.toCollection().modify({

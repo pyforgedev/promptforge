@@ -10,12 +10,14 @@ import { QueueView } from '@/features/formatter/components/QueueView'
 import { DownloadSection } from '@/features/formatter/components/DownloadSection'
 import { ReplaceConfirmDialog } from '@/features/formatter/components/ReplaceConfirmDialog'
 import { ResetProgressDialog } from '@/features/formatter/components/ResetProgressDialog'
+import { ClearQueueDialog } from '@/features/formatter/components/ClearQueueDialog'
 import {
   getActiveBatch,
   createFormatterBatch,
   markItemCopied,
   setCurrentIndex,
   resetAllProgress,
+  clearQueue,
   exportBatch,
   parseRawText,
   parseCsvPreview,
@@ -43,6 +45,7 @@ export default function FormatterPage() {
   const [lastBatchId, setLastBatchId] = useState<number | undefined>(undefined)
   const [showReplace, setShowReplace] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [showClearQueue, setShowClearQueue] = useState(false)
   const [pendingPrompts, setPendingPrompts] = useState<string[] | null>(null)
 
   const activeBatch = useLiveQuery(() => getActiveBatch())
@@ -160,6 +163,12 @@ export default function FormatterPage() {
     setCurrentIndex(index)
   }
 
+  const handleClearQueue = async () => {
+    await clearQueue()
+    setShowClearQueue(false)
+    showToast('success', t('toast.queueCleared'))
+  }
+
   const handleResetConfirm = () => {
     resetAllProgress()
     setShowReset(false)
@@ -251,12 +260,19 @@ export default function FormatterPage() {
             onPrev={handlePrev}
             onJump={handleJump}
             onResetPrompt={() => setShowReset(true)}
+            onClearQueue={() => setShowClearQueue(true)}
           />
 
           <ResetProgressDialog
             open={showReset}
             onOpenChange={setShowReset}
             onConfirm={handleResetConfirm}
+          />
+
+          <ClearQueueDialog
+            open={showClearQueue}
+            onOpenChange={setShowClearQueue}
+            onConfirm={handleClearQueue}
           />
 
           <DownloadSection
