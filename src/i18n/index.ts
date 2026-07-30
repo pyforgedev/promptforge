@@ -13,7 +13,12 @@ i18n
       en: { translation: enTranslation },
       id: { translation: idTranslation },
     },
+    lng: 'en',
     fallbackLng: 'en',
+    detection: {
+      order: ['localStorage'],
+      caches: ['localStorage'],
+    },
     interpolation: {
       escapeValue: false,
     },
