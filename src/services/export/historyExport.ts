@@ -1,4 +1,5 @@
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
+import i18n from '@/i18n'
 import { toast } from 'sonner'
 
 export function exportToTxt(items: PromptHistoryRecord[]): string {
@@ -78,8 +79,11 @@ export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | '
   })
 
   toast.promise(promise, {
-    loading: `Preparing ${items.length} prompts for export...`,
-    success: 'Exported',
-    error: 'Export failed.',
+    loading: i18n.t('toast.exportPreparing', {
+      count: items.length,
+      defaultValue: `Preparing ${items.length} prompts for export...`,
+    }),
+    success: i18n.t('toast.exportComplete', { defaultValue: 'Prompts exported' }),
+    error: i18n.t('toast.exportFailed', { defaultValue: 'Export failed' }),
   })
 }

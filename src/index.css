@@ -343,6 +343,130 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* 6.18 Toast Notifications (Sonner) — neutral surface + status accents.
+   Sonner injects its stylesheet at runtime; these rules carry higher
+   specificity so the design-system tokens win. richColors is never used. */
+[data-sonner-toaster].toaster {
+  z-index: var(--color-z-toast);
+  font-family: var(--font-sans);
+}
+
+[data-sonner-toaster].toaster[data-sonner-theme='light'],
+[data-sonner-toaster].toaster[data-sonner-theme='dark'] {
+  --normal-bg: rgb(var(--bg-surface));
+  --normal-bg-hover: rgb(var(--bg-surface-hover));
+  --normal-border: rgb(var(--border-strong));
+  --normal-border-hover: rgb(var(--border-strong));
+  --normal-text: rgb(var(--text-primary));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='success'] {
+  border-color: rgb(var(--brand-success) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--brand-success) / 0.15),
+    0 8px 28px -8px rgb(var(--brand-success) / 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='success'] [data-icon] {
+  color: rgb(var(--brand-success));
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='success'] [data-title] {
+  color: rgb(var(--brand-success));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='error'] {
+  border-color: rgb(var(--brand-danger) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--brand-danger) / 0.15),
+    0 8px 28px -8px rgb(var(--brand-danger) / 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='error'] [data-icon] {
+  color: rgb(var(--brand-danger));
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='error'] [data-title] {
+  color: rgb(var(--brand-danger));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='warning'] {
+  border-color: rgb(var(--brand-warning) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--brand-warning) / 0.15),
+    0 8px 28px -8px rgb(var(--brand-warning) / 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='warning'] [data-icon] {
+  color: rgb(var(--brand-warning));
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='warning'] [data-title] {
+  color: rgb(var(--brand-warning));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='info'] {
+  border-color: rgb(var(--brand-primary) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--brand-primary) / 0.15),
+    0 8px 28px -8px rgb(var(--brand-primary) / 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='info'] [data-icon] {
+  color: rgb(var(--brand-primary));
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='info'] [data-title] {
+  color: rgb(var(--brand-primary));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='loading'] {
+  border-color: rgb(var(--brand-primary) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--brand-primary) / 0.15),
+    0 8px 28px -8px rgb(var(--brand-primary) / 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='loading'] [data-icon] {
+  color: rgb(var(--brand-primary));
+}
+[data-sonner-toaster] .sonner-loading-bar {
+  background: rgb(var(--brand-primary));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type='default'] {
+  box-shadow: 0 0 0 1px rgb(var(--border-strong) / 0.5),
+    0 8px 28px -8px rgb(0 0 0 / 0.25);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type='default'] [data-icon] {
+  color: rgb(var(--text-secondary));
+}
+
+[data-sonner-toaster] [data-sonner-toast]:focus-visible {
+  box-shadow: 0 0 0 2px rgb(var(--brand-primary));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-description] {
+  color: rgb(var(--text-secondary));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-button] {
+  background: rgb(var(--brand-primary));
+  color: rgb(var(--text-on-brand));
+}
+[data-sonner-toaster]
+  [data-sonner-toast][data-styled='true']
+  [data-button]:hover {
+  background: rgb(var(--brand-primary-hover));
+}
+
+[data-sonner-toaster][data-sonner-theme='light']
+  [data-sonner-toast][data-styled='true']
+  [data-cancel],
+[data-sonner-toaster][data-sonner-theme='dark']
+  [data-sonner-toast][data-styled='true']
+  [data-cancel] {
+  background: rgb(var(--bg-surface-hover));
+  color: rgb(var(--text-secondary));
+}
+
+[data-sonner-toaster][data-sonner-theme='light']
+  [data-sonner-toast][data-styled='true']
+  [data-close-button],
+[data-sonner-toaster][data-sonner-theme='dark']
+  [data-sonner-toast][data-styled='true']
+  [data-close-button] {
+  background: rgb(var(--bg-surface-hover));
+  border-color: rgb(var(--border-strong));
+  color: rgb(var(--text-secondary));
+}
+
 /* Disable all transitions during theme switch to prevent FOUC */
 html.theme-switching *,
 html.theme-switching *::before,

@@ -227,7 +227,10 @@
     "progressFailed": "Gagal memperbarui progres",
     "resetSuccess": "Kemajuan direset",
     "queueCleared": "Antrean dibersihkan",
-    "downloadSuccess": "File diunduh"
+    "downloadSuccess": "File diunduh",
+    "exportPreparing": "Menyiapkan {{count}} prompt untuk diekspor...",
+    "exportComplete": "Prompt diekspor",
+    "exportFailed": "Ekspor gagal"
   },
   "templates": {
     "pageTitle": "Template Prompt",

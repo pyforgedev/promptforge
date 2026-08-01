@@ -227,7 +227,10 @@
     "progressFailed": "Failed to update progress",
     "resetSuccess": "Progress reset",
     "queueCleared": "Queue cleared",
-    "downloadSuccess": "File downloaded"
+    "downloadSuccess": "File downloaded",
+    "exportPreparing": "Preparing {{count}} prompts for export...",
+    "exportComplete": "Prompts exported",
+    "exportFailed": "Export failed"
   },
   "templates": {
     "pageTitle": "Prompt Templates",

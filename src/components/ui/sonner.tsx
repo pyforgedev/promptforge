@@ -17,28 +17,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      className="toaster"
       position="top-right"
       offset={{ top: 64 }}
+      mobileOffset={{ top: 64 }}
       visibleToasts={3}
       expand={false}
+      duration={4000}
+      containerAriaLabel="Notifications"
       icons={{
         success: <CircleCheck className="h-4 w-4" />,
         info: <Info className="h-4 w-4" />,
         warning: <TriangleAlert className="h-4 w-4" />,
         error: <OctagonX className="h-4 w-4" />,
         loading: <LoaderCircle className="h-4 w-4 motion-safe:animate-pulse" />,
-      }}
-      toastOptions={{
-        classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-surface/80 group-[.toaster]:text-primary group-[.toaster]:border-border-strong group-[.toaster]:shadow-xl group-[.toaster]:backdrop-blur-md",
-          description: "group-[.toast]:text-secondary",
-          actionButton:
-            "group-[.toast]:bg-brand-primary group-[.toast]:text-text-on-brand",
-          cancelButton:
-            "group-[.toast]:bg-surface-hover group-[.toast]:text-primary",
-        },
       }}
       {...props}
     />

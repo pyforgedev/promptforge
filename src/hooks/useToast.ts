@@ -13,9 +13,10 @@ export function useToast() {
     duration?: number,
   ) => {
     try {
+      const errorDuration = !duration && type === 'error' ? 8000 : undefined
       const options = {
         ...(description ? { description } : {}),
-        ...(duration ? { duration } : {}),
+        ...(duration ? { duration } : errorDuration ? { duration: errorDuration } : {}),
       }
       switch (type) {
         case 'success':

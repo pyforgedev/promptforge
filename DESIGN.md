@@ -104,7 +104,7 @@ typographic control. **Font smoothing** is applied globally:
 | `z-dropdown` | 20 | Select menus, popovers |
 | `z-drawer` | 30 | Mobile sidebar drawer |
 | `z-modal` | 40 | Dialogs |
-| `z-toast` | 50 | Copy/duplicate-warning toasts |
+| `z-toast` | 50 | Toast notifications (see §6.18) |
 
 The grain overlay (`z-grain: 1`) is a fixed-position texture layer that renders
 above the background (`z-base` defaults to 0 via stacking context) but below
@@ -1092,6 +1092,82 @@ to content is seamless.
 
 ---
 
+## 6.18 Toast Notifications (Sonner)
+
+Toasts use the **Neutral Surface + Status Accents** pattern: a single neutral
+card surface in both themes, with status communicated exclusively through
+subtle colored borders, colored icons, tinted titles, and a soft colored glow.
+Full solid status backgrounds are **forbidden** (this includes Sonner's
+`richColors` prop) — they strain the eye in dark mode and break the monochrome
+hierarchy defined in §1.
+
+### 6.18.1 Surface
+
+| Mode | Background | Border (resting) |
+|---|---|---|
+| Light | `bg-surface` (`#FFFFFF`) | `border-strong` |
+| Dark | `bg-surface` (`#15181C`) | `border-strong` |
+
+- Toasts are the **one deliberate exception** to the `overlay-glass` rule in §4:
+  they use a solid `bg-surface` instead of `bg-surface/80 + blur` so body text
+  stays crisp and scannable over busy content. Dropdowns, modals, and tooltips
+  still follow §4.
+- Radius `radius-md` (8px), `label` typography for the title (13px/500),
+  `caption`-scale body for the description. Icons are `16px` lucide (stroke
+  1.75 per §6.1).
+- Elevation is a 1px ring + soft ambient shadow — never a heavy drop shadow.
+
+### 6.18.2 Status Accents
+
+Borders use the status color at 35% alpha; icons use full status color; titles
+are tinted with the full status color (AA-verified in both modes, §5.5); the
+glow is a 0.15 alpha 1px ring plus a 28px ambient shadow at 0.3 alpha.
+
+| Status | Border | Icon / Title | Glow |
+|---|---|---|---|
+| Success | `brand-success` / 35% | `brand-success` | green |
+| Error | `brand-danger` / 35% | `brand-danger` | red |
+| Warning | `brand-warning` / 35% | `brand-warning` | amber |
+| Info | `brand-primary` / 35% | `brand-primary` | blue |
+| Loading | `brand-primary` / 35% | `brand-primary` spinner | blue |
+| Default (`toast()`) | `border-strong` | icon `text-secondary`, title `text-primary` | neutral |
+
+Description text stays neutral `text-secondary` in both modes — the colored
+title, icon, and border carry the status so users never have to read the body
+to register it (§5.3: color is never the only signal — here icon **and** border
+and title all agree).
+
+### 6.18.3 Positioning, Duration & Stacking
+
+- **Position:** top-right, `offset: { top: 64 }` (clears the sticky header).
+  Mobile: top offset 64, full-width with side margins.
+- **Stacking:** `visibleToasts: 3`, `expand: false` — later toasts stack behind
+  the front one with Sonner's lift effect.
+- **Durations:** copy confirmations 3000ms; standard success/info/warning
+  4000ms; errors 8000ms (long enough to read and act on, but never persistent);
+  `toast.promise` phases resolve when the promise settles.
+- **Animation:** Sonner's built-in 400ms translate + fade; swipe-to-dismiss on
+  all toasts; fully disabled under `prefers-reduced-motion` (§1.4).
+- **Z-index:** `z-toast` (50) per §1.3 — toasts render above modals (40) and
+  below nothing else.
+
+### 6.18.4 Usage Rules
+
+1. Use typed helpers only: `toast.success()`, `toast.error()`,
+   `toast.warning()`, `toast.info()`, `toast.promise()`. Never render custom
+   JSX/markup inside a raw `toast()` call, and never pass per-call
+   `style`/`classNames` overrides — theming lives in `index.css` §6.18 rules.
+2. The `<Toaster />` in `src/components/ui/sonner.tsx` is the single source of
+   config: theme (from `useAppContext`, honoring `system`), position, duration,
+   icons, and the `containerAriaLabel`. No other `<Toaster />` may be mounted.
+3. React components route through `useToast()` (`showToast(type, message,
+   description?)`); non-React code (services like `historyExport.ts`) calls the
+   same helpers through the `i18n` instance directly so strings stay translated.
+4. Error toasts state what happened and what to do next (§6.4 voice); success
+   copy is confident, no exclamation marks.
+
+---
+
 ## 7. Layout & Spacing
 
 - **Container:** max-width `1280px` (`xl` breakpoint, §1.5) for the main
@@ -1134,3 +1210,4 @@ to content is seamless.
 | v1.3 | Added grain overlay, card spotlight border, layout refinements |
 | v1.5 | Added native tooltip suppression rule for simple-icons (title="") to prevent double tooltips |
 | v1.4 | Added centralized skeleton loading system, strengthened tooltip rule |
+| v1.6 | Added toast notification spec (§6.18): neutral surface + status accents (no richColors), status borders/icons/titles/glows, durations, stacking, z-index, usage rules; theme tokens drive Sonner theming in `index.css` |
