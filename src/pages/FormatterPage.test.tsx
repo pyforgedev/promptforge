@@ -49,7 +49,7 @@ describe('FormatterPage optimistic copy flow', () => {
       return new Promise<void>((resolve) => {
         setTimeout(() => {
           realImpl!(itemId, nextIndex).then(() => resolve())
-        }, 100)
+        }, 500)
       })
     })
 
@@ -75,7 +75,7 @@ describe('FormatterPage optimistic copy flow', () => {
       const settled = await getActiveBatch()
       expect(settled?.batch.currentIndex).toBe(1)
       expect(settled?.items[0].status).toBe('copied')
-    })
+    }, { timeout: 5000 })
     expect(screen.getByText('Prompt #2')).toBeInTheDocument()
   })
 

@@ -38,7 +38,57 @@ void i18n.use(initReactI18next).init({
   },
 })
 
-// 3. Mock MatchMedia (needed for Radix UI and layout checks)
+// 3. localStorage/sessionStorage shim
+// Node >=22 exposes an experimental global `localStorage` (returns undefined
+// without --localstorage-file), which prevents vitest's populateGlobal from
+// copying jsdom's real Storage. Provide spec-compliant in-memory versions.
+class MemoryStorage {
+  private store = new Map<string, string>()
+
+  get length() {
+    return this.store.size
+  }
+
+  clear() {
+    this.store.clear()
+  }
+
+  getItem(key: string) {
+    return this.store.get(key) ?? null
+  }
+
+  key(index: number) {
+    return Array.from(this.store.keys())[index] ?? null
+  }
+
+  removeItem(key: string) {
+    this.store.delete(key)
+  }
+
+  setItem(key: string, value: string) {
+    this.store.set(key, String(value))
+  }
+}
+
+if (typeof Storage !== 'undefined') {
+  Object.setPrototypeOf(MemoryStorage.prototype, Storage.prototype)
+}
+
+const memoryStorage = new MemoryStorage()
+const memorySessionStorage = new MemoryStorage()
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: memoryStorage,
+  configurable: true,
+  writable: true,
+})
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: memorySessionStorage,
+  configurable: true,
+  writable: true,
+})
+
+// 4. Mock MatchMedia (needed for Radix UI and layout checks)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
@@ -55,6 +105,10 @@ Object.defineProperty(window, 'matchMedia', {
 
 // 4. Clean Database & Reset Zustand stores between tests
 beforeEach(async () => {
+  // Clear in-memory storage shims
+  memoryStorage.clear()
+  memorySessionStorage.clear()
+
   // Clear indexeddb tables
   await Promise.all(
     db.tables.map(table => table.clear())
