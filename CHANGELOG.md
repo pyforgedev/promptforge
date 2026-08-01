@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/pyforgedev/promptforge/compare/v0.3.0...v0.4.0) (2026-08-01)
+
+### Features
+
+* add duration option to toast hook ([8384eb9](https://github.com/pyforgedev/promptforge/commit/8384eb9f46ebad0a726f2ef272b0da7a4a5074f8))
+* add queue filters for aspect ratio, type, and sorting ([284d45e](https://github.com/pyforgedev/promptforge/commit/284d45eb1d1d5d62ed54117566317172a4c55d1f))
+* make formatter copy flow optimistic ([5de7ff8](https://github.com/pyforgedev/promptforge/commit/5de7ff851c5fd092fbcdd7b4490ae77e1d43512d))
+
+### Bug Fixes
+
+* eliminate FOUC and add consistent skeleton loading across all pages ([8f592ce](https://github.com/pyforgedev/promptforge/commit/8f592ce0005df33b4aa80881950dfa0d49c3900e))
+* restore encrypted settings storage ([a88a269](https://github.com/pyforgedev/promptforge/commit/a88a2695499efb44f25c46abab6bb7a4226fdc55))
+
 ## [0.3.0](https://github.com/pyforgedev/promptforge/compare/v0.2.0...v0.3.0) (2026-07-30)
 
 ### Features
