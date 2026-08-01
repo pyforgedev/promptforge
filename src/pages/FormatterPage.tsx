@@ -24,9 +24,18 @@ import {
   parseCsvWithColumn,
   detectDuplicates,
   getUniqueAspectRatios,
+  applyQueueView,
+  detectPromptType,
 } from '@/services/formatter/formatterService'
 import { Sparkles } from 'lucide-react'
-import type { InputMode, DownloadFormat, DownloadScope, CsvPreviewResult } from '@/features/formatter/types'
+import type {
+  InputMode,
+  DownloadFormat,
+  DownloadScope,
+  PromptType,
+  QueueSort,
+  CsvPreviewResult,
+} from '@/features/formatter/types'
 import { useToast } from '@/hooks/useToast'
 
 let writeQueue: Promise<void> = Promise.resolve()
@@ -51,8 +60,10 @@ export default function FormatterPage() {
   const [csvPreview, setCsvPreview] = useState<CsvPreviewResult | null>(null)
   const [selectedCsvColumn, setSelectedCsvColumn] = useState<string | null>(null)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
-  const [downloadScope, setDownloadScope] = useState<DownloadScope>('all')
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string | null>(null)
+  const [queueScope, setQueueScope] = useState<DownloadScope>('all')
+  const [queueAspectRatio, setQueueAspectRatio] = useState<string | null>(null)
+  const [queueType, setQueueType] = useState<'all' | PromptType>('all')
+  const [queueSort, setQueueSort] = useState<QueueSort>('order')
   const [lastBatchId, setLastBatchId] = useState<number | undefined>(undefined)
   const [showReplace, setShowReplace] = useState(false)
   const [showReset, setShowReset] = useState(false)
@@ -67,7 +78,26 @@ export default function FormatterPage() {
   const batch = activeBatch?.batch ?? null
   const items = useMemo(() => activeBatch?.items ?? [], [activeBatch?.items])
   const currentIndex = batch?.currentIndex ?? 0
-  const displayIndex = optimisticIndex ?? currentIndex
+  const activeRawIndex = optimisticIndex ?? currentIndex
+
+  const visibleItems = useMemo(
+    () =>
+      applyQueueView(items, {
+        scope: queueScope,
+        aspectRatio: queueAspectRatio,
+        type: queueType,
+        sort: queueSort,
+      }),
+    [items, queueScope, queueAspectRatio, queueType, queueSort],
+  )
+
+  const displayIndex = useMemo(() => {
+    // Posisi item aktif di set terfilter. Jika item aktif tidak lolos filter,
+    // tampilkan item visible pertama (tanpa menulis DB); currentIndex di DB
+    // tetap mengikuti item aktif yang asli.
+    const pos = visibleItems.findIndex((item) => item.order === activeRawIndex)
+    return pos >= 0 ? pos : 0
+  }, [visibleItems, activeRawIndex])
 
   useEffect(() => {
     return () => {
@@ -86,10 +116,26 @@ export default function FormatterPage() {
   }
 
   const detectedAspectRatios = useMemo(() => getUniqueAspectRatios(items), [items])
+  const promptTypeCache = useMemo(() => {
+    const cache = new Map<string, PromptType>()
+    for (const item of items) {
+      if (!cache.has(item.promptText)) {
+        cache.set(item.promptText, detectPromptType(item.promptText))
+      }
+    }
+    return cache
+  }, [items])
+  const hasVideoItems = useMemo(
+    () => items.some((item) => promptTypeCache.get(item.promptText) === 'video'),
+    [items, promptTypeCache],
+  )
 
   if (batch?.id !== lastBatchId) {
     setLastBatchId(batch?.id)
-    setSelectedAspectRatio(null)
+    setQueueAspectRatio(null)
+    setQueueScope('all')
+    setQueueType('all')
+    setQueueSort('order')
     setOptimisticIndex(null)
     setCopySuccess(false)
   }
@@ -173,14 +219,15 @@ export default function FormatterPage() {
   }
 
   const handleCopy = async () => {
-    const currentItem = items[displayIndex]
-    const itemId = currentItem?.id
+    const currentVisible = visibleItems[displayIndex]
+    const itemId = currentVisible?.id
     if (!itemId) return
 
-    const nextIndex = Math.min(displayIndex + 1, items.length - 1)
+    const nextPos = Math.min(displayIndex + 1, visibleItems.length - 1)
+    const nextIndex = visibleItems[nextPos]?.order ?? currentVisible.order
 
     try {
-      await navigator.clipboard.writeText(currentItem.promptText)
+      await navigator.clipboard.writeText(currentVisible.promptText)
     } catch {
       showToast('error', t('toast.copyFailed'))
       return
@@ -202,7 +249,7 @@ export default function FormatterPage() {
   const handlePrev = () => {
     if (displayIndex <= 0) return
 
-    const prevIndex = displayIndex - 1
+    const prevIndex = visibleItems[displayIndex - 1]?.order ?? activeRawIndex
     const action = ++optimisticActionRef.current
     setOptimisticIndex(prevIndex)
 
@@ -214,13 +261,29 @@ export default function FormatterPage() {
     })
   }
 
-  const handleJump = (index: number) => {
-    if (index < 0 || index >= items.length) return
+  const handleNext = () => {
+    if (displayIndex >= visibleItems.length - 1) return
 
+    const nextIndex = visibleItems[displayIndex + 1]?.order ?? activeRawIndex
     const action = ++optimisticActionRef.current
-    setOptimisticIndex(index)
+    setOptimisticIndex(nextIndex)
 
-    void enqueueWrite(() => setCurrentIndex(index)).catch(() => {
+    void enqueueWrite(() => setCurrentIndex(nextIndex)).catch(() => {
+      if (optimisticActionRef.current !== action) return
+      setOptimisticIndex(null)
+      setCopySuccess(false)
+      showToast('error', t('toast.progressFailed'))
+    })
+  }
+
+  const handleJump = (index: number) => {
+    if (index < 0 || index >= visibleItems.length) return
+
+    const rawIndex = visibleItems[index]?.order ?? activeRawIndex
+    const action = ++optimisticActionRef.current
+    setOptimisticIndex(rawIndex)
+
+    void enqueueWrite(() => setCurrentIndex(rawIndex)).catch(() => {
       if (optimisticActionRef.current !== action) return
       setOptimisticIndex(null)
       setCopySuccess(false)
@@ -241,14 +304,14 @@ export default function FormatterPage() {
   }
 
   const handleDownload = () => {
-    const content = exportBatch(items, downloadFormat, downloadScope, selectedAspectRatio)
+    const content = exportBatch(visibleItems, downloadFormat)
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     
-    const arSuffix = selectedAspectRatio ? `-${selectedAspectRatio.replace(/:/g, 'x')}` : ''
-    a.download = `formatter-export-${downloadScope}${arSuffix}.${downloadFormat}`
+    const arSuffix = queueAspectRatio ? `-${queueAspectRatio.replace(/:/g, 'x')}` : ''
+    a.download = `formatter-export-${queueScope}${arSuffix}.${downloadFormat}`
     
     document.body.appendChild(a)
     a.click()
@@ -319,14 +382,27 @@ export default function FormatterPage() {
       {hasBatch && (
         <>
           <QueueView
-            items={items}
+            items={visibleItems}
+            totalItems={items.length}
+            copiedCount={copiedCount}
             currentIndex={displayIndex}
             copySuccess={copySuccess}
             onCopy={handleCopy}
             onPrev={handlePrev}
+            onNext={handleNext}
             onJump={handleJump}
             onResetPrompt={() => setShowReset(true)}
             onClearQueue={() => setShowClearQueue(true)}
+            scope={queueScope}
+            onScopeChange={setQueueScope}
+            detectedAspectRatios={detectedAspectRatios}
+            selectedAspectRatio={queueAspectRatio}
+            onAspectRatioChange={setQueueAspectRatio}
+            hasVideoItems={hasVideoItems}
+            queueType={queueType}
+            onTypeChange={setQueueType}
+            queueSort={queueSort}
+            onSortChange={setQueueSort}
           />
 
           <ResetProgressDialog
@@ -343,14 +419,9 @@ export default function FormatterPage() {
 
           <DownloadSection
             format={downloadFormat}
-            scope={downloadScope}
-            detectedAspectRatios={detectedAspectRatios}
-            selectedAspectRatio={selectedAspectRatio}
             onFormatChange={setDownloadFormat}
-            onScopeChange={setDownloadScope}
-            onAspectRatioChange={setSelectedAspectRatio}
             onDownload={handleDownload}
-            disabled={items.length === 0}
+            disabled={visibleItems.length === 0}
           />
         </>
       )}

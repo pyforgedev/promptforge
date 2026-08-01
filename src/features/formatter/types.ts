@@ -1,6 +1,6 @@
-import type { CsvPreviewResult } from '@/services/formatter/formatterService'
+import type { CsvPreviewResult, PromptType, QueueSort, QueueViewOptions } from '@/services/formatter/formatterService'
 
-export type { CsvPreviewResult }
+export type { CsvPreviewResult, PromptType, QueueSort, QueueViewOptions }
 
 export type { FormatterItem } from '@/services/storage/indexeddb'
 

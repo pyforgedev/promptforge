@@ -103,6 +103,23 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// 5. Pointer capture stubs (jsdom gap — Radix Select pointer handlers call these)
+if (typeof Element !== 'undefined') {
+  Element.prototype.hasPointerCapture ??= () => false
+  Element.prototype.setPointerCapture ??= () => {}
+  Element.prototype.releasePointerCapture ??= () => {}
+}
+
+// 6. ResizeObserver stub (jsdom gap — Radix ScrollArea constructs it on mount)
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
+}
+
 // 4. Clean Database & Reset Zustand stores between tests
 beforeEach(async () => {
   // Clear in-memory storage shims

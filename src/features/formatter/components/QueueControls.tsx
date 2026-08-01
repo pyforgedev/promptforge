@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, Copy, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -9,6 +9,7 @@ interface QueueControlsProps {
   copySuccess: boolean
   onCopy: () => void
   onPrev: () => void
+  onNext: () => void
 }
 
 export function QueueControls({
@@ -17,6 +18,7 @@ export function QueueControls({
   copySuccess,
   onCopy,
   onPrev,
+  onNext,
 }: QueueControlsProps) {
   const { t } = useTranslation()
 
@@ -32,7 +34,7 @@ export function QueueControls({
         {t('formatter.prevPrompt')}
       </Button>
       <Button
-        variant={copySuccess ? 'default' : 'default'}
+        variant="default"
         className={cn(
           'btn-press min-w-[140px] gap-2 transition-all duration-300',
           copySuccess && 'bg-brand-success text-white hover:bg-brand-success/90'
@@ -55,6 +57,15 @@ export function QueueControls({
             </kbd>
           </>
         )}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={onNext}
+        disabled={currentIndex >= totalItems - 1}
+        aria-label={t('formatter.nextPrompt')}
+      >
+        {t('formatter.nextPrompt')}
+        <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   )

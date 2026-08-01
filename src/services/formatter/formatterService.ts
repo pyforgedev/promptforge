@@ -56,6 +56,79 @@ function filterItemsByScope(
   return items
 }
 
+export type QueueSort = 'order' | 'aspectRatio' | 'status' | 'length'
+export type PromptType = 'image' | 'video'
+
+export interface QueueViewOptions {
+  scope: 'all' | 'remaining' | 'completed'
+  aspectRatio: string | null
+  type: 'all' | PromptType
+  sort: QueueSort
+}
+
+const VIDEO_PROMPT_MARKERS = [
+  /(^|\s)--video\b/i,
+  /\bvideo\b/i,
+  /\bveo\b/i,
+  /\bsora\b/i,
+  /\bkling\b/i,
+  /\bhailuo\b/i,
+  /\brunway\b/i,
+  /\bpika\b/i,
+  /\bpixverse\b/i,
+  /\bluma\b/i,
+  /\bwanx\b/i,
+  /\bwalt\b/i,
+  /\bcogvideox\b/i,
+  /\bhotshot\b/i,
+  /\bminimax\b/i,
+  /\banimatediff\b/i,
+  /\bdream machine\b/i,
+  /\bstable video\b/i,
+  /\bvideo diffusion\b/i,
+]
+
+// Heuristik: flag `--video`, kata "video", atau keyword model video → video;
+// selain itu dianggap image. Sifatnya heuristik — false positive mungkin
+// terjadi (mis. "video game" pada prompt image), filter tipe tetap opsional.
+export function detectPromptType(promptText: string): PromptType {
+  return VIDEO_PROMPT_MARKERS.some((marker) => marker.test(promptText)) ? 'video' : 'image'
+}
+
+export function applyQueueView(items: FormatterItem[], options: QueueViewOptions): FormatterItem[] {
+  const { scope, aspectRatio, type, sort } = options
+
+  let visible = filterItemsByScope(items, scope)
+
+  if (aspectRatio) {
+    visible = visible.filter((item) => item.detectedAspectRatio === aspectRatio)
+  }
+
+  if (type !== 'all') {
+    visible = visible.filter((item) => detectPromptType(item.promptText) === type)
+  }
+
+  if (sort === 'aspectRatio') {
+    // Sortir leksikografis (konsisten dengan getUniqueAspectRatios & daftar
+    // filter AR): pengelompokan adalah tujuan utama, bukan urutan natural.
+    visible = [...visible].sort((a, b) => {
+      const ratioA = a.detectedAspectRatio ?? '\uffff'
+      const ratioB = b.detectedAspectRatio ?? '\uffff'
+      return ratioA.localeCompare(ratioB)
+    })
+  } else if (sort === 'status') {
+    visible = [...visible].sort((a, b) => {
+      const statusA = a.status === 'pending' ? 0 : 1
+      const statusB = b.status === 'pending' ? 0 : 1
+      return statusA - statusB
+    })
+  } else if (sort === 'length') {
+    visible = [...visible].sort((a, b) => a.promptText.length - b.promptText.length)
+  }
+
+  return visible
+}
+
 export function parseRawText(input: string): string[] {
   const normalized = input
     .replace(/\r\n/g, '\n')
@@ -252,26 +325,15 @@ export async function getActiveBatch(): Promise<{ batch: FormatterBatch; items: 
   return { batch, items }
 }
 
-export function exportBatch(
-  items: FormatterItem[],
-  format: 'txt' | 'csv' | 'json',
-  scope: 'all' | 'remaining' | 'completed',
-  aspectRatio: string | null = null,
-): string {
-  let filteredItems = filterItemsByScope(items, scope)
-  
-  if (aspectRatio) {
-    filteredItems = filteredItems.filter((item) => item.detectedAspectRatio === aspectRatio)
-  }
-
-  const rows = filteredItems.map((item) => ({
+export function exportBatch(items: FormatterItem[], format: 'txt' | 'csv' | 'json'): string {
+  const rows = items.map((item) => ({
     index: item.order,
     prompt: item.promptText,
     status: item.status,
   }))
 
   if (format === 'txt') {
-    return filteredItems.map((item) => item.promptText).join('\n')
+    return items.map((item) => item.promptText).join('\n')
   }
 
   if (format === 'csv') {

@@ -6,6 +6,8 @@ import {
   parseCsvWithColumn,
   detectDuplicates,
   detectAspectRatio,
+  detectPromptType,
+  applyQueueView,
   checkSanityLimit,
   createFormatterBatch,
   exportBatch,
@@ -473,6 +475,140 @@ describe('setCurrentIndex', () => {
   })
 })
 
+describe('detectPromptType', () => {
+  it('detects video via --video flag', () => {
+    expect(detectPromptType('cinematic shot --video')).toBe('video')
+    expect(detectPromptType('slow motion close-up --video 1')).toBe('video')
+  })
+
+  it('detects video via the standalone video keyword', () => {
+    expect(detectPromptType('a video of a cat')).toBe('video')
+    expect(detectPromptType('create a short video about product launch')).toBe('video')
+  })
+
+  it('detects video via known video model keywords', () => {
+    expect(detectPromptType('Veo 3 camera pan across the skyline')).toBe('video')
+    expect(detectPromptType('Sora-style seamless loop')).toBe('video')
+    expect(detectPromptType('Kling 1.6 realistic water splash')).toBe('video')
+    expect(detectPromptType('runway gen-4 drone shot')).toBe('video')
+    expect(detectPromptType('dream machine motion blur')).toBe('video')
+    expect(detectPromptType('stable video diffusion timelapse')).toBe('video')
+  })
+
+  it('is case-insensitive', () => {
+    expect(detectPromptType('A SORA GENERATED CLIP')).toBe('video')
+    expect(detectPromptType('DREAM MACHINE loop')).toBe('video')
+  })
+
+  it('does not match partial words', () => {
+    expect(detectPromptType('a videographer recording a scene')).toBe('image')
+    expect(detectPromptType('videography tips')).toBe('image')
+    expect(detectPromptType('videoed content')).toBe('image')
+  })
+
+  it('defaults to image for plain image prompts', () => {
+    expect(detectPromptType('a cute chibi-style obelisk icon')).toBe('image')
+    expect(detectPromptType('')).toBe('image')
+  })
+})
+
+describe('applyQueueView', () => {
+  const makeItem = (
+    order: number,
+    promptText: string,
+    status: 'pending' | 'copied' = 'pending',
+    detectedAspectRatio: string | null = null,
+  ): import('@/services/storage/indexeddb').FormatterItem => ({
+    id: order,
+    order,
+    promptText,
+    status,
+    copiedAt: status === 'copied' ? new Date() : null,
+    detectedAspectRatio,
+  })
+
+  const items = [
+    makeItem(0, 'first prompt --ar 16:9', 'copied', '16:9'),
+    makeItem(1, 'plain second prompt', 'pending'),
+    makeItem(2, 'third prompt --ar 1:1 --video', 'pending', '1:1'),
+    makeItem(3, 'fourth prompt --ar 16:9', 'copied', '16:9'),
+  ]
+
+  const allOptions = {
+    scope: 'all' as const,
+    aspectRatio: null,
+    type: 'all' as const,
+    sort: 'order' as const,
+  }
+
+  it('returns all items in order with default options', () => {
+    const result = applyQueueView(items, allOptions)
+    expect(result.map((i) => i.order)).toEqual([0, 1, 2, 3])
+  })
+
+  it('filters by scope remaining', () => {
+    const result = applyQueueView(items, { ...allOptions, scope: 'remaining' })
+    expect(result.map((i) => i.order)).toEqual([1, 2])
+  })
+
+  it('filters by scope completed', () => {
+    const result = applyQueueView(items, { ...allOptions, scope: 'completed' })
+    expect(result.map((i) => i.order)).toEqual([0, 3])
+  })
+
+  it('filters by aspect ratio', () => {
+    const result = applyQueueView(items, { ...allOptions, aspectRatio: '16:9' })
+    expect(result.map((i) => i.order)).toEqual([0, 3])
+  })
+
+  it('filters by prompt type', () => {
+    const result = applyQueueView(items, { ...allOptions, type: 'video' })
+    expect(result.map((i) => i.order)).toEqual([2])
+  })
+
+  it('combines scope and aspect ratio filters', () => {
+    const result = applyQueueView(items, { ...allOptions, scope: 'completed', aspectRatio: '16:9' })
+    expect(result.map((i) => i.order)).toEqual([0, 3])
+  })
+
+  it('returns empty array when nothing matches', () => {
+    const result = applyQueueView(items, { ...allOptions, scope: 'remaining', aspectRatio: '16:9' })
+    expect(result).toEqual([])
+  })
+
+  it('sorts by aspectRatio grouping nulls last', () => {
+    const result = applyQueueView(items, { ...allOptions, sort: 'aspectRatio' })
+    const ratios = result.map((i) => i.detectedAspectRatio)
+    expect(ratios).toEqual(['1:1', '16:9', '16:9', null])
+  })
+
+  it('sorts by status with pending first', () => {
+    const result = applyQueueView(items, { ...allOptions, sort: 'status' })
+    expect(result.map((i) => i.status)).toEqual(['pending', 'pending', 'copied', 'copied'])
+  })
+
+  it('sorts by length ascending', () => {
+    const result = applyQueueView(items, { ...allOptions, sort: 'length' })
+    expect(result.map((i) => i.promptText)).toEqual([
+      'plain second prompt',
+      'first prompt --ar 16:9',
+      'fourth prompt --ar 16:9',
+      'third prompt --ar 1:1 --video',
+    ])
+  })
+
+  it('keeps original order for equal sort keys (stable sort)', () => {
+    const result = applyQueueView(items, { ...allOptions, scope: 'completed', sort: 'status' })
+    expect(result.map((i) => i.order)).toEqual([0, 3])
+  })
+
+  it('does not mutate the input array', () => {
+    const snapshot = items.map((i) => i.order)
+    applyQueueView(items, { ...allOptions, sort: 'length' })
+    expect(items.map((i) => i.order)).toEqual(snapshot)
+  })
+})
+
 describe('exportBatch', () => {
   beforeEach(async () => {
     await createFormatterBatch(['prompt1', 'comma, prompt', 'pending item'], 'paste')
@@ -484,45 +620,70 @@ describe('exportBatch', () => {
 
   it('txt format exports plain prompts without metadata', async () => {
     const batchData = await getActiveBatch()
-    const txt = exportBatch(batchData!.items, 'txt', 'all')
+    const txt = exportBatch(batchData!.items, 'txt')
 
     expect(txt).toBe('prompt1\ncomma, prompt\npending item')
   })
 
-  it('exportBatch filters by aspect ratio', async () => {
+  it('exports the exact items it receives (filters applied by caller)', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
     await createFormatterBatch(prompts, 'paste')
     const batchData = await getActiveBatch()
 
-    const txt169 = exportBatch(batchData!.items, 'txt', 'all', '16:9')
+    const filtered169 = applyQueueView(batchData!.items, {
+      scope: 'all',
+      aspectRatio: '16:9',
+      type: 'all',
+      sort: 'order',
+    })
+    const txt169 = exportBatch(filtered169, 'txt')
     expect(txt169).toBe('prompt --ar 16:9')
 
-    const txt11 = exportBatch(batchData!.items, 'txt', 'all', '1:1')
+    const filtered11 = applyQueueView(batchData!.items, {
+      scope: 'all',
+      aspectRatio: '1:1',
+      type: 'all',
+      sort: 'order',
+    })
+    const txt11 = exportBatch(filtered11, 'txt')
     expect(txt11).toBe('aspect ratio 1:1')
-
-    const txtNone = exportBatch(batchData!.items, 'txt', 'all', null)
-    expect(txtNone).toBe('prompt --ar 16:9\nplain prompt\naspect ratio 1:1')
   })
 
-  it('exportBatch combines scope and aspect ratio filters', async () => {
+  it('exportBatch receives combined scope and aspect ratio filtering from caller', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
     await createFormatterBatch(prompts, 'paste')
     const batchData = await getActiveBatch()
-    
+
     const itemId = batchData!.items[0].id!
     await markItemCopied(itemId)
 
     const freshBatch = await getActiveBatch()
-    const completed169 = exportBatch(freshBatch!.items, 'txt', 'completed', '16:9')
+    const completed169 = exportBatch(
+      applyQueueView(freshBatch!.items, {
+        scope: 'completed',
+        aspectRatio: '16:9',
+        type: 'all',
+        sort: 'order',
+      }),
+      'txt',
+    )
     expect(completed169).toBe('prompt --ar 16:9')
 
-    const remainingAll = exportBatch(freshBatch!.items, 'txt', 'remaining', null)
+    const remainingAll = exportBatch(
+      applyQueueView(freshBatch!.items, {
+        scope: 'remaining',
+        aspectRatio: null,
+        type: 'all',
+        sort: 'order',
+      }),
+      'txt',
+    )
     expect(remainingAll).toBe('plain prompt\naspect ratio 1:1')
   })
 
   it('csv format includes index,prompt,status columns with proper quoting', async () => {
     const batchData = await getActiveBatch()
-    const csv = exportBatch(batchData!.items, 'csv', 'all')
+    const csv = exportBatch(batchData!.items, 'csv')
 
     // Should have header row
     expect(csv).toContain('index,prompt,status')
@@ -530,19 +691,37 @@ describe('exportBatch', () => {
     expect(csv).toContain('"comma, prompt"')
   })
 
-  it('csv format filters by scope', async () => {
+  it('csv format preserves item statuses', async () => {
     const batchData = await getActiveBatch()
 
-    const remaining = exportBatch(batchData!.items, 'csv', 'remaining')
+    const remaining = exportBatch(
+      applyQueueView(batchData!.items, {
+        scope: 'remaining',
+        aspectRatio: null,
+        type: 'all',
+        sort: 'order',
+      }),
+      'csv',
+    )
     expect(remaining).toContain('pending')
+    expect(remaining).not.toContain('copied')
 
-    const completed = exportBatch(batchData!.items, 'csv', 'completed')
+    const completed = exportBatch(
+      applyQueueView(batchData!.items, {
+        scope: 'completed',
+        aspectRatio: null,
+        type: 'all',
+        sort: 'order',
+      }),
+      'csv',
+    )
     expect(completed).toContain('copied')
+    expect(completed).not.toContain('pending')
   })
 
   it('json format exports array of objects', async () => {
     const batchData = await getActiveBatch()
-    const json = exportBatch(batchData!.items, 'json', 'all')
+    const json = exportBatch(batchData!.items, 'json')
 
     const parsed = JSON.parse(json)
     expect(parsed).toHaveLength(3)

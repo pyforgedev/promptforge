@@ -1,36 +1,61 @@
 import { useTranslation } from 'react-i18next'
 import { ActivePromptDisplay } from './ActivePromptDisplay'
 import { QueueControls } from './QueueControls'
+import { QueueFilters } from './QueueFilters'
 import { OverviewList } from './OverviewList'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { RotateCcw, List, Trash2 } from 'lucide-react'
-import type { FormatterItem } from '../types'
+import type { DownloadScope, FormatterItem, PromptType, QueueSort } from '../types'
 
 interface QueueViewProps {
   items: FormatterItem[]
+  totalItems: number
+  copiedCount: number
   currentIndex: number
   copySuccess: boolean
   onCopy: () => void
   onPrev: () => void
+  onNext: () => void
   onJump: (index: number) => void
   onResetPrompt: () => void
   onClearQueue: () => void
+  scope: DownloadScope
+  onScopeChange: (s: DownloadScope) => void
+  detectedAspectRatios: string[]
+  selectedAspectRatio: string | null
+  onAspectRatioChange: (ar: string | null) => void
+  hasVideoItems: boolean
+  queueType: 'all' | PromptType
+  onTypeChange: (t: 'all' | PromptType) => void
+  queueSort: QueueSort
+  onSortChange: (s: QueueSort) => void
 }
 
 export function QueueView({
   items,
+  totalItems,
+  copiedCount,
   currentIndex,
   copySuccess,
   onCopy,
   onPrev,
+  onNext,
   onJump,
   onResetPrompt,
   onClearQueue,
+  scope,
+  onScopeChange,
+  detectedAspectRatios,
+  selectedAspectRatio,
+  onAspectRatioChange,
+  hasVideoItems,
+  queueType,
+  onTypeChange,
+  queueSort,
+  onSortChange,
 }: QueueViewProps) {
   const { t } = useTranslation()
-  const totalItems = items.length
-  const copiedCount = items.filter((i) => i.status === 'copied').length
   const progressPercent = totalItems > 0 ? (copiedCount / totalItems) * 100 : 0
   const currentItem = items[currentIndex]
 
@@ -64,23 +89,37 @@ export function QueueView({
           </div>
         </div>
 
+        <QueueFilters
+          scope={scope}
+          onScopeChange={onScopeChange}
+          detectedAspectRatios={detectedAspectRatios}
+          selectedAspectRatio={selectedAspectRatio}
+          onAspectRatioChange={onAspectRatioChange}
+          hasVideoItems={hasVideoItems}
+          queueType={queueType}
+          onTypeChange={onTypeChange}
+          queueSort={queueSort}
+          onSortChange={onSortChange}
+        />
+
         {currentItem ? (
           <ActivePromptDisplay item={currentItem} />
         ) : (
           <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-border-subtle bg-surface">
             <div className="flex flex-col items-center gap-2 text-muted">
               <List className="h-5 w-5" />
-              <span className="text-body-ui">No items to display</span>
+              <span className="text-body-ui">{t('formatter.noItemsToDisplay')}</span>
             </div>
           </div>
         )}
 
         <QueueControls
           currentIndex={currentIndex}
-          totalItems={totalItems}
+          totalItems={items.length}
           copySuccess={copySuccess}
           onCopy={onCopy}
           onPrev={onPrev}
+          onNext={onNext}
         />
       </div>
 
@@ -88,7 +127,7 @@ export function QueueView({
         <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle px-4 py-2.5">
           <List className="h-4 w-4 text-muted" />
           <span className="text-caption-ui font-medium text-muted">
-            Overview ({totalItems})
+            {t('formatter.overviewCount', { filtered: items.length, total: totalItems })}
           </span>
         </div>
         <ScrollArea className="flex-1 min-h-0">

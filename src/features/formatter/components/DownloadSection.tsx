@@ -8,36 +8,18 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
-import type { DownloadFormat, DownloadScope } from '../types'
+import type { DownloadFormat } from '../types'
 
 interface DownloadSectionProps {
   format: DownloadFormat
-  scope: DownloadScope
-  detectedAspectRatios: string[]
-  selectedAspectRatio: string | null
   onFormatChange: (f: DownloadFormat) => void
-  onScopeChange: (s: DownloadScope) => void
-  onAspectRatioChange: (ar: string | null) => void
-  onDownload: () => void
-  disabled: boolean
-}
-interface DownloadSectionProps {
-  format: DownloadFormat
-  scope: DownloadScope
-  onFormatChange: (f: DownloadFormat) => void
-  onScopeChange: (s: DownloadScope) => void
   onDownload: () => void
   disabled: boolean
 }
 
 export function DownloadSection({
   format,
-  scope,
-  detectedAspectRatios,
-  selectedAspectRatio,
   onFormatChange,
-  onScopeChange,
-  onAspectRatioChange,
   onDownload,
   disabled,
 }: DownloadSectionProps) {
@@ -66,48 +48,7 @@ export function DownloadSection({
             </SelectContent>
           </Select>
         </div>
-        
-        <div className="flex flex-col gap-2">
-          <label className="text-caption-ui text-muted">{t('formatter.downloadScope')}</label>
-          <Select
-            value={scope}
-            onValueChange={(v) => onScopeChange(v as DownloadScope)}
-            disabled={disabled}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('formatter.scopeAll')}</SelectItem>
-              <SelectItem value="remaining">{t('formatter.scopeRemaining')}</SelectItem>
-              <SelectItem value="completed">{t('formatter.scopeCompleted')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {detectedAspectRatios.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <label className="text-caption-ui text-muted">{t('formatter.aspectRatio')}</label>
-            <Select
-              value={selectedAspectRatio ?? 'none'}
-              onValueChange={(v) => onAspectRatioChange(v === 'none' ? null : v)}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{t('formatter.aspectRatioNone')}</SelectItem>
-                {detectedAspectRatios.map((ratio) => (
-                  <SelectItem key={ratio} value={ratio}>
-                    {ratio}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        
+
         <Button
           variant="default"
           onClick={onDownload}
