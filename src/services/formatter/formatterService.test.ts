@@ -11,6 +11,7 @@ import {
   exportBatch,
   getActiveBatch,
   markItemCopied,
+  markCopiedAndAdvance,
   resetAllProgress,
   setCurrentIndex,
   getUniqueAspectRatios,
@@ -390,6 +391,54 @@ describe('markItemCopied', () => {
     expect(updated!.items[0].status).toBe('copied')
     expect(updated!.items[0].copiedAt).toBeInstanceOf(Date)
     expect(updated!.items[1].status).toBe('pending')
+  })
+})
+
+describe('markCopiedAndAdvance', () => {
+  it('marks item as copied and advances currentIndex atomically', async () => {
+    await createFormatterBatch(['p1', 'p2', 'p3'], 'paste')
+    const batchData = await getActiveBatch()
+    const itemId = batchData!.items[0].id!
+
+    await markCopiedAndAdvance(itemId, 1)
+
+    const updated = await getActiveBatch()
+    expect(updated!.items[0].status).toBe('copied')
+    expect(updated!.items[0].copiedAt).toBeInstanceOf(Date)
+    expect(updated!.items[1].status).toBe('pending')
+    expect(updated!.batch.currentIndex).toBe(1)
+  })
+
+  it('does not change currentIndex when no active batch exists', async () => {
+    const result = await markCopiedAndAdvance(999, 1)
+    expect(result).toBeUndefined()
+  })
+
+  it('keeps currentIndex when advanced beyond last item', async () => {
+    await createFormatterBatch(['p1', 'p2'], 'paste')
+    const batchData = await getActiveBatch()
+    const itemId = batchData!.items[1].id!
+
+    await markCopiedAndAdvance(itemId, 1)
+
+    const updated = await getActiveBatch()
+    expect(updated!.items[1].status).toBe('copied')
+    expect(updated!.batch.currentIndex).toBe(1)
+  })
+
+  it('does not advance currentIndex when the item no longer exists', async () => {
+    await createFormatterBatch(['p1', 'p2'], 'paste')
+    const batchData = await getActiveBatch()
+    const itemId = batchData!.items[0].id!
+
+    await createFormatterBatch(['replacement'], 'paste')
+
+    await markCopiedAndAdvance(itemId, 1)
+
+    const updated = await getActiveBatch()
+    expect(updated!.items[0].promptText).toBe('replacement')
+    expect(updated!.items[0].status).toBe('pending')
+    expect(updated!.batch.currentIndex).toBe(0)
   })
 })
 

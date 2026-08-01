@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -14,7 +14,7 @@ import { ClearQueueDialog } from '@/features/formatter/components/ClearQueueDial
 import {
   getActiveBatch,
   createFormatterBatch,
-  markItemCopied,
+  markCopiedAndAdvance,
   setCurrentIndex,
   resetAllProgress,
   clearQueue,
@@ -28,6 +28,17 @@ import {
 import { Sparkles } from 'lucide-react'
 import type { InputMode, DownloadFormat, DownloadScope, CsvPreviewResult } from '@/features/formatter/types'
 import { useToast } from '@/hooks/useToast'
+
+let writeQueue: Promise<void> = Promise.resolve()
+
+function enqueueWrite<T>(write: () => Promise<T>): Promise<T> {
+  const result = writeQueue.then(write)
+  writeQueue = result.then(
+    () => undefined,
+    () => undefined,
+  )
+  return result
+}
 
 export default function FormatterPage() {
   const { t } = useTranslation()
@@ -47,17 +58,40 @@ export default function FormatterPage() {
   const [showReset, setShowReset] = useState(false)
   const [showClearQueue, setShowClearQueue] = useState(false)
   const [pendingPrompts, setPendingPrompts] = useState<string[] | null>(null)
+  const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null)
+  const [copySuccess, setCopySuccess] = useState(false)
+  const optimisticActionRef = useRef(0)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activeBatch = useLiveQuery(() => getActiveBatch())
   const batch = activeBatch?.batch ?? null
   const items = useMemo(() => activeBatch?.items ?? [], [activeBatch?.items])
   const currentIndex = batch?.currentIndex ?? 0
+  const displayIndex = optimisticIndex ?? currentIndex
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current)
+      }
+    }
+  }, [])
+
+  const flashCopySuccess = () => {
+    if (copyTimerRef.current) {
+      clearTimeout(copyTimerRef.current)
+    }
+    setCopySuccess(true)
+    copyTimerRef.current = setTimeout(() => setCopySuccess(false), 1500)
+  }
 
   const detectedAspectRatios = useMemo(() => getUniqueAspectRatios(items), [items])
 
   if (batch?.id !== lastBatchId) {
     setLastBatchId(batch?.id)
     setSelectedAspectRatio(null)
+    setOptimisticIndex(null)
+    setCopySuccess(false)
   }
 
   const hasBatch = batch !== null
@@ -65,11 +99,11 @@ export default function FormatterPage() {
 
   const processSummary = useMemo(() => {
     if (!batch) return null
-    
+
     const cleanCount = items.length
     const skippedBlanks = 0
     const duplicateCount = detectDuplicates(items.map(i => i.promptText)).length
-    
+
     return { cleanCount, skippedBlanks, duplicateCount }
   }, [batch, items])
 
@@ -139,28 +173,59 @@ export default function FormatterPage() {
   }
 
   const handleCopy = async () => {
-    const currentItem = items[currentIndex]
-    if (!currentItem?.id) return
+    const currentItem = items[displayIndex]
+    const itemId = currentItem?.id
+    if (!itemId) return
+
+    const nextIndex = Math.min(displayIndex + 1, items.length - 1)
 
     try {
       await navigator.clipboard.writeText(currentItem.promptText)
-      await markItemCopied(currentItem.id)
-      const nextIndex = Math.min(currentIndex + 1, items.length - 1)
-      await setCurrentIndex(nextIndex)
-      showCopySuccess()
     } catch {
       showToast('error', t('toast.copyFailed'))
+      return
     }
+
+    const action = ++optimisticActionRef.current
+    setOptimisticIndex(nextIndex)
+    flashCopySuccess()
+    showCopySuccess()
+
+    void enqueueWrite(() => markCopiedAndAdvance(itemId, nextIndex)).catch(() => {
+      if (optimisticActionRef.current !== action) return
+      setOptimisticIndex(null)
+      setCopySuccess(false)
+      showToast('error', t('toast.copyFailed'))
+    })
   }
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-    }
+    if (displayIndex <= 0) return
+
+    const prevIndex = displayIndex - 1
+    const action = ++optimisticActionRef.current
+    setOptimisticIndex(prevIndex)
+
+    void enqueueWrite(() => setCurrentIndex(prevIndex)).catch(() => {
+      if (optimisticActionRef.current !== action) return
+      setOptimisticIndex(null)
+      setCopySuccess(false)
+      showToast('error', t('toast.progressFailed'))
+    })
   }
 
   const handleJump = (index: number) => {
-    setCurrentIndex(index)
+    if (index < 0 || index >= items.length) return
+
+    const action = ++optimisticActionRef.current
+    setOptimisticIndex(index)
+
+    void enqueueWrite(() => setCurrentIndex(index)).catch(() => {
+      if (optimisticActionRef.current !== action) return
+      setOptimisticIndex(null)
+      setCopySuccess(false)
+      showToast('error', t('toast.progressFailed'))
+    })
   }
 
   const handleClearQueue = async () => {
@@ -255,7 +320,8 @@ export default function FormatterPage() {
         <>
           <QueueView
             items={items}
-            currentIndex={currentIndex}
+            currentIndex={displayIndex}
+            copySuccess={copySuccess}
             onCopy={handleCopy}
             onPrev={handlePrev}
             onJump={handleJump}

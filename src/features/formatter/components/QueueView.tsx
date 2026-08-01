@@ -6,11 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { RotateCcw, List, Trash2 } from 'lucide-react'
 import type { FormatterItem } from '../types'
-import { useState, useEffect } from 'react'
 
 interface QueueViewProps {
   items: FormatterItem[]
   currentIndex: number
+  copySuccess: boolean
   onCopy: () => void
   onPrev: () => void
   onJump: (index: number) => void
@@ -21,6 +21,7 @@ interface QueueViewProps {
 export function QueueView({
   items,
   currentIndex,
+  copySuccess,
   onCopy,
   onPrev,
   onJump,
@@ -28,23 +29,10 @@ export function QueueView({
   onClearQueue,
 }: QueueViewProps) {
   const { t } = useTranslation()
-  const [copySuccess, setCopySuccess] = useState(false)
   const totalItems = items.length
   const copiedCount = items.filter((i) => i.status === 'copied').length
   const progressPercent = totalItems > 0 ? (copiedCount / totalItems) * 100 : 0
   const currentItem = items[currentIndex]
-
-  useEffect(() => {
-    if (copySuccess) {
-      const timer = setTimeout(() => setCopySuccess(false), 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [copySuccess])
-
-  const handleCopy = () => {
-    setCopySuccess(true)
-    onCopy()
-  }
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[60%_1fr] animate-stagger-2">
@@ -91,7 +79,7 @@ export function QueueView({
           currentIndex={currentIndex}
           totalItems={totalItems}
           copySuccess={copySuccess}
-          onCopy={handleCopy}
+          onCopy={onCopy}
           onPrev={onPrev}
         />
       </div>

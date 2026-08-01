@@ -224,6 +224,7 @@
     "themeChanged": "Theme updated",
     "languageChanged": "Language updated",
     "copyFailed": "Failed to copy",
+    "progressFailed": "Failed to update progress",
     "resetSuccess": "Progress reset",
     "queueCleared": "Queue cleared",
     "downloadSuccess": "File downloaded"

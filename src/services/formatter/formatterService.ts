@@ -201,6 +201,24 @@ export async function setCurrentIndex(index: number): Promise<void> {
   await db.formatter_batch.update(activeBatch.id, { currentIndex: index })
 }
 
+export async function markCopiedAndAdvance(itemId: number, nextIndex: number): Promise<void> {
+  await db.transaction('rw', db.formatter_batch, db.formatter_items, async () => {
+    const updated = await db.formatter_items.update(itemId, {
+      status: 'copied',
+      copiedAt: new Date(),
+    })
+
+    if (updated === 0) {
+      return
+    }
+
+    const activeBatch = await db.formatter_batch.toCollection().first()
+    if (activeBatch?.id) {
+      await db.formatter_batch.update(activeBatch.id, { currentIndex: nextIndex })
+    }
+  })
+}
+
 export async function clearQueue(): Promise<void> {
   await db.transaction('rw', db.formatter_batch, db.formatter_items, async () => {
     await db.formatter_items.clear()

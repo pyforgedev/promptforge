@@ -224,6 +224,7 @@
     "themeChanged": "Tema diperbarui",
     "languageChanged": "Bahasa diperbarui",
     "copyFailed": "Gagal menyalin",
+    "progressFailed": "Gagal memperbarui progres",
     "resetSuccess": "Kemajuan direset",
     "queueCleared": "Antrean dibersihkan",
     "downloadSuccess": "File diunduh"
