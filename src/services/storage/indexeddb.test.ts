@@ -101,6 +101,43 @@ describe('Dexie Storage Service CRUD', () => {
     expect(readVal).toBe('dark')
   })
 
+  it('falls back to legacy plaintext JSON under sensitive keys without deleting it', async () => {
+    await db.settings.put({ key: 'legacy_config', value: '{"a":1}' })
+
+    const readVal = await getSetting('legacy_config')
+    expect(readVal).toEqual({ a: 1 })
+
+    const record = await db.settings.get('legacy_config')
+    expect(record).toBeDefined()
+  })
+
+  it('returns legacy non-string values under sensitive keys as-is', async () => {
+    await db.settings.put({ key: 'legacy_config', value: { raw: 'data' } })
+
+    const readVal = await getSetting('legacy_config')
+    expect(readVal).toEqual({ raw: 'data' })
+
+    const record = await db.settings.get('legacy_config')
+    expect(record).toBeDefined()
+  })
+
+  it('returns corrupted encrypted settings as-is without deleting them', async () => {
+    await db.settings.put({ key: 'corrupt_config', value: 'not-a-valid-ciphertext!!' })
+
+    const readVal = await getSetting('corrupt_config')
+    expect(readVal).toBe('not-a-valid-ciphertext!!')
+
+    const record = await db.settings.get('corrupt_config')
+    expect(record).toBeDefined()
+  })
+
+  it('rejects non-serializable values for sensitive settings keys', async () => {
+    await expect(saveSetting('api_key_config', undefined)).rejects.toThrow(TypeError)
+
+    const record = await db.settings.get('api_key_config')
+    expect(record).toBeUndefined()
+  })
+
   it('saves batch generated prompts and retrieves history items', async () => {
     const generatorInput = {
       niche: 'Nature',

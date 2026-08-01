@@ -5,6 +5,8 @@ import type { Prompt } from '@/types'
 import type { Folder } from '@/features/history/types'
 import type { GeneratedPrompt, GeneratedPromptBatch, GeneratorInput } from '@/features/prompt-generator/types'
 
+import { encrypt, decrypt } from '@/lib/crypto'
+
 const DB_NAME = 'promptforge'
 
 export interface IdeaCacheEntry {
@@ -254,19 +256,23 @@ export async function getSetting(key: string): Promise<unknown> {
   const record = await db.settings.get(key)
   if (!record) return undefined
   
-  if (
-    typeof record.value === 'string' && 
-    (key.includes('config') || key.includes('preset'))
-  ) {
-    try {
-      return JSON.parse(record.value)
-    } catch {
-      if (import.meta.env.DEV) {
-        console.warn(`[Storage] Clearing corrupted/encrypted legacy data for key: ${key}`)
+  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+    if (typeof record.value === 'string') {
+      try {
+        const decrypted = await decrypt(record.value)
+        return JSON.parse(decrypted)
+      } catch {
+        if (import.meta.env.DEV) {
+          console.warn(`[Storage] Failed to decrypt setting "${key}", falling back to raw value`)
+        }
+        try {
+          return JSON.parse(record.value)
+        } catch {
+          return record.value
+        }
       }
-      await db.settings.delete(key)
-      return undefined
     }
+    return record.value
   }
   
   return record.value
@@ -274,7 +280,24 @@ export async function getSetting(key: string): Promise<unknown> {
 
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   await ensureDbReady()
-  await db.settings.put({ key, value })
+  let valToSave = value
+  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+    let json: string
+    try {
+      const serialized = JSON.stringify(value)
+      if (serialized === undefined) {
+        throw new TypeError('value is not serializable')
+      }
+      json = serialized
+    } catch (error) {
+      throw new TypeError(
+        `[Storage] Cannot encrypt setting "${key}": ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
+      )
+    }
+    valToSave = await encrypt(json)
+  }
+  await db.settings.put({ key, value: valToSave })
 }
 
 // === HISTORY REFACTOR - Functions below need updating or removal ===
