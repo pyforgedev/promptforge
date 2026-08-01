@@ -10,32 +10,37 @@ export function useToast() {
     type: ToastType,
     message: string,
     description?: string,
+    duration?: number,
   ) => {
     try {
+      const options = {
+        ...(description ? { description } : {}),
+        ...(duration ? { duration } : {}),
+      }
       switch (type) {
         case 'success':
-          toast.success(message, { description })
+          toast.success(message, options)
           break
         case 'error':
-          toast.error(message, { description })
+          toast.error(message, options)
           break
         case 'warning':
-          toast.warning(message, { description })
+          toast.warning(message, options)
           break
         case 'info':
-          toast.info(message, { description })
+          toast.info(message, options)
           break
         default:
-          toast(message)
+          toast(message, options)
       }
     } catch (err) {
-      console.warn('Toast failed, falling back to alert:', message, err)
+      console.warn('Toast failed, falling back to alert:', err)
       alert(`${t('toast.error')}: ${message}`) // Fallback to alert for critical notifications
     }
   }
 
   const showCopySuccess = () => {
-    showToast('success', t('toast.copySuccess'))
+    showToast('success', t('toast.copySuccess'), undefined, 3000)
   }
 
   const showGenerationSuccess = () => {
