@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/common/PageHeader'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
+import { FormatterSkeleton } from '@/components/ui/skeleton'
 import { InputSection } from '@/features/formatter/components/InputSection'
 import { ProcessSummary } from '@/features/formatter/components/ProcessSummary'
 import { QueueView } from '@/features/formatter/components/QueueView'
@@ -75,6 +76,7 @@ export default function FormatterPage() {
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activeBatch = useLiveQuery(() => getActiveBatch())
+  const isLoading = activeBatch === undefined
   const batch = activeBatch?.batch ?? null
   const items = useMemo(() => activeBatch?.items ?? [], [activeBatch?.items])
   const currentIndex = batch?.currentIndex ?? 0
@@ -327,7 +329,9 @@ export default function FormatterPage() {
         description={t('formatter.pageDescription')}
       />
 
-      {!hasBatch && (
+      {isLoading ? (
+        <FormatterSkeleton />
+      ) : !hasBatch ? (
         <div className="animate-stagger-1">
           <EmptyState
             title={t('formatter.emptyTitle')}
@@ -344,24 +348,26 @@ export default function FormatterPage() {
             }
           />
         </div>
-      )}
+      ) : null}
 
-      <InputSection
-        inputMode={inputMode}
-        pasteText={pasteText}
-        uploadedFileName={uploadedFileName}
-        csvPreview={csvPreview}
-        selectedCsvColumn={selectedCsvColumn}
-        onInputModeChange={setInputMode}
-        onPasteTextChange={setPasteText}
-        onClear={() => setPasteText('')}
-        onFileUpload={handleFileUpload}
-        onSelectCsvColumn={setSelectedCsvColumn}
-        onConfirmCsvColumn={() => {
-          showToast('success', t('formatter.csvColumnSelected'))
-        }}
-        onProcess={handleProcess}
-      />
+      {!isLoading && (
+        <InputSection
+          inputMode={inputMode}
+          pasteText={pasteText}
+          uploadedFileName={uploadedFileName}
+          csvPreview={csvPreview}
+          selectedCsvColumn={selectedCsvColumn}
+          onInputModeChange={setInputMode}
+          onPasteTextChange={setPasteText}
+          onClear={() => setPasteText('')}
+          onFileUpload={handleFileUpload}
+          onSelectCsvColumn={setSelectedCsvColumn}
+          onConfirmCsvColumn={() => {
+            showToast('success', t('formatter.csvColumnSelected'))
+          }}
+          onProcess={handleProcess}
+        />
+      )}
 
       <ReplaceConfirmDialog
         open={showReplace}
@@ -379,7 +385,7 @@ export default function FormatterPage() {
         />
       )}
 
-      {hasBatch && (
+      {hasBatch && !isLoading && (
         <>
           <QueueView
             items={visibleItems}

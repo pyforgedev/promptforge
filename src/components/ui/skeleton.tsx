@@ -155,4 +155,28 @@ function FormSkeleton() {
   )
 }
 
-export { Skeleton, CardSkeleton, HistoryCardSkeleton, MetricTileSkeleton, RecentPromptItemSkeleton, PageSkeleton, FormSkeleton }
+function FormatterSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 md:gap-8" role="status" aria-live="polite">
+      <div className="flex flex-col gap-3 rounded-xl border border-border-subtle bg-surface p-5">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-9 w-9 rounded-lg" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-[85%]" />
+        </div>
+      </div>
+      <div className="rounded-xl border border-border-subtle bg-surface p-6">
+        <Skeleton className="h-[420px] w-full rounded-lg" />
+      </div>
+      <div className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface p-5">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-9 w-32 rounded-lg" />
+      </div>
+    </div>
+  )
+}
+
+export { Skeleton, CardSkeleton, HistoryCardSkeleton, MetricTileSkeleton, RecentPromptItemSkeleton, PageSkeleton, FormSkeleton, FormatterSkeleton }

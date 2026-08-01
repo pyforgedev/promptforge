@@ -60,6 +60,7 @@ export default function Settings() {
   const {
     presets,
     activeConfig,
+    isReady,
     setActiveConfig,
     savePreset,
     deletePreset,
@@ -288,8 +289,15 @@ export default function Settings() {
         description={t('settings.pageDescription')}
       />
 
-      {/* AI Configuration */}
-      <Card className="card-spotlight">
+      {!isReady || !masterPromptLoaded || customModelsLoading ? (
+        <div className="flex flex-col gap-6" role="status" aria-live="polite">
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+          <Skeleton className="h-[300px] w-full rounded-xl" />
+        </div>
+      ) : (
+        <>
+          {/* AI Configuration */}
+          <Card className="card-spotlight">
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
             <Cpu className="h-4 w-4 text-brand-primary" />
@@ -737,6 +745,8 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   )
 }

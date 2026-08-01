@@ -6,6 +6,9 @@
     },
     "security-reviewer": {
       "model": "opencode/ling-3.0-flash-free"
+    },
+    "explore":{
+      "model": "opencode/ling-3.0-flash-free"
     }
   },
   "permissions": [

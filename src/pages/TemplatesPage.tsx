@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CardSkeleton, Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -177,7 +178,21 @@ export default function TemplatesPage() {
         }
       />
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      {loading && prompts.length === 0 ? (
+        <div className="flex flex-col gap-6" role="status" aria-live="polite">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-10 flex-1 rounded-lg" />
+            <Skeleton className="h-10 w-full sm:w-[180px] rounded-lg" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <Input
@@ -216,6 +231,8 @@ export default function TemplatesPage() {
           onDelete={setDeleteId}
           onUseAsReference={handleUseAsReference}
         />
+      )}
+        </>
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
