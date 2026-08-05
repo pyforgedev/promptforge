@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useEffect, useRef } from 'react'
 import { ActivePromptDisplay } from './ActivePromptDisplay'
 import { QueueControls } from './QueueControls'
 import { QueueFilters } from './QueueFilters'
@@ -58,6 +59,18 @@ export function QueueView({
   const { t } = useTranslation()
   const progressPercent = totalItems > 0 ? (copiedCount / totalItems) * 100 : 0
   const currentItem = items[currentIndex]
+  const viewportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const viewport = viewportRef.current
+    const activeEl = viewport?.querySelector('[data-active-item="true"]')
+    if (!viewport || !activeEl) return
+    const top =
+      activeEl.getBoundingClientRect().top -
+      viewport.getBoundingClientRect().top +
+      viewport.scrollTop
+    viewport.scrollTop = top
+  }, [currentIndex])
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[60%_1fr] animate-stagger-2">
@@ -130,7 +143,7 @@ export function QueueView({
             {t('formatter.overviewCount', { filtered: items.length, total: totalItems })}
           </span>
         </div>
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
           <OverviewList items={items} currentIndex={currentIndex} onJump={onJump} />
         </ScrollArea>
       </div>

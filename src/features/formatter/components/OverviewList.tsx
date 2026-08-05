@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Check, Play } from 'lucide-react'
 import type { FormatterItem } from '../types'
-import { useRef, useEffect } from 'react'
 
 interface OverviewListProps {
   items: FormatterItem[]
@@ -10,14 +9,6 @@ interface OverviewListProps {
 }
 
 export function OverviewList({ items, currentIndex, onJump }: OverviewListProps) {
-  const activeRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    if (activeRef.current) {
-      activeRef.current.scrollIntoView({ block: 'nearest' })
-    }
-  }, [currentIndex])
-
   return (
     <div className="flex flex-col gap-0.5 py-2 px-2">
       {items.map((item, idx) => {
@@ -26,7 +17,7 @@ export function OverviewList({ items, currentIndex, onJump }: OverviewListProps)
         return (
           <button
             key={item.id ?? idx}
-            ref={isCurrent ? activeRef : null}
+            data-active-item={isCurrent ? 'true' : undefined}
             onClick={() => onJump(idx)}
             className={cn(
               'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-150',

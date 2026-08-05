@@ -1,13 +1,19 @@
-import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { useLayoutEffect, useState } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { useFavicon } from '@/hooks/useFavicon'
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
+  const { pathname } = useLocation()
+
   useFavicon()
+
+  useLayoutEffect(() => {
+    // Reset scroll position on route change
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-app">
