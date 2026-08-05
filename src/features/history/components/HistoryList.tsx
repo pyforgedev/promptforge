@@ -59,7 +59,7 @@ export const HistoryList = memo(function HistoryList({
   validateHistoryListProps({ items, loading, error, onCopy, onDelete })
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { selectedIds, toggleSelect, searchMode, hasMore, loadMore } = useHistoryStore()
+  const { selectedIds, toggleSelect, searchMode, hasMore, loadMore, hasLoaded } = useHistoryStore()
 
   const handleCopy = async (content: string) => {
     await onCopy(content)
@@ -74,7 +74,7 @@ export const HistoryList = memo(function HistoryList({
     }
   }
 
-  if (loading && items.length === 0) {
+  if (loading && items.length === 0 && !hasLoaded) {
     return (
       <div className="flex flex-col gap-3" role="status" aria-live="polite">
         {Array.from({ length: 5 }).map((_, i) => (

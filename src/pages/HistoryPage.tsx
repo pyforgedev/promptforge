@@ -8,7 +8,6 @@ import { FolderSidebar } from '@/features/history/components/FolderSidebar'
 import { BulkActionBar } from '@/features/history/components/BulkActionBar'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/useToast'
-import { HistoryCardSkeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,7 +67,7 @@ export default function HistoryPage() {
     <div className="flex h-full overflow-hidden lg:-m-6 lg:h-[calc(100dvh-3.5rem)]">
       <FolderSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:p-6">
+      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:p-6 [scrollbar-gutter:stable]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Button 
@@ -102,35 +101,19 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {loading && items.length === 0 ? (
-          <div className="flex flex-col gap-6" role="status" aria-live="polite">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="h-10 w-full sm:w-[180px] rounded-lg bg-border-subtle animate-pulse" />
-              <div className="h-10 w-full sm:w-[180px] rounded-lg bg-border-subtle animate-pulse" />
-            </div>
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <HistoryCardSkeleton key={i} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            <HistoryFiltersBar
-              filters={filters}
-              onFilterChange={setFilter}
-              onReset={resetFilters}
-            />
+        <HistoryFiltersBar
+          filters={filters}
+          onFilterChange={setFilter}
+          onReset={resetFilters}
+        />
 
-            <HistoryList
-              items={items}
-              loading={loading}
-              error={error}
-              onCopy={handleCopy}
-              onDelete={removeItem}
-            />
-          </>
-        )}
+        <HistoryList
+          items={items}
+          loading={loading}
+          error={error}
+          onCopy={handleCopy}
+          onDelete={removeItem}
+        />
 
         <BulkActionBar />
 

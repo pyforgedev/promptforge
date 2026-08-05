@@ -28,6 +28,7 @@ interface HistoryState {
   error: string | null
   hasMore: boolean
   offset: number
+  hasLoaded: boolean
 
   // Actions
   fetchHistory: () => Promise<void>
@@ -80,6 +81,18 @@ const defaultFilters: HistoryFilters = {
   search: '',
 }
 
+const SEARCH_DEBOUNCE_MS = 300
+
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleSearchFetch(): void {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = null
+    useHistoryStore.getState().fetchHistory()
+  }, SEARCH_DEBOUNCE_MS)
+}
+
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   items: [],
   folders: [],
@@ -91,9 +104,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   error: null,
   hasMore: false,
   offset: 0,
+  hasLoaded: false,
 
   fetchHistory: async () => {
-    set({ loading: true, error: null, offset: 0, items: [] })
+    set({ loading: true, error: null, offset: 0 })
     try {
       const { currentFolderId, searchMode, filters } = get()
       const { items, hasMore } = await queryHistoryItems({
@@ -104,7 +118,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         offset: 0,
         limit: 20
       })
-      set({ items, hasMore, offset: items.length, loading: false })
+      set({ items, hasMore, offset: items.length, loading: false, hasLoaded: true })
     } catch (err) {
       if (_isSchemaError(err)) {
         console.warn('[HistoryStore] fetchHistory failed with schema error, resetting DB...', err)
@@ -119,7 +133,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
             offset: 0,
             limit: 20
           })
-          set({ items, hasMore, offset: items.length, loading: false })
+          set({ items, hasMore, offset: items.length, loading: false, hasLoaded: true })
           return
         } catch (retryErr) {
           console.error('[HistoryStore] fetchHistory failed after DB reset:', retryErr)
@@ -184,7 +198,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   setFilter: (key, value) => {
     set((state) => ({ filters: { ...state.filters, [key]: value } }))
-    get().fetchHistory()
+    if (key === 'search') {
+      scheduleSearchFetch()
+    } else {
+      get().fetchHistory()
+    }
   },
 
   resetFilters: () => {
