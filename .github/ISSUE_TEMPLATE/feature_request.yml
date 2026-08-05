@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest a new feature or improvement for PromptForge
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve? Describe it without proposing a solution yet.
+      placeholder: "I often need to ... but currently I have to ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like the feature to look like?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds or alternative approaches you've tried.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This feature affects UI/UX (design tokens in DESIGN.md must be respected)
+        - label: This feature needs new i18n strings (both English and Indonesian)
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Mockups, links, or examples of similar features elsewhere.
