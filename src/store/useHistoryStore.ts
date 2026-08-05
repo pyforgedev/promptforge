@@ -1,13 +1,15 @@
 import { create } from 'zustand'
-import db, { 
-  deleteHistoryItem, 
+import {
+  deleteHistoryItem,
+  deleteHistoryItems,
   deleteAllHistory,
   getFolders,
   saveFolder,
-  deleteFolder,
+  deleteFolderAndUnassign,
   bulkUpdateHistoryFolder,
   queryHistoryItems,
   resetDatabase,
+  updateFolder,
 } from '@/services/storage/indexeddb'
 import { emit } from '@/lib/eventBus'
 import { sanitizeError } from '@/lib/sanitizeError'
@@ -214,13 +216,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const { selectedIds } = get()
     set({ error: null, loading: true })
     try {
-      const CHUNK_SIZE = 50
-      for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
-        const chunk = selectedIds.slice(i, i + CHUNK_SIZE)
-        await db.transaction('rw', db.prompt_history, async () => {
-          await Promise.all(chunk.map(id => db.prompt_history.delete(id)))
-        })
-      }
+      await deleteHistoryItems(selectedIds)
       emit('history:items-deleted', selectedIds)
       get().fetchHistory()
       set({ selectedIds: [], loading: false })
@@ -304,7 +300,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   renameFolder: async (id, name) => {
     set({ error: null })
     try {
-      const { updateFolder } = await import('@/services/storage/indexeddb')
       await updateFolder(id, { name })
       set((state) => ({
         folders: state.folders.map(f => f.id === id ? { ...f, name } : f)
@@ -319,8 +314,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   removeFolder: async (id) => {
     set({ error: null })
     try {
-      await deleteFolder(id)
-      await db.prompt_history.where('folderId').equals(id).modify({ folderId: null })
+      await deleteFolderAndUnassign(id)
       set((state) => ({
         folders: state.folders.filter(f => f.id !== id),
         currentFolderId: state.currentFolderId === id ? null : state.currentFolderId,
