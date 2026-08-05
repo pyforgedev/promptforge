@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/pyforgedev/promptforge/compare/v0.4.0...v0.5.0) (2026-08-05)
+
+### Features
+
+* **ci:** Add CI pipeline and OSS governance files ([2995b05](https://github.com/pyforgedev/promptforge/commit/2995b0555edb8e2a573cae89d7f1bc625e46aa66))
+* **formatter:** Add paste format help dialog with docs link ([2c5c616](https://github.com/pyforgedev/promptforge/commit/2c5c61616becbeceae3277d324a7674077d02f00))
+* **formatter:** Show image/video type badge on queue card ([20dbf04](https://github.com/pyforgedev/promptforge/commit/20dbf0421aae4a6ba6a6c90992d13b21e9589330))
+
+### Bug Fixes
+
+* **history:** Stabilize loading state and prevent search focus loss ([6cc7e9d](https://github.com/pyforgedev/promptforge/commit/6cc7e9ded40cd6399dda8e70de5a5513c0264f56))
+* **scroll:** Reset window scroll on route change and contain overview auto-follow ([957ce69](https://github.com/pyforgedev/promptforge/commit/957ce6940bd0f3e69b6d5fe27cca02668985bdcb))
+* **templates:** Prevent scrollbar FOUC on reset and refetch ([a1c9064](https://github.com/pyforgedev/promptforge/commit/a1c906490a48d193b4427c0f0442ea87c823bbd5))
+
+### Performance Improvements
+
+* **build:** Split vendor chunks with Rolldown codeSplitting ([b8bcce6](https://github.com/pyforgedev/promptforge/commit/b8bcce635b6dbc41743c025bd746b5ae6f8ec60d))
+
 ## [0.4.0](https://github.com/pyforgedev/promptforge/compare/v0.3.0...v0.4.0) (2026-08-01)
 
 ### Features
