@@ -53,6 +53,9 @@
       "upload": "Upload"
     },
     "pastePlaceholder": "Paste one prompt per line...",
+    "pasteHelpTitle": "Supported paste formats",
+    "pasteHelpDescription": "Each line becomes one prompt; blank lines are ignored. Lines starting with \"Prompt:\" (or \"- **Prompt:**\" in markdown lists) are extracted as prompts — if none match, all lines are used.",
+    "pasteHelpLink": "Full documentation",
     "uploadLabel": "Choose a file",
     "uploadHint": ".txt or .csv files",
     "csvColumnPicker": "Select prompt column",

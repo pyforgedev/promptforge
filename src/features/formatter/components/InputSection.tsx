@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CsvColumnPicker } from './CsvColumnPicker'
+import { PasteHelpDialog } from './PasteHelpDialog'
 import type { CsvPreviewResult, InputMode } from '../types'
 
 interface InputSectionProps {
@@ -83,6 +84,7 @@ export function InputSection({
             {t('formatter.inputMode.upload')}
           </button>
         </div>
+        {inputMode === 'paste' && <PasteHelpDialog />}
       </div>
 
       {inputMode === 'paste' ? (

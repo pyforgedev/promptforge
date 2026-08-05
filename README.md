@@ -22,6 +22,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 - **Theme:** Strict Light/Dark/System theme support via next-themes, utilizing a semantic color system and glassmorphism.
 - **Internationalization (i18n):** Full support for English (en) and Bahasa Indonesia (id).
 - **Toast Notifications:** Standardized user feedback using sonner for all data-modifying actions.
+- **Formatter:** Batch-format prompts from paste input or CSV upload, with queue management and download in TXT/CSV/JSON. See [Supported Paste Formats](./docs/supported-format-paste.md) for accepted input formats.
 
 ## Quick Start
 
@@ -116,6 +117,7 @@ src/
 
 - `/` → HomePage (landing page)
 - `/dashboard` → Redirects automatically to `/templates`
+- `/formatter` → Prompt formatter (paste/CSV input, queue, download)
 - `/generator` → V2 Prompt Generator
 - `/history` → Prompt history log
 - `/templates` → Template management page

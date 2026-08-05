@@ -53,6 +53,9 @@
       "upload": "Unggah"
     },
     "pastePlaceholder": "Tempelkan satu prompt per baris...",
+    "pasteHelpTitle": "Format tempel yang didukung",
+    "pasteHelpDescription": "Setiap baris menjadi satu prompt; baris kosong diabaikan. Baris yang diawali \"Prompt:\" (atau \"- **Prompt:**\" pada daftar markdown) diekstrak sebagai prompt — jika tidak ada yang cocok, semua baris dipakai.",
+    "pasteHelpLink": "Dokumentasi lengkap",
     "uploadLabel": "Pilih file",
     "uploadHint": "File .txt atau .csv",
     "csvColumnPicker": "Pilih kolom prompt",

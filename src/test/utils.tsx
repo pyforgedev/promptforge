@@ -5,6 +5,7 @@ import i18n from 'i18next'
 import type { ReactNode } from 'react'
 
 import { AppContext } from '@/app/providers/AppContext'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { AppPreferences } from '@/types'
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'queries'> {
@@ -42,11 +43,13 @@ export function renderWithProviders(
     return (
       <I18nextProvider i18n={i18n}>
         <AppContext.Provider value={mockContext}>
-          <MemoryRouter initialEntries={[route]}>
-            <Routes>
-              <Route path={routePath} element={children} />
-            </Routes>
-          </MemoryRouter>
+          <TooltipProvider delayDuration={300}>
+            <MemoryRouter initialEntries={[route]}>
+              <Routes>
+                <Route path={routePath} element={children} />
+              </Routes>
+            </MemoryRouter>
+          </TooltipProvider>
         </AppContext.Provider>
       </I18nextProvider>
     )

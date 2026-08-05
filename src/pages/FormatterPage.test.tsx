@@ -414,4 +414,20 @@ describe('FormatterPage queue filters and Next navigation', () => {
     expect(screen.getByRole('button', { name: /Next/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /Previous/i })).toBeDisabled()
   })
+
+  it('opens the paste format help dialog with a docs link from the paste tab', async () => {
+    renderPage()
+    const user = userEvent.setup()
+
+    await waitFor(() => expect(screen.getByText('Prompt #1')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: 'Supported paste formats' }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText(/Lines starting with "Prompt:"/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Full documentation/i })).toHaveAttribute(
+      'href',
+      'https://github.com/pyforgedev/promptforge/blob/main/docs/supported-format-paste.md'
+    )
+  })
 })
