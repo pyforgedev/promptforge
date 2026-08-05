@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, Download, Upload, RotateCcw, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePrompts } from '@/features/prompts/hooks/usePrompts'
+import { ROUTES } from '@/app/routePaths'
 import { PromptList } from '@/features/prompts/components/PromptList'
 import { PromptForm } from '@/features/prompts/components/PromptForm'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -140,7 +141,7 @@ export default function TemplatesPage() {
   const handleUseAsReference = (prompt: Prompt) => {
     storeSetInput({ basePromptReference: prompt.content })
     storeSetAdvancedOpen(true)
-    navigate('/generator')
+    navigate(ROUTES.generator)
     toast.success(t('templates.referenceToast'))
   }
 

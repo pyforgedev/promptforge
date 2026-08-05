@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { ROUTES } from '@/app/routePaths'
 import { RandomIdeaButton } from './RandomIdeaButton'
 
 import { Button } from '@/components/ui/button'
@@ -686,7 +687,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
               </div>
               <p className="text-body-ui text-secondary">{t('generator.form.errors.apiConfigRequired.description')}</p>
               <Button asChild variant="outline" className="w-fit border-brand-warning/30 text-brand-warning hover:bg-brand-warning/10 hover:text-brand-primary-hover">
-                <Link to="/settings">
+                <Link to={ROUTES.settings}>
                   <SettingsIcon className="mr-2 h-4 w-4" />
                   {t('generator.form.errors.apiConfigRequired.button')}
                 </Link>

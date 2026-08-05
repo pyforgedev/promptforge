@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '@/app/routePaths'
 import { AlertCircle, Copy, Trash2, Star, Clock } from 'lucide-react'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -99,7 +100,7 @@ export const HistoryList = memo(function HistoryList({
         description={searchMode === 'local' ? t('history.emptyFolderDescription', "No prompts found in this folder. Start generating to fill it up!") : t('history.emptyDescription')}
         action={
           <Button asChild variant="default" className="mt-2">
-            <Link to="/">
+            <Link to={ROUTES.home}>
               {t('history.goToGenerator', { defaultValue: 'Go to Generator' })}
             </Link>
           </Button>

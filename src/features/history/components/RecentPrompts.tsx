@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { Copy, Check, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/app/routePaths'
 import { RecentPromptItemSkeleton } from '@/components/ui/skeleton'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 
@@ -48,7 +49,7 @@ export const RecentPrompts = memo(function RecentPrompts() {
           title={t('history.noRecentPrompts')}
           description={t('history.emptyDescription')}
           action={
-            <Button size="sm" variant="outline" onClick={() => navigate('/generator')}>
+            <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.generator)}>
               <Wand2 className="h-4 w-4" />
               {t('home.getStarted')}
             </Button>

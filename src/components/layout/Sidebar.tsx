@@ -4,19 +4,20 @@ import {
   Home, Settings, Wand2, FileText, Clock, ListChecks,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { ROUTES, type RoutePath } from '@/app/routePaths'
 
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const navItems = [
-  { to: '/', icon: Home, label: 'nav.home' },
-  { to: '/generator', icon: Wand2, label: 'nav.generator' },
-  { to: '/history', icon: Clock, label: 'nav.history' },
-  { to: '/templates', icon: FileText, label: 'nav.templates' },
-  { to: '/formatter', icon: ListChecks, label: 'nav.formatter' },
-  { to: '/settings', icon: Settings, label: 'nav.settings' },
+const navItems: { to: RoutePath; icon: typeof Home; label: string }[] = [
+  { to: ROUTES.home, icon: Home, label: 'nav.home' },
+  { to: ROUTES.generator, icon: Wand2, label: 'nav.generator' },
+  { to: ROUTES.history, icon: Clock, label: 'nav.history' },
+  { to: ROUTES.templates, icon: FileText, label: 'nav.templates' },
+  { to: ROUTES.formatter, icon: ListChecks, label: 'nav.formatter' },
+  { to: ROUTES.settings, icon: Settings, label: 'nav.settings' },
 ]
 
 export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -42,7 +43,7 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === ROUTES.home}
               onClick={onClose}
               className={({ isActive }) =>
                 `group relative flex min-w-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-label-ui font-medium tracking-tight transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app lg:min-w-0 ${

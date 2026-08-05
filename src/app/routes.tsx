@@ -1,10 +1,11 @@
 import { Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
-import { 
-  HomePage, 
-  Generator, 
-  History, 
-  Templates, 
+import { ROUTES } from './routePaths'
+import {
+  HomePage,
+  Generator,
+  History,
+  Templates,
   SettingsPage,
   ErrorPage,
   FormatterPage,
@@ -12,36 +13,36 @@ import {
 
 export const routes = [
   {
-    path: '/',
+    path: ROUTES.home,
     element: <Layout />,
     errorElement: <ErrorPage />,
     children: [
       {
-        path: '/',
+        path: ROUTES.home,
         element: <HomePage />,
       },
       {
-        path: '/dashboard',
-        element: <Navigate to="/templates" replace />,
+        path: ROUTES.dashboard,
+        element: <Navigate to={ROUTES.templates} replace />,
       },
       {
-        path: '/generator',
+        path: ROUTES.generator,
         element: <Generator />,
       },
       {
-        path: '/history',
+        path: ROUTES.history,
         element: <History />,
       },
       {
-        path: '/templates',
+        path: ROUTES.templates,
         element: <Templates />,
       },
       {
-        path: '/formatter',
+        path: ROUTES.formatter,
         element: <FormatterPage />,
       },
       {
-        path: '/settings',
+        path: ROUTES.settings,
         element: <SettingsPage />,
       },
     ],

@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button'
 import { QuickStats } from '@/features/history/components/QuickStats'
 import { RecentPrompts } from '@/features/history/components/RecentPrompts'
 import { AppLogo } from '@/components/common/AppLogo'
+import { ROUTES } from '@/app/routePaths'
 
 const features = [
   {
     icon: Sparkles,
     title: 'home.featureGenerate',
     description: 'home.featureGenerateDesc',
-    to: '/generator',
+    to: ROUTES.generator,
     accent: 'from-brand-primary/20 to-brand-primary/5',
     iconBg: 'bg-brand-primary/15 text-brand-primary',
   },
@@ -19,7 +20,7 @@ const features = [
     icon: FileText,
     title: 'home.featurePrompts',
     description: 'home.featurePromptsDesc',
-    to: '/templates',
+    to: ROUTES.templates,
     accent: 'from-brand-success/20 to-brand-success/5',
     iconBg: 'bg-brand-success/15 text-brand-success',
   },
@@ -27,7 +28,7 @@ const features = [
     icon: Database,
     title: 'home.featureStorage',
     description: 'home.featureStorageDesc',
-    to: '/history',
+    to: ROUTES.history,
     accent: 'from-brand-warning/20 to-brand-warning/5',
     iconBg: 'bg-brand-warning/15 text-brand-warning',
   },
@@ -35,7 +36,7 @@ const features = [
     icon: Globe,
     title: 'home.featureI18n',
     description: 'home.featureI18nDesc',
-    to: '/settings',
+    to: ROUTES.settings,
     accent: 'from-brand-primary/10 to-transparent',
     iconBg: 'bg-border-subtle text-secondary',
   },
@@ -66,7 +67,7 @@ export default function Home() {
           <Button
             size="lg"
             className="gap-2"
-            onClick={() => navigate('/generator')}
+            onClick={() => navigate(ROUTES.generator)}
           >
             {t('home.getStarted')}
             <ArrowRight className="h-4 w-4" />
@@ -75,7 +76,7 @@ export default function Home() {
             size="lg"
             variant="ghost"
             className="gap-2 text-secondary"
-            onClick={() => navigate('/history')}
+            onClick={() => navigate(ROUTES.history)}
           >
             {t('nav.history')}
           </Button>
