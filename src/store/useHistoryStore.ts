@@ -89,24 +89,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   hasMore: false,
   offset: 0,
 
-  /**
-   * Check if the error looks like a Dexie schema/migration issue
-   * that can be fixed by clearing IndexedDB.
-   */
-  _isSchemaError(err: unknown): boolean {
-    const msg = (err as Error)?.message?.toLowerCase() ?? ''
-    const name = (err as DOMException)?.name ?? ''
-    return (
-      msg.includes('schema') ||
-      msg.includes('version') ||
-      msg.includes('upgrade') ||
-      msg.includes('migration') ||
-      msg.includes('corruption') ||
-      name === 'VersionError' ||
-      name === 'InvalidStateError'
-    )
-  },
-
   fetchHistory: async () => {
     set({ loading: true, error: null, offset: 0, items: [] })
     try {

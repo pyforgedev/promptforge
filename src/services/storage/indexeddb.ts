@@ -300,7 +300,7 @@ export async function saveSetting(key: string, value: unknown): Promise<void> {
   await db.settings.put({ key, value: valToSave })
 }
 
-// === HISTORY REFACTOR - Functions below need updating or removal ===
+// === HISTORY API ===
 
 export async function saveGeneratedPromptBatch(batch: GeneratedPromptBatch): Promise<string> {
   const { batchId, generatorInput, generatedAt, prompts } = batch

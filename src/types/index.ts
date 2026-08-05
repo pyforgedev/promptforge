@@ -23,7 +23,7 @@ export interface AIServiceConfig {
 
 export interface AIRequest {
   prompt: string
-  systemPrompt?: string // AGENT NOTE: Added for PromptComposerEngine to support system prompts
+  systemPrompt?: string
   model: string
   temperature: number
   maxTokens: number

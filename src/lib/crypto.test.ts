@@ -27,4 +27,11 @@ describe('crypto utilities', () => {
     const decrypted1 = await decrypt(encrypted1)
     expect(decrypted1).toBe(text)
   })
+
+  it('round-trips a large payload without stack overflow', async () => {
+    const largeText = 'x'.repeat(256 * 1024)
+    const encrypted = await encrypt(largeText)
+    const decrypted = await decrypt(encrypted)
+    expect(decrypted).toBe(largeText)
+  })
 })

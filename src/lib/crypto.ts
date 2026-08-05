@@ -50,24 +50,42 @@ export async function encrypt(text: string): Promise<string> {
   const combined = new Uint8Array(iv.length + encrypted.byteLength)
   combined.set(iv)
   combined.set(new Uint8Array(encrypted), iv.length)
-  
-  return btoa(String.fromCharCode(...combined))
+
+  return uint8ArrayToBase64(combined)
 }
 
 export async function decrypt(encryptedBase64: string): Promise<string> {
   const key = await getOrCreateKey()
-  const combined = new Uint8Array(
-    atob(encryptedBase64).split('').map(c => c.charCodeAt(0))
-  )
-  
+  const combined = base64ToUint8Array(encryptedBase64)
+
   const iv = combined.slice(0, 12)
   const data = combined.slice(12)
-  
+
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv },
     key,
     data
   )
-  
+
   return new TextDecoder().decode(decrypted)
+}
+
+// Must be <= 0xFFFF to stay within String.fromCharCode's safe argument count.
+const BASE64_CHUNK_SIZE = 0x8000
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += BASE64_CHUNK_SIZE) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + BASE64_CHUNK_SIZE))
+  }
+  return btoa(binary)
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
 }

@@ -294,11 +294,11 @@ export async function generateStructured<T>(
   prompt: string, 
   schema: ZodSchema<T>, 
   config: AIConfig,
-  systemPrompt?: string // AGENT NOTE: Added systemPrompt for MetaPromptBuilder
+  systemPrompt?: string
 ): Promise<T> {
   const response = await sendPrompt({
     prompt,
-    systemPrompt, // Pass systemPrompt
+    systemPrompt,
     model: config.model,
     temperature: 0.1, // Lower temperature for more deterministic JSON
     maxTokens: 300, // Optimized limit for structured outputs
@@ -318,7 +318,7 @@ export async function generateStructuredStream<T>(
   schema: ZodSchema<T>,
   config: AIConfig,
   onPartial: (partialData: Partial<T>) => void,
-  systemPrompt?: string // AGENT NOTE: Added systemPrompt for MetaPromptBuilder
+  systemPrompt?: string
 ): Promise<T> {
   const adapter = ProviderFactory.getAdapter(config.provider)
   

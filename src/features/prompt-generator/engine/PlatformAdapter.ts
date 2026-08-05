@@ -1,8 +1,5 @@
 // PlatformAdapter — adapts GeneratedPrompt for DALL-E 3 and Nano Banana platforms.
 // Phase 3.3.
-// AGENT NOTE: Nano Banana Pro / Nano Banana 2 official prompt documentation was not
-// found at the time of implementation. The nano_banana adapter uses conservative
-// defaults (natural language, comma-separated negatives, 2000 char limit).
 // TODO: Verify nano_banana maxPromptLength, negative prompt format, and weighted
 // tag syntax against official Nano Banana documentation when available.
 

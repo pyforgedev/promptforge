@@ -1,15 +1,5 @@
 import type { PlatformSpec } from '../types'
 
-// AGENT NOTE: Before implementing this file, search for official Nano Banana
-// Pro / Nano Banana 2 documentation to verify:
-//   a. Maximum prompt length (chars or tokens)
-//   b. Whether weighted terms are supported (e.g., term:1.5)
-//   c. Whether negative prompts go in a separate field or inline
-//   d. Any platform-specific syntax requirements or best practices
-// Fill in accurate values below based on your research.
-// If documentation cannot be found, use the conservative defaults shown
-// and add a // TODO comment noting what needs verification.
-
 export const PLATFORM_SPECS: Record<string, PlatformSpec> = {
   dalle3: {
     id: 'dalle3',
