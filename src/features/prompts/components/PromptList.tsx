@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { Prompt } from '@/types'
-import { PromptCard } from './PromptCard'
+import { TemplatePromptCard } from './TemplatePromptCard'
 import { EmptyState } from '@/components/common/EmptyState'
 import { CardSkeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
@@ -55,7 +55,7 @@ export function PromptList({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {prompts.map((prompt) => (
-        <PromptCard
+        <TemplatePromptCard
           key={prompt.id}
           prompt={prompt}
           onEdit={onEdit}

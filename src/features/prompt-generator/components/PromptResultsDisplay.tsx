@@ -11,7 +11,7 @@ import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { GenerationService } from '../services/generationService'
 
-import { PromptCard } from './PromptCard'
+import { GeneratorPromptCard } from './GeneratorPromptCard'
 import { BatchActionBar } from './BatchActionBar'
 import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 import { ServerCrash, AlertCircle } from 'lucide-react'
@@ -141,7 +141,7 @@ export function PromptResultsDisplay() {
               onExportJSON={handleExportJSON}
             />
             {batch.prompts.map((prompt) => (
-              <PromptCard
+              <GeneratorPromptCard
                 key={prompt.id}
                 prompt={prompt}
                 totalInBatch={batch.prompts.length}

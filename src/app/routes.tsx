@@ -3,9 +3,9 @@ import { Layout } from '@/components/layout/Layout'
 import { ROUTES } from './routePaths'
 import {
   HomePage,
-  Generator,
-  History,
-  Templates,
+  GeneratorPage,
+  HistoryPage,
+  TemplatesPage,
   SettingsPage,
   ErrorPage,
   FormatterPage,
@@ -27,15 +27,15 @@ export const routes = [
       },
       {
         path: ROUTES.generator,
-        element: <Generator />,
+        element: <GeneratorPage />,
       },
       {
         path: ROUTES.history,
-        element: <History />,
+        element: <HistoryPage />,
       },
       {
         path: ROUTES.templates,
-        element: <Templates />,
+        element: <TemplatesPage />,
       },
       {
         path: ROUTES.formatter,

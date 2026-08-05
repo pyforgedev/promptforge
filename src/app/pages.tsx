@@ -2,13 +2,13 @@ import { lazy, Suspense } from 'react'
 import { LazyFallback } from '@/components/common/LazyFallback'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
-const Home = lazy(() => import('@/pages/Home'))
-const GeneratorPage = lazy(() => import('@/pages/GeneratorPage'))
-const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
-const TemplatesPage = lazy(() => import('@/pages/TemplatesPage'))
-const Settings = lazy(() => import('@/pages/Settings'))
-const ErrorPageContent = lazy(() => import('@/pages/ErrorPage'))
-const FormatterPageContent = lazy(() => import('@/pages/FormatterPage'))
+const HomeLazy = lazy(() => import('@/pages/Home'))
+const GeneratorLazy = lazy(() => import('@/pages/GeneratorPage'))
+const HistoryLazy = lazy(() => import('@/pages/HistoryPage'))
+const TemplatesLazy = lazy(() => import('@/pages/TemplatesPage'))
+const SettingsLazy = lazy(() => import('@/pages/Settings'))
+const ErrorPageLazy = lazy(() => import('@/pages/ErrorPage'))
+const FormatterPageLazy = lazy(() => import('@/pages/FormatterPage'))
 
 function withErrorBoundary(Component: React.LazyExoticComponent<React.ComponentType>) {
   return (
@@ -20,11 +20,10 @@ function withErrorBoundary(Component: React.LazyExoticComponent<React.ComponentT
   )
 }
 
-export const HomePage = () => withErrorBoundary(Home)
-export const Generator = () => withErrorBoundary(GeneratorPage)
-export const History = () => withErrorBoundary(HistoryPage)
-export const Templates = () => withErrorBoundary(TemplatesPage)
-export const SettingsPage = () => withErrorBoundary(Settings)
-export const ErrorPage = () => withErrorBoundary(ErrorPageContent)
-export const FormatterPage = () => withErrorBoundary(FormatterPageContent)
-
+export const HomePage = () => withErrorBoundary(HomeLazy)
+export const GeneratorPage = () => withErrorBoundary(GeneratorLazy)
+export const HistoryPage = () => withErrorBoundary(HistoryLazy)
+export const TemplatesPage = () => withErrorBoundary(TemplatesLazy)
+export const SettingsPage = () => withErrorBoundary(SettingsLazy)
+export const ErrorPage = () => withErrorBoundary(ErrorPageLazy)
+export const FormatterPage = () => withErrorBoundary(FormatterPageLazy)

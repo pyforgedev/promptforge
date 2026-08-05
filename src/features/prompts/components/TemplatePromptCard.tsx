@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-interface PromptCardProps {
+interface TemplatePromptCardProps {
   prompt: Prompt
   onEdit: (prompt: Prompt) => void
   onDelete: (id: string) => void
@@ -26,7 +26,7 @@ function formatDate(timestamp: number): string {
   }).format(timestamp)
 }
 
-export const PromptCard = memo(function PromptCard({ prompt, onEdit, onDelete, onUseAsReference }: PromptCardProps) {
+export const TemplatePromptCard = memo(function TemplatePromptCard({ prompt, onEdit, onDelete, onUseAsReference }: TemplatePromptCardProps) {
   const { t } = useTranslation()
 
   return (

@@ -94,7 +94,7 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
   )
 }
 
-interface PromptCardProps {
+interface GeneratorPromptCardProps {
   prompt: GeneratedPrompt
   totalInBatch: number
   onRegenerate?: (variantIndex: number) => Promise<void>
@@ -102,13 +102,13 @@ interface PromptCardProps {
   onSaveAsTemplate?: (prompt: GeneratedPrompt) => void
 }
 
-export function PromptCard({
+export function GeneratorPromptCard({
   prompt,
   totalInBatch,
   onRegenerate,
   onToggleFavorite,
   onSaveAsTemplate,
-}: PromptCardProps) {
+}: GeneratorPromptCardProps) {
   const { t } = useTranslation()
   const shouldReduceMotion = useReducedMotion()
 
