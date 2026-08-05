@@ -4,6 +4,29 @@
 
 > Tech stack, architecture, and project structure are documented in [`README.md`](./README.md#architecture-and-tech-stack).
 
+## Development
+
+Core commands:
+
+```bash
+npm run dev       # start the development server
+npm run build     # TypeScript check + production build
+npm run lint      # run ESLint
+npm run test:run  # run the Vitest suite once
+```
+
+> [!IMPORTANT]
+> Before claiming a task is done, run `npm run build`, `npm run lint`, and `npm run test:run` and ensure all three pass.
+
+## Internationalization
+
+All user-facing text — including UI labels and error messages — must be added as i18n keys in **both** `public/locales/en/translation.json` and `public/locales/id/translation.json`. Never hardcode user-facing strings directly in components.
+
+## Documentation
+
+- `docs/audit/*.md` files are **overwritten in place** by review agents (they represent the current state, not a running log).
+- README updates are owned by the `@docs-writer` subagent.
+
 ## UI/UX
 
 > Must read [`DESIGN.md`](./DESIGN.md) before making any UI/UX changes — it contains design tokens, glassmorphism rules, accessibility guidelines, and component patterns that must be followed.

@@ -10,11 +10,12 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+[![CI](https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://promptforge.pyforgedev.web.id/)
 
 ## Features
 
-- **V1 Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (1/3/5/10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, and stock keywords toggling.
+- **Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (1/3/5/10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, stock keywords toggling, Adobe Stock scoring, and photography segments.
 - **Prompt Quality Rating:** Scores prompts on Commercial Potential, Creativity, Clarity, Marketability, and Uniqueness.
 - **Duplicate Detection:** Similarity analysis against prompt history to prevent repetitive generations.
 - **Templates:** Save, edit, reset, import, and export custom templates.
@@ -27,12 +28,12 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 ## Quick Start
 
 > [!NOTE]
-> Ensure you have [Node.js](https://nodejs.org/) installed before proceeding.
+> Ensure you have [Node.js](https://nodejs.org/) >= 22.12.0 installed before proceeding.
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/promptforge.git
+git clone https://github.com/pyforgedev/promptforge.git
 cd promptforge
 ```
 
@@ -57,7 +58,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 ### Architecture Layers
 
 - **Feature-Based Modules (`src/features/`):** Self-contained domains encapsulating components, hooks, schemas, state slices, and assets relevant to specific features (e.g., prompt generator, history, templates).
-- **Services Layer (`src/services/`):** External integrations and core application business logic, including AI API clients, IndexedDB storage wrapper (Dexie), export utilities, and text similarity algorithms.
+- **Services Layer (`src/services/`):** External integrations and core application business logic, including AI API clients, a per-domain IndexedDB storage layer (Dexie) behind a barrel re-export, export utilities, and text similarity algorithms.
 - **State Management (`src/store/`):** Zustand-powered stores managing global application state, including AI configuration, generator preferences, and historical logs.
 - **Routing Layer (`src/app/`):** React Router DOM v7 utilizing `createBrowserRouter` for declarative, lazy-loaded routing, error boundaries, and nested layout structures.
 
@@ -83,7 +84,8 @@ src/
 ├── index.css                         # Tailwind entry
 ├── theme.config.ts                   # Theme configuration
 ├── app/
-│   ├── pages.tsx                     # Lazy-loaded page imports
+│   ├── pages.tsx                     # Lazy-loaded page imports (uniform *Page naming)
+│   ├── routePaths.ts                 # Centralized route path constants (ROUTES)
 │   ├── router.ts                     # Router creation
 │   ├── routes.tsx                    # Route definitions
 │   └── providers/                    # App providers
@@ -97,18 +99,19 @@ src/
 │   ├── history/                      # Prompt history (components, hooks, types)
 │   ├── prompt-generator/             # V2 prompt composer (components, engine, hooks, schemas, services, store, types, constants)
 │   ├── prompts/                      # Prompt utilities (components, hooks, services, types, utils)
-│   ├── settings/                     # Settings (hooks, services, types)
+│   ├── settings/                     # Settings (components, services, types)
 │   └── templates/                    # Default template definitions
-├── hooks/                            # Shared hooks (useAppContext, useEffectiveTheme, useFavicon, useToast)
+├── hooks/                            # Shared hooks (useAppContext, useEffectiveTheme, useFavicon, useSpotlightBorder, useToast)
 ├── i18n/                             # i18next configuration
-├── lib/                              # Utilities (constants, crypto, utils, validation)
-├── pages/                            # Page components (Home, GeneratorPage, HistoryPage, TemplatesPage, Settings, ErrorPage)
+├── lib/                              # Utilities (axiosSetup, constants, crypto, eventBus, rateLimiter, sanitizeError, utils, validation)
+├── pages/                            # Page components (Home, GeneratorPage, HistoryPage, TemplatesPage, Settings, FormatterPage, ErrorPage)
 ├── services/
 │   ├── ai/                           # AI service (API integration)
 │   ├── export/                       # Export services (history, txt)
+│   ├── formatter/                    # Formatter batch services
 │   ├── similarity/                   # Duplicate detection service
-│   └── storage/                      # IndexedDB storage layer (Dexie)
-├── store/                            # Zustand stores (AIConfig, Generator, History)
+│   └── storage/                      # Per-domain Dexie modules (db, history, folders, settings, generatorState, ideaCache, formatter, prompts) + indexeddb.ts barrel
+├── store/                            # Zustand stores (AIConfig, Generator, History, MasterPrompt)
 ├── test/                             # Test setup and utilities
 └── types/                            # Shared TypeScript types
 ```
@@ -143,6 +146,10 @@ PromptForge implements a strict design system detailed in [`DESIGN.md`](./DESIGN
 
 > [!TIP]
 > The testing setup utilizes Vitest 4, `@testing-library/react`, `@testing-library/jest-dom`, and `fake-indexeddb` to execute tests under a simulated IndexedDB environment.
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for community standards, and [SECURITY.md](./SECURITY.md) for reporting vulnerabilities.
 
 ## License
 
