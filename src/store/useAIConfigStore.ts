@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { getSetting, saveSetting } from '@/services/storage/indexeddb'
 import { sanitizeError } from '@/lib/sanitizeError'
+import i18n from '@/i18n'
 import type { AIConfig, AIConfigPreset } from '@/features/settings/types'
 
 interface AIConfigState {
@@ -44,7 +45,7 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       })
     } catch (error) {
       set({ 
-        error: 'Failed to load configs',
+        error: i18n.t('errors.ai.loadConfigsFailed'),
         isLoading: false,
         isReady: true
       })
@@ -64,7 +65,7 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
         console.warn('[AIConfigStore] setActiveConfig failed:', sanitizeError(error))
       }
       set({ 
-        error: 'Failed to save active config',
+        error: i18n.t('errors.ai.saveActiveConfigFailed'),
         isLoading: false
       })
       throw error
@@ -92,7 +93,7 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
         console.warn('[AIConfigStore] savePreset failed:', sanitizeError(error))
       }
       set({ 
-        error: 'Failed to save preset',
+        error: i18n.t('errors.ai.savePresetFailed'),
         isLoading: false
       })
       throw error
@@ -108,7 +109,7 @@ export const useAIConfigStore = create<AIConfigState>((set, get) => ({
       if (import.meta.env.DEV) {
         console.warn('[AIConfigStore] deletePreset failed:', sanitizeError(error))
       }
-      set({ error: 'Failed to delete preset' })
+      set({ error: i18n.t('errors.ai.deletePresetFailed') })
       throw error
     }
   }

@@ -11,6 +11,7 @@ import db, {
 } from '@/services/storage/indexeddb'
 import { emit } from '@/lib/eventBus'
 import { sanitizeError } from '@/lib/sanitizeError'
+import i18n from '@/i18n'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import type { HistoryFilters, Folder } from '@/features/history/types'
 
@@ -121,12 +122,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         } catch (retryErr) {
           console.error('[HistoryStore] fetchHistory failed after DB reset:', retryErr)
           if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory DB reset failed:', sanitizeError(retryErr))
-          set({ error: 'Failed to load history after database reset.', loading: false })
+          set({ error: i18n.t('errors.history.loadFailedAfterReset'), loading: false })
           return
         }
       }
       if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory failed:', sanitizeError(err))
-      set({ error: 'Failed to load history.', loading: false })
+      set({ error: i18n.t('errors.history.loadFailed'), loading: false })
     }
   },
 
@@ -151,7 +152,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       })
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] loadMore failed:', sanitizeError(err))
-      set({ error: 'Failed to load more history.', loading: false })
+      set({ error: i18n.t('errors.history.loadMoreFailed'), loading: false })
     }
   },
 
@@ -170,12 +171,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           return
         } catch (retryErr) {
           if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders DB reset failed:', sanitizeError(retryErr))
-          set({ error: 'Failed to load folders after database reset.' })
+          set({ error: i18n.t('errors.history.loadFoldersFailedAfterReset') })
           return
         }
       }
       if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders failed:', sanitizeError(err))
-      set({ error: 'Failed to load folders.' })
+      set({ error: i18n.t('errors.history.loadFoldersFailed') })
     }
   },
 
@@ -226,7 +227,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] bulkDelete failed:', sanitizeError(err))
       get().fetchHistory()
-      set({ error: 'Failed to delete items.', loading: false })
+      set({ error: i18n.t('errors.history.deleteItemsFailed'), loading: false })
       throw err
     }
   },
@@ -248,7 +249,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       }
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] bulkMove failed:', sanitizeError(err))
-      set({ error: 'Failed to move items.', loading: false })
+      set({ error: i18n.t('errors.history.moveItemsFailed'), loading: false })
       throw err
     }
   },
@@ -261,7 +262,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       set({ items: [], selectedIds: [] })
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeAll failed:', sanitizeError(err))
-      set({ error: 'Failed to clear history.' })
+      set({ error: i18n.t('errors.history.clearFailed') })
       throw err
     }
   },
@@ -277,7 +278,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       }))
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeItem failed:', sanitizeError(err))
-      set({ error: 'Failed to delete item.' })
+      set({ error: i18n.t('errors.history.deleteItemFailed') })
       throw err
     }
   },
@@ -295,7 +296,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       set((state) => ({ folders: [...state.folders, newFolder] }))
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] createFolder failed:', sanitizeError(err))
-      set({ error: 'Failed to create folder.' })
+      set({ error: i18n.t('errors.history.createFolderFailed') })
       throw err
     }
   },
@@ -310,7 +311,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       }))
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] renameFolder failed:', sanitizeError(err))
-      set({ error: 'Failed to rename folder.' })
+      set({ error: i18n.t('errors.history.renameFolderFailed') })
       throw err
     }
   },
@@ -332,7 +333,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       }
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeFolder failed:', sanitizeError(err))
-      set({ error: 'Failed to remove folder.' })
+      set({ error: i18n.t('errors.history.removeFolderFailed') })
       throw err
     }
   }

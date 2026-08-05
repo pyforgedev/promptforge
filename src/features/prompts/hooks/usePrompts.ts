@@ -7,6 +7,7 @@ import {
   deletePrompt,
 } from '@/features/prompts/services/promptService'
 import type { CreatePromptInput, UpdatePromptInput } from '@/features/prompts/types'
+import i18n from '@/i18n'
 
 interface UsePromptsReturn {
   prompts: Prompt[]
@@ -38,7 +39,7 @@ export function usePrompts(): UsePromptsReturn {
     } catch (err) {
       setError(import.meta.env.DEV
         ? (err instanceof Error ? err.message : String(err))
-        : 'Failed to load prompts')
+        : i18n.t('errors.prompts.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -61,7 +62,7 @@ export function usePrompts(): UsePromptsReturn {
     } catch (err) {
       const message = import.meta.env.DEV
         ? (err instanceof Error ? err.message : String(err))
-        : 'Failed to create prompt'
+        : i18n.t('errors.prompts.createFailed')
       setError(message)
       throw err
     } finally {
@@ -79,7 +80,7 @@ export function usePrompts(): UsePromptsReturn {
     } catch (err) {
       const message = import.meta.env.DEV
         ? (err instanceof Error ? err.message : String(err))
-        : 'Failed to update prompt'
+        : i18n.t('errors.prompts.updateFailed')
       setError(message)
       throw err
     } finally {
@@ -96,7 +97,7 @@ export function usePrompts(): UsePromptsReturn {
     } catch (err) {
       const message = import.meta.env.DEV
         ? (err instanceof Error ? err.message : String(err))
-        : 'Failed to delete prompt'
+        : i18n.t('errors.prompts.deleteFailed')
       setError(message)
       throw err
     } finally {

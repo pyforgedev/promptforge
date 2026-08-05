@@ -564,5 +564,40 @@
     "saved": "Batch tersimpan ke riwayat",
     "saveError": "Gagal menyimpan batch",
     "exported": "Diekspor"
+  },
+  "errorPage": {
+    "unexpectedError": "Kesalahan Tak Terduga",
+    "genericMessage": "Ups! Terjadi kesalahan di forge.",
+    "goHome": "Ke Beranda",
+    "reloadPage": "Muat Ulang Halaman",
+    "stackTrace": "Jejak tumpukan"
+  },
+  "errors": {
+    "history": {
+      "loadFailed": "Gagal memuat riwayat.",
+      "loadFailedAfterReset": "Gagal memuat riwayat setelah reset database.",
+      "loadMoreFailed": "Gagal memuat riwayat lainnya.",
+      "loadFoldersFailed": "Gagal memuat folder.",
+      "loadFoldersFailedAfterReset": "Gagal memuat folder setelah reset database.",
+      "deleteItemsFailed": "Gagal menghapus item.",
+      "moveItemsFailed": "Gagal memindahkan item.",
+      "clearFailed": "Gagal menghapus riwayat.",
+      "deleteItemFailed": "Gagal menghapus item.",
+      "createFolderFailed": "Gagal membuat folder.",
+      "renameFolderFailed": "Gagal mengganti nama folder.",
+      "removeFolderFailed": "Gagal menghapus folder."
+    },
+    "ai": {
+      "loadConfigsFailed": "Gagal memuat konfigurasi",
+      "saveActiveConfigFailed": "Gagal menyimpan konfigurasi aktif",
+      "savePresetFailed": "Gagal menyimpan prasetel",
+      "deletePresetFailed": "Gagal menghapus prasetel"
+    },
+    "prompts": {
+      "loadFailed": "Gagal memuat prompt",
+      "createFailed": "Gagal membuat prompt",
+      "updateFailed": "Gagal memperbarui prompt",
+      "deleteFailed": "Gagal menghapus prompt"
+    }
   }
 }

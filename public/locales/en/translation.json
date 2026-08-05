@@ -564,5 +564,40 @@
     "saved": "Batch saved to history",
     "saveError": "Failed to save batch",
     "exported": "Exported"
+  },
+  "errorPage": {
+    "unexpectedError": "Unexpected Error",
+    "genericMessage": "Oops! Something went wrong in the forge.",
+    "goHome": "Go home",
+    "reloadPage": "Reload page",
+    "stackTrace": "Stack trace"
+  },
+  "errors": {
+    "history": {
+      "loadFailed": "Failed to load history.",
+      "loadFailedAfterReset": "Failed to load history after database reset.",
+      "loadMoreFailed": "Failed to load more history.",
+      "loadFoldersFailed": "Failed to load folders.",
+      "loadFoldersFailedAfterReset": "Failed to load folders after database reset.",
+      "deleteItemsFailed": "Failed to delete items.",
+      "moveItemsFailed": "Failed to move items.",
+      "clearFailed": "Failed to clear history.",
+      "deleteItemFailed": "Failed to delete item.",
+      "createFolderFailed": "Failed to create folder.",
+      "renameFolderFailed": "Failed to rename folder.",
+      "removeFolderFailed": "Failed to remove folder."
+    },
+    "ai": {
+      "loadConfigsFailed": "Failed to load configs",
+      "saveActiveConfigFailed": "Failed to save active config",
+      "savePresetFailed": "Failed to save preset",
+      "deletePresetFailed": "Failed to delete preset"
+    },
+    "prompts": {
+      "loadFailed": "Failed to load prompts",
+      "createFailed": "Failed to create prompt",
+      "updateFailed": "Failed to update prompt",
+      "deleteFailed": "Failed to delete prompt"
+    }
   }
 }
