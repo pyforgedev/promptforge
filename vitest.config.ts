@@ -8,6 +8,10 @@ export default mergeConfig(
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
+      // Explicit so the vitest cache never lands inside src/ (see stray
+      // src/features/prompt-generator/engine/node_modules/.vite left by an
+      // earlier run without a configured cache root).
+      cacheDir: './node_modules/.vitest',
       css: true,
       coverage: {
         provider: 'v8',
