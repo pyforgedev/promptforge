@@ -52,12 +52,31 @@ Thanks for your interest in contributing! This guide covers the essentials for w
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) — this drives automated versioning via release-it:
 
-- `feat:` → minor bump
-- `fix:` → patch bump
-- `BREAKING CHANGE:` → major bump
-- `docs:`, `chore:`, `refactor:`, `test:` → no version bump
+Format: `<type>(<scope>): <subject>`
 
-Examples: `feat(history): add folder export`, `fix(generator): abort stale requests on unmount`.
+| Type | Purpose | Version bump |
+|---|---|---|
+| `feat` | New feature | minor |
+| `fix` | Bug fix | patch |
+| `refactor` | Refactoring, no behavior change | — |
+| `perf` | Performance improvement | — |
+| `docs` | Documentation only | — |
+| `test` | Test additions or corrections | — |
+| `build` / `ci` | Build system / CI config | — |
+| `chore` | Maintenance | — |
+| `style` | Formatting, no logic change | — |
+
+Subject rules:
+
+- Imperative mood, capitalized first letter — "Add feature", not "Added feature"
+- No trailing period; keep under 72 characters
+- Use a scope in parentheses when specific: `feat(history): add folder export`
+
+Body: explain what and why, not how. Base the message on the actual staged diff (`git diff --staged`), not a guess. Reference issues in the footer with `Fixes`/`Refs` (e.g. `Fixes SENTRY-1234`).
+
+Breaking changes: use `!` in the subject (`feat(api)!: ...`) and a `BREAKING CHANGE:` footer — this bumps the major version.
+
+Examples: `fix(generator): abort stale requests on unmount`, `feat(formatter): add CSV column picker`.
 
 ## Pull Request Workflow
 

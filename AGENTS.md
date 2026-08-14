@@ -63,11 +63,3 @@ Or directly: `npx release-it <increment> --ci`
 ### Vercel Deploy
 
 The `vercel` CLI reads the `VERCEL_TOKEN` environment variable natively — **do not** pass it via `--token` flag (exposes secret in process args). The `--yes` flag skips interactive prompts in CI.
-
-### Semantic Commits
-
-Follow [Conventional Commits](https://conventionalcommits.org):
-- `feat:` → minor bump
-- `fix:` → patch bump
-- `BREAKING CHANGE:` → major bump
-- `docs:`, `chore:`, `refactor:` → no version bump (still included in changelog)
