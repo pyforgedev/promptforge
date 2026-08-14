@@ -12,7 +12,7 @@ export function LoadingSpinner({ size = 24, message }: LoadingSpinnerProps) {
         {[0, 1, 2].map((index) => (
           <span
             key={index}
-            className="rounded-full bg-border-subtle motion-safe:animate-pulse"
+            className="rounded-full bg-border-subtle animate-pulse"
             style={{ width: dotSize, height: dotSize, animationDelay: `${index * 120}ms` }}
           />
         ))}

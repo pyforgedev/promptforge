@@ -1,4 +1,4 @@
-import { useReducedMotion, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 function Skeleton({
@@ -6,9 +6,6 @@ function Skeleton({
   withShimmer = true,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { withShimmer?: boolean }) {
-  const shouldReduceMotion = useReducedMotion()
-  const showShimmer = withShimmer && !shouldReduceMotion
-
   return (
     <div
       className={cn(
@@ -18,7 +15,7 @@ function Skeleton({
       aria-hidden="true"
       {...props}
     >
-      {showShimmer && (
+      {withShimmer && (
         <motion.div
           className="absolute inset-0"
           style={{

@@ -170,7 +170,7 @@ export function SettingsPageContent() {
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={handleApplyConfig} disabled={isApplying}>
                   {isApplying ? (
-                    <RefreshCw className="h-4 w-4 motion-safe:animate-pulse" />
+                    <RefreshCw className="h-4 w-4 animate-pulse" />
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
@@ -182,7 +182,7 @@ export function SettingsPageContent() {
                   disabled={isTesting || !apiKey || !endpoint}
                 >
                   {isTesting ? (
-                    <RefreshCw className="h-4 w-4 motion-safe:animate-pulse" />
+                    <RefreshCw className="h-4 w-4 animate-pulse" />
                   ) : testResult === 'success' ? (
                     <CheckCircle2 className="h-4 w-4 text-brand-success" />
                   ) : testResult === 'error' ? (

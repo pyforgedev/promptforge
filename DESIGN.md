@@ -29,7 +29,7 @@ accents.
   is communicated exclusively through glassmorphism + a strict z-index scale,
   never through drop shadows on resting surfaces.
 - **Accessible by default** — every rule below assumes the result must be
-  usable with a keyboard, a screen reader, and `prefers-reduced-motion: reduce`.
+  usable with a keyboard and a screen reader.
   This is not optional polish; treat it as a build requirement same as TypeScript
   passing.
 
@@ -117,12 +117,15 @@ modal.
 
 ### 1.4 Motion
 
-| Token | Duration | Easing | Use |
-|---|---|---|---|
-| `motion-fast` | 120ms | `ease-out` | Hover/active feedback, icon swaps |
-| `motion-base` | 200ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Panel open/close, accordion |
-| `motion-slow` | 320ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Drawer slide-in, modal entrance |
-| `motion-stream` | per-character, no easing | — | Text streaming (see §6.2) |
+Durations are fixed guidance, not CSS tokens — implementations may hardcode
+them (Tailwind `duration-*` classes or Framer Motion transition values):
+
+| Duration | Easing | Use |
+|---|---|---|
+| 120ms | `ease-out` | Hover/active feedback, icon swaps |
+| 200ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Panel open/close, accordion |
+| 320ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Drawer slide-in, modal entrance |
+| n/a | per-character, no easing | Text streaming (see §6.2) — content appears as chunks arrive, no reveal animation |
 
 **Stagger animations:** Use the `animate-stagger-*` utility classes for
 sequential entry animations. Each class applies a `slide-up-fade` keyframe
@@ -148,18 +151,6 @@ animation with incremental delays:
 
 **Button press:** The `btn-press` class applies tactile feedback on `:active`:
 `transform: scale(0.98) translateY(1px)`. Use on primary action buttons.
-
-**Reduced motion is mandatory, not optional:** wrap non-essential motion
-(drawer slides, accordion expand, hover scale) in a check against
-`prefers-reduced-motion`, and fall back to an opacity-only or instant
-transition. Streaming text may keep appearing instantly (no animation) rather
-than character-by-character when reduced motion is requested — the content
-still needs to appear, just without the animated reveal.
-
-```tsx
-const shouldReduceMotion = useReducedMotion(); // from framer-motion
-transition={shouldReduceMotion ? { duration: 0 } : baseTransition}
-```
 
 ### 1.5 Breakpoints
 
@@ -362,13 +353,11 @@ direct example of what this section prevents going forward).
 3. **Color is never the only signal.** An error state pairs `border-danger`
    with an icon and text, not just a red border — this applies to all
    warning and error patterns throughout the app.
-4. **Respect `prefers-reduced-motion`** per §1.4 for every animation that
-   isn't strictly necessary to convey state.
-5. **Contrast is checked, not assumed.** Any new color value added to §2.1
+4. **Contrast is checked, not assumed.** Any new color value added to §2.1
    gets verified against the AA targets stated there before merging.
-6. **Touch targets ≥ 40px** on interactive elements in mobile/drawer contexts
+5. **Touch targets ≥ 40px** on interactive elements in mobile/drawer contexts
    (action bar icon buttons, close buttons).
-7. **Every icon-only button needs two labels.** `aria-label` for screen readers
+6. **Every icon-only button needs two labels.** `aria-label` for screen readers
    & touch devices (they don't see tooltips), plus a `<Tooltip>` for sighted
    mouse/keyboard users (they can't see `aria-label`). Both are required per
    §6.8.
@@ -428,7 +417,7 @@ direct example of what this section prevents going forward).
 - On "Generate", the output panel appears immediately with a blinking cursor.
 - As `stream: true` data arrives, characters append in `body-mono`.
 - **Skeleton loading:** while streaming, "AI Quality Score" shows a `<Skeleton />`
-  block (see §6.17 — uses Framer Motion shimmer with reduced-motion support).
+  block (see §6.17 — uses a Framer Motion shimmer).
   The numeric score replaces it only once the stream completes.
 
 ## 6.3 Action Bars & Copy Buttons
@@ -1001,9 +990,6 @@ pattern in the app (per §1.4).
     `border-subtle` (`#2A2E34`).
   - `mix-blend-mode: overlay` ensures the shimmer reads correctly across both
     themes without separate gradient definitions.
-- **Reduced motion:** when `prefers-reduced-motion: reduce` is active,
-  `useReducedMotion()` from Framer Motion disables the shimmer entirely.
-  The skeleton renders as a static `bg-border-subtle` block.
 - **Accessibility:** every skeleton container gets `aria-hidden="true"` (the
   skeleton is decorative, not content). Parent containers wrapping multiple
   skeletons use `role="status" aria-live="polite"` so assistive technology
@@ -1076,16 +1062,12 @@ to content is seamless.
   dimensions, making the transition invisible.
 - **Do** wrap skeleton groups in `role="status" aria-live="polite"` so screen
   readers announce loading state once.
-- **Do** check `useReducedMotion` (via `shouldReduceMotion`) in any custom
-  skeleton animation that isn't handled by the base `Skeleton` component.
-  The base component handles reduced motion automatically — custom wrappers
-  must do the same.
 - **Don't** use `LoadingSpinner` anywhere. It has been fully replaced by
   skeleton loading. The component file remains only for backwards compatibility
   and will be removed in a future version.
 - **Don't** use inline `animate-pulse bg-border-subtle` divs — always use the
   `<Skeleton />` component or one of its composed variants. Inline pulse divs
-  bypass the shimmer effect and reduced-motion handling.
+  bypass the shimmer effect.
 - **Don't** render a skeleton and the real content at the same time — the
   loading condition must be mutually exclusive with the content condition.
   Use early returns (e.g., `if (loading) return <Skeleton />`).
@@ -1147,7 +1129,7 @@ and title all agree).
   4000ms; errors 8000ms (long enough to read and act on, but never persistent);
   `toast.promise` phases resolve when the promise settles.
 - **Animation:** Sonner's built-in 400ms translate + fade; swipe-to-dismiss on
-  all toasts; fully disabled under `prefers-reduced-motion` (§1.4).
+  all toasts.
 - **Z-index:** `z-toast` (50) per §1.3 — toasts render above modals (40) and
   below nothing else.
 

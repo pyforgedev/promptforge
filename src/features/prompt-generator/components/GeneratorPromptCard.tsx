@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Check, Heart, RotateCcw, ChevronDown, Tag, Bookmark, AlertTriangle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,6 @@ interface KeywordsPanelProps {
 
 function KeywordsPanel({ keywords }: KeywordsPanelProps) {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
 
@@ -58,7 +57,7 @@ function KeywordsPanel({ keywords }: KeywordsPanelProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2.5 px-4 pb-3">
@@ -110,7 +109,6 @@ export function GeneratorPromptCard({
   onSaveAsTemplate,
 }: GeneratorPromptCardProps) {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
 
   const defaultPlatform: DisplayPlatform =
     prompt.generatorInput.targetPlatform === 'nano_banana' ? 'nano_banana' : 'dalle3'
@@ -162,7 +160,7 @@ export function GeneratorPromptCard({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
+      transition={{ duration: 0.25 }}
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface card-spotlight transition-all duration-200 hover:border-border-strong"
     >
       {isRegenerating && (

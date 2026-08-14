@@ -1,4 +1,4 @@
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -11,7 +11,6 @@ import { MoveMenu } from './MoveMenu'
 
 export const BulkActionBar = () => {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const { showToast } = useToast()
   const { selectedIds, deselectAll, items, folders, bulkDelete, bulkMove } = useHistoryStore()
   const count = selectedIds.length
@@ -50,9 +49,9 @@ export const BulkActionBar = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: shouldReduceMotion ? 0 : 100, opacity: 0 }}
+          initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: shouldReduceMotion ? 0 : 100, opacity: 0 }}
+          exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-toast"
         >
           <div className="overlay-glass flex items-center gap-4 rounded-full px-4 py-3 shadow-xl sm:px-6">

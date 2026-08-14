@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dices, AlertCircle } from 'lucide-react'
-import { useReducedMotion } from 'framer-motion'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { generateCompletion } from '@/services/ai/aiService'
 import { Button } from '@/components/ui/button'
@@ -19,7 +18,6 @@ interface RandomIdeaButtonProps {
 
 export function RandomIdeaButton({ category, onIdeaGenerated }: RandomIdeaButtonProps) {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const activeConfig = useAIConfigStore((s) => s.activeConfig)
@@ -58,7 +56,7 @@ export function RandomIdeaButton({ category, onIdeaGenerated }: RandomIdeaButton
               className="h-5 w-5 text-muted hover:text-primary"
             >
               {isLoading ? (
-                <Dices className={`h-3.5 w-3.5${shouldReduceMotion ? '' : ' motion-safe:animate-pulse'}`} />
+                <Dices className="h-3.5 w-3.5 animate-pulse" />
               ) : (
                 <Dices className="h-3.5 w-3.5" />
               )}

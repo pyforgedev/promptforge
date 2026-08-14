@@ -2,7 +2,7 @@ import { memo, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info, Sliders, Palette, History } from 'lucide-react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -56,7 +56,6 @@ const humanModelOptions = makeOptions(HUMAN_MODEL_OPTIONS)
 
 export const GeneratorForm = memo(function GeneratorForm() {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
 
   const { input, setInput, generatePrompts, isGenerating, error, advancedOptionsOpen, setAdvancedOptionsOpen } = usePromptGeneratorStore(
     useShallow((state) => ({
@@ -537,7 +536,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="overflow-hidden pt-4"
               >
                 <div className="grid gap-4">
@@ -695,7 +694,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
             </div>
           ) : (
             <Button onClick={handleGenerate} disabled={isGenerating || !input.niche.trim()} size="lg" className="flex-1">
-              {isGenerating ? <RefreshCw className="mr-2 h-4 w-4 motion-safe:animate-pulse" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {isGenerating ? <RefreshCw className="mr-2 h-4 w-4 animate-pulse" /> : <Sparkles className="mr-2 h-4 w-4" />}
               {isGenerating ? t('generator.generating') : t('generator.generate_v2')}
             </Button>
           )}

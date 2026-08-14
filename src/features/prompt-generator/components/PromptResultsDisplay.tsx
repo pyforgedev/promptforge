@@ -5,7 +5,7 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -20,7 +20,6 @@ import type { GeneratedPrompt } from '../types'
 
 export function PromptResultsDisplay() {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const [templatePrompt, setTemplatePrompt] = useState<GeneratedPrompt | null>(null)
   const { batch, isGenerating, error, toggleFavoriteInBatch } = usePromptGeneratorStore(
     useShallow((state) => ({
@@ -92,9 +91,9 @@ export function PromptResultsDisplay() {
           {Array.from({ length: batchSize }).map((_, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 8 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.25, delay: i * 0.05 }}
+              transition={{ duration: 0.25, delay: i * 0.05 }}
             >
               <CardSkeleton />
             </motion.div>
@@ -133,7 +132,7 @@ export function PromptResultsDisplay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
+              transition={{ duration: 0.5 }}
               className="flex flex-col gap-6"
           >
             <BatchActionBar

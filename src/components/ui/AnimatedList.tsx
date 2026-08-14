@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { MouseEventHandler, ReactNode, UIEvent } from 'react'
-import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_ITEMS = [
@@ -42,7 +42,6 @@ function AnimatedItem({
 }: AnimatedItemProps) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { amount: 0.5, once: false })
-  const shouldReduceMotion = useReducedMotion()
 
   return (
     <motion.div
@@ -55,7 +54,7 @@ function AnimatedItem({
       onClick={onClick}
       initial={{ scale: 0.7, opacity: 0 }}
       animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.2, delay: shouldReduceMotion ? 0 : delay }}
+      transition={{ duration: 0.2, delay }}
       className="mb-4 cursor-pointer"
     >
       {children}

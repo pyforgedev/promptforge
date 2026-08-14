@@ -21,7 +21,7 @@ export const AppLogo = memo(function AppLogo({ size = 'md', className = '' }: Ap
   const effectiveTheme = useEffectiveTheme(preferences.theme);
 
   const heightClass = sizeMap[size];
-  const transitionClass = 'motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out';
+  const transitionClass = 'transition-opacity duration-200 ease-out';
 
   return (
     <div className={`relative shrink-0 ${heightClass} w-auto ${className}`}>

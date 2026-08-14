@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Check, ChevronDown } from 'lucide-react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 
 interface NegativePromptPanelProps {
@@ -10,7 +10,6 @@ interface NegativePromptPanelProps {
 
 export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps) {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -41,7 +40,7 @@ export function NegativePromptPanel({ negativePrompt }: NegativePromptPanelProps
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-4 pb-3">
