@@ -1,7 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { renderWithProviders, screen, waitFor } from '@/test/utils'
 import { QuickStats } from './QuickStats'
 import db from '@/services/storage/indexeddb'
+
+vi.mock('@/components/CountUp', () => ({
+  default: ({ to, className }: { to: number; className?: string }) => (
+    <span className={className}>{to}</span>
+  ),
+}))
 
 describe('QuickStats Component', () => {
   it('renders default/empty statistics correctly', async () => {
@@ -9,8 +15,7 @@ describe('QuickStats Component', () => {
     
     // We should wait for dexie query to complete
     await waitFor(() => {
-      expect(screen.getByText('0')).toBeInTheDocument()
-      expect(screen.getByText('0.0')).toBeInTheDocument()
+      expect(screen.getAllByText('0')).toHaveLength(2)
     })
   })
 
@@ -57,7 +62,7 @@ describe('QuickStats Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('2')).toBeInTheDocument()
-      expect(screen.getByText('85.0')).toBeInTheDocument()
+      expect(screen.getByText('85')).toBeInTheDocument()
     })
   })
 })

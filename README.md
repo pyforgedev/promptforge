@@ -65,7 +65,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 ### Core Technologies
 
 - **Framework:** React 19 + TypeScript + Vite 8
-- **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + Framer Motion 12
+- **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + React Bits (animated components) + Framer Motion 12
 - **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
 - **State Management:** Zustand 5
 - **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks`
@@ -93,7 +93,8 @@ src/
 │   ├── common/                       # AppLogo, EmptyState, LazyFallback, LoadingSpinner, PageHeader
 │   ├── forms/                        # FormField
 │   ├── layout/                       # Header, Layout, Sidebar
-│   └── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
+│   ├── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
+│   └── *.tsx                         # React Bits animated components (AnimatedContent, Aurora, SpotlightCard, etc.)
 ├── features/
 │   ├── formatter/                    # Prompt formatting & queue (components, types)
 │   ├── history/                      # Prompt history (components, hooks, types)
@@ -130,9 +131,10 @@ src/
 
 PromptForge implements a strict design system detailed in [`DESIGN.md`](./DESIGN.md). Key highlights include:
 
+- **Component Priority:** components are selected in strict order — shadcn/ui first for all interactive patterns (Radix primitives with built-in ARIA and keyboard support), then React Bits (TS + Tailwind variants via the `@react-bits` registry in `components.json`, e.g. `npx shadcn@latest add @react-bits/<Name>-TS-TW`) for animation-forward components shadcn doesn't ship (text entrances, spotlight cards, backgrounds), then Framer Motion for custom motion primitives (skeleton shimmer, layout animations), and custom Tailwind/CSS only as the last resort when none of the three fit or deep customization is needed (e.g. scrollbar styling, keyframe utilities).
 - **Semantic Colors:** Strict adherence to semantic variables (`bg-surface`, `text-primary`) rather than hardcoded hex values.
 - **Glassmorphism:** Mandatory for all floating elements (overlays, dropdowns, modals) to maintain spatial hierarchy.
-- **Typography:** Developer-centric typography utilizing `Inter` for UI elements and a monospace font (`JetBrains Mono` or `Geist Mono`) for outputs, prompts, and scores to convey precision.
+- **Typography:** Developer-centric typography utilizing `Geist` for UI elements and a monospace font (`JetBrains Mono` or `Geist Mono`) for outputs, prompts, and scores to convey precision.
 - **Streaming UI:** Instantaneous feel with text streaming interfaces and skeleton loaders for pending data.
 
 ## Available Scripts

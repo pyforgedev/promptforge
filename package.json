@@ -19,6 +19,7 @@
     "release:major": "release-it major"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.4.0",
     "@icons-pack/react-simple-icons": "^13.13.0",
     "@radix-ui/react-alert-dialog": "^1.1.16",
@@ -42,9 +43,12 @@
     "dexie": "^4.4.3",
     "dexie-react-hooks": "^4.4.0",
     "framer-motion": "^12.40.0",
+    "gsap": "^3.15.0",
     "i18next": "^26.3.1",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.18.0",
+    "motion": "^12.43.0",
+    "ogl": "^1.0.11",
     "p-limit": "^7.3.0",
     "papaparse": "^5.5.4",
     "react": "^19.2.6",

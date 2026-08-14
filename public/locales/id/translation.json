@@ -34,7 +34,14 @@
     "featureStorage": "Memori prompt lokal",
     "featureStorageDesc": "Riwayat IndexedDB membuat ide yang dihasilkan tetap mudah dicari tanpa keluar dari perangkat.",
     "featureI18n": "Alur kerja bilingual",
-    "featureI18nDesc": "Susun dan kelola prompt dalam Bahasa Indonesia atau Inggris."
+    "featureI18nDesc": "Susun dan kelola prompt dalam Bahasa Indonesia atau Inggris.",
+    "rotatingStyles": [
+      "sinematik",
+      "editorial",
+      "komersial",
+      "minimalis",
+      "lifestyle"
+    ]
   },
   "dashboard": {
     "title": "Dasbor",

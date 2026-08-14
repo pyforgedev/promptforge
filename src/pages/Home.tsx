@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button'
 import { QuickStats } from '@/features/history/components/QuickStats'
 import { RecentPrompts } from '@/features/history/components/RecentPrompts'
 import { AppLogo } from '@/components/common/AppLogo'
+import Aurora from '@/components/Aurora'
+import RotatingText from '@/components/RotatingText'
+import SpotlightCard from '@/components/SpotlightCard'
 import { ROUTES } from '@/app/routePaths'
+import { useAppContext } from '@/hooks/useAppContext'
+import { useEffectiveTheme } from '@/hooks/useEffectiveTheme'
 
 const features = [
   {
@@ -45,12 +50,27 @@ const features = [
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { preferences } = useAppContext()
+  const effectiveTheme = useEffectiveTheme(preferences.theme)
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const auroraStops =
+    effectiveTheme === 'dark'
+      ? ['#0B0D10', '#5B8DF8', '#0B0D10']
+      : ['#FAFAFA', '#2F6FE0', '#FAFAFA']
+  const spotlightColor =
+    effectiveTheme === 'dark'
+      ? 'rgba(91, 141, 248, 0.08)'
+      : 'rgba(47, 111, 224, 0.08)'
+  const rotatingStyles = t('home.rotatingStyles', { returnObjects: true }) as string[]
 
   return (
     <div className="flex flex-col gap-12 py-8 md:gap-16 md:py-14">
       <section className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-brand-primary/8 blur-[80px] pointer-events-none" />
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-[300px] h-[150px] rounded-full bg-brand-primary/5 blur-[40px] pointer-events-none" />
+        {!prefersReducedMotion && (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <Aurora colorStops={auroraStops} amplitude={0.8} blend={0.35} />
+          </div>
+        )}
 
         <AppLogo size="lg" className="mb-2 h-16 md:h-24 relative z-10 animate-stagger-1" />
 
@@ -62,6 +82,19 @@ export default function Home() {
             {t('home.subtitle')}
           </p>
         </div>
+
+        {!prefersReducedMotion && (
+          <div className="relative z-10 flex items-center justify-center gap-2 text-body-mono text-muted">
+            <span className="shrink-0">--style</span>
+            <span className="inline-block min-w-[7rem] text-left">
+              <RotatingText
+                texts={rotatingStyles}
+                rotationInterval={2600}
+                mainClassName="flex justify-center font-medium text-brand-primary"
+              />
+            </span>
+          </div>
+        )}
 
         <div className="relative z-10 flex flex-col items-center gap-3 animate-stagger-3 sm:flex-row">
           <Button
@@ -92,26 +125,30 @@ export default function Home() {
       </div>
 
       <div className="mx-auto grid w-full max-w-4xl gap-3 px-4 sm:grid-cols-2">
-        {features.map(({ icon: Icon, title, description, to, iconBg }, i) => (
-          <button
+        {features.map(({ icon: Icon, title, description, to, iconBg }) => (
+          <SpotlightCard
             key={title}
-            onClick={() => navigate(to)}
-            className="group relative flex items-start gap-4 rounded-xl border border-border-subtle bg-surface p-5 text-left transition-all duration-200 hover:border-border-strong hover:bg-surface-hover card-spotlight cursor-pointer"
-            style={{ animationDelay: `${i * 60}ms` }}
+            spotlightColor={spotlightColor}
+            className="group transition-all duration-200 hover:border-border-strong hover:bg-surface-hover"
           >
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105 ${iconBg}`}>
-              <Icon className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col gap-1 min-w-0">
-              <span className="text-label-ui font-semibold text-primary group-hover:text-brand-primary transition-colors duration-150">
-                {t(title)}
-              </span>
-              <span className="text-caption-ui text-muted leading-relaxed">
-                {t(description)}
-              </span>
-            </div>
-            <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted opacity-0 group-hover:opacity-100 transition-all duration-150 translate-x-0 group-hover:translate-x-0.5" />
-          </button>
+            <button
+              onClick={() => navigate(to)}
+              className="flex w-full cursor-pointer items-start gap-4 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+            >
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105 ${iconBg}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-label-ui font-semibold text-primary transition-colors duration-150 group-hover:text-brand-primary">
+                  {t(title)}
+                </span>
+                <span className="text-caption-ui text-muted leading-relaxed">
+                  {t(description)}
+                </span>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0.5 group-hover:opacity-100" />
+            </button>
+          </SpotlightCard>
         ))}
       </div>
     </div>

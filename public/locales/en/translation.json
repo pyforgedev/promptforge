@@ -34,7 +34,14 @@
     "featureStorage": "Local prompt memory",
     "featureStorageDesc": "IndexedDB history keeps generated ideas searchable without leaving the device.",
     "featureI18n": "Bilingual workflow",
-    "featureI18nDesc": "Compose and manage prompts in English or Bahasa Indonesia."
+    "featureI18nDesc": "Compose and manage prompts in English or Bahasa Indonesia.",
+    "rotatingStyles": [
+      "cinematic",
+      "editorial",
+      "commercial",
+      "minimal",
+      "lifestyle"
+    ]
   },
   "dashboard": {
     "title": "Dashboard",

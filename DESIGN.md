@@ -1,5 +1,5 @@
 ---
-version: 1.5.0
+version: 1.7.0
 name: PromptForge-design-system
 description: >
   A high-performance, IDE-inspired design language for an AI Prompt Engineering
@@ -32,6 +32,44 @@ accents.
   usable with a keyboard and a screen reader.
   This is not optional polish; treat it as a build requirement same as TypeScript
   passing.
+
+---
+
+## 0. Component Selection Priority
+
+Every UI pattern is implemented by the **first layer in this order that covers
+it**. Lower layers are fallbacks, not free choices — reach for them only when
+the higher layers genuinely don't fit.
+
+| Tier | Source | Covers | Never used for |
+|---|---|---|---|
+| 1 | **shadcn/ui** — Radix primitives, `src/components/ui/` | Interactive patterns: buttons, dialogs, dropdowns, selects, comboboxes, tooltips, switches, tabs, scroll areas — anything with ARIA/focus/keyboard requirements (§5.1) | Decorative animation |
+| 2 | **React Bits** — `@react-bits` registry, TS + Tailwind variants, flat files in `src/components/` (e.g. `AnimatedContent.tsx`, `SpotlightCard.tsx`) | Animation-forward components shadcn doesn't ship: text entrances (`SplitText`, `RotatingText`, `TextType`, `ShinyText`), entrance wrappers (`AnimatedContent`, `FadeContent`), backgrounds (`Aurora`), decorative cards (`SpotlightCard`), grain (`Noise`), counters (`CountUp`) | Interactive primitives — never as a replacement for a shadcn control |
+| 3 | **Framer Motion** — `motion/react` | Custom motion composed from primitives: layout animations, `AnimatePresence`, the Skeleton shimmer (§6.17), press feedback beyond `btn-press` | Patterns with a ready React Bits component |
+| 4 | **Custom Tailwind/CSS** — `src/index.css` | What tiers 1–3 don't cover or need deep token theming: glassmorphism utilities (§4), scrollbar styling (§6.11), keyframes (`slide-up-fade`, `btn-press`, §1.4), the static grain fallback (§6.15) | Anything a higher tier already provides |
+
+**Rules:**
+
+1. **shadcn first, always.** Interactive pattern → shadcn primitive. No
+   exceptions; see §5.1.
+2. **Search React Bits before writing animation code.** If a React Bits
+   component covers the effect, add it through the registry — never
+   copy-paste from the website: `npx shadcn@latest add @react-bits/<Name>-TS-TW`
+   (the `@react-bits` registry is configured in `components.json`).
+3. **React Bits files are vendored read-only.** The only permitted edits are
+   lint fixes and a **one-time token alignment at adoption**: hardcoded
+   non-token defaults (e.g. `bg-neutral-900`, white `spotlightColor`,
+   `rounded-3xl` in `SpotlightCard`) may be replaced with this system's
+   semantic tokens so the component matches both themes. Afterwards the file
+   is read-only — theme React Bits components through their `className`/props
+   with this system's semantic tokens, never fork a file for a color change.
+4. **Framer Motion for the gaps.** When React Bits has no matching component
+   and the motion is custom-composed (layout animation, gesture, streaming
+   shimmer), use Framer Motion with the §1.4 duration/easing guidance.
+5. **Custom CSS is the last resort.** New CSS lives in `src/index.css` only
+   when tiers 1–3 have no fit — e.g. scrollbar pseudo-elements (§6.11) can't
+   come from any library. When custom code duplicates a tier-2 component's
+   behavior, prefer the component.
 
 ---
 
@@ -148,6 +186,12 @@ animation with incremental delays:
 .animate-stagger-3 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 120ms forwards; }
 .animate-stagger-4 { animation: slide-up-fade 350ms cubic-bezier(0.4, 0, 0.2, 1) 180ms forwards; }
 ```
+
+> **Tier check (§0):** these utilities are tier 4 (custom CSS). When an
+> entrance needs direction, distance, or scroll-trigger control beyond a
+> fixed stagger, use the React Bits `AnimatedContent` / `FadeContent`
+> wrappers (tier 2) or Framer Motion variants (tier 3) instead of extending
+> this table.
 
 **Button press:** The `btn-press` class applies tactile feedback on `:active`:
 `transform: scale(0.98) translateY(1px)`. Use on primary action buttons.
@@ -346,6 +390,7 @@ direct example of what this section prevents going forward).
    `Dialog`, `Popover`, `Select`, `Tooltip`) instead of hand-rolled
    `<div onClick>` or raw `<button>` toggles. They ship correct ARIA roles,
    focus trapping, and keyboard handling for free — don't reimplement it.
+   (Component tier 1, §0.)
 2. **Visible focus is mandatory.** Every interactive element gets a visible
    `focus-visible` ring using `brand-primary`, e.g.
    `focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2`.
@@ -907,6 +952,15 @@ more whitespace and clearer section boundaries.
 A subtle noise texture overlays the entire application to add visual depth
 without distracting from content.
 
+- **Implementation tier (§0):** tier 2 — the React Bits `Noise` component
+  (`src/components/Noise.tsx`, props: `patternSize`, `patternScaleX/Y`,
+  `patternRefreshInterval`, `patternAlpha`) is the animated option when the
+  grain must refresh continuously. The `body::before` data-URI approach below
+  is the tier-4 fallback: zero JS, one static pass — use it for the app-wide
+  overlay where animation adds nothing. Opacity targets below apply to the
+  CSS variant; `Noise` controls density via `patternAlpha` instead (default
+  15).
+
 - **Position:** fixed-position pseudo-element on `body::before`, covering the
   full viewport.
 - **Z-index:** `1` (see §1.3), rendering above the background but below all
@@ -944,6 +998,17 @@ body::before {
 Interactive cards gain a luminous border effect that follows the cursor
 position, providing visual feedback on hover.
 
+- **Implementation tier (§0):** tier 2 — the React Bits `SpotlightCard`
+  component (`src/components/SpotlightCard.tsx`) is the standard
+  implementation for card-shaped surfaces. Home feature tiles render it
+  directly (defaults token-aligned on adoption per §0 rule 3). The
+  `.card-spotlight` + `useSpotlightBorder`
+  spec below remains the fallback for containers where SpotlightCard's
+  wrapper chrome (border, radius, padding) doesn't fit — e.g. list-item
+  rows that must keep their own layout, or surfaces already carrying
+  hover-shift behavior (`GeneratorPromptCard`, `GeneratorForm`, Settings
+  cards).
+
 - **Utility class:** `.card-spotlight` applies to any interactive card component.
 - **Effect:** a `::after` pseudo-element with a `radial-gradient` centered at
   `--mouse-x`/`--mouse-y` CSS custom properties, using `brand-primary/6` color,
@@ -972,9 +1037,9 @@ const spotlightRef = useSpotlightBorder();
 
 ## 6.17 Skeleton Loading System
 
-A centralized skeleton system built with Framer Motion, replacing all ad-hoc
-`LoadingSpinner` and inline pulse divs. Skeletons are the only loading state
-pattern in the app (per §1.4).
+A centralized skeleton system built with Framer Motion (tier 3, §0),
+replacing all ad-hoc `LoadingSpinner` and inline pulse divs. Skeletons are
+the only loading state pattern in the app (per §1.4).
 
 ### 6.17.1 Base Skeleton
 
@@ -1190,6 +1255,7 @@ and title all agree).
 | v1.1 | Added `brand-danger`, `text-on-brand` tokens, form validation, duplicate-detection warning, switch/toggle spec, tooltip rule, scrollbar styling |
 | v1.2 | Added dual-mode select pattern, form field layout spec, settings page layout |
 | v1.3 | Added grain overlay, card spotlight border, layout refinements |
-| v1.5 | Added native tooltip suppression rule for simple-icons (title="") to prevent double tooltips |
 | v1.4 | Added centralized skeleton loading system, strengthened tooltip rule |
+| v1.5 | Added native tooltip suppression rule for simple-icons (title="") to prevent double tooltips |
 | v1.6 | Added toast notification spec (§6.18): neutral surface + status accents (no richColors), status borders/icons/titles/glows, durations, stacking, z-index, usage rules; theme tokens drive Sonner theming in `index.css` |
+| v1.7 | Added component selection priority (§0): shadcn/ui → React Bits → Framer Motion → custom Tailwind/CSS. React Bits registry (`@react-bits`, components.json) is the tier-2 source for animation-forward components; aligned §1.4 (stagger), §6.15 (Noise), §6.16 (SpotlightCard), §6.17 (Skeleton) with tier references |
