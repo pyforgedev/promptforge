@@ -120,6 +120,36 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 }
 
+// 7. IntersectionObserver stub (jsdom gap — framer-motion useInView constructs
+// it; mark every observed element as intersecting so items render in view)
+if (typeof globalThis.IntersectionObserver === 'undefined') {
+  class IntersectionObserverStub {
+    private readonly callback: IntersectionObserverCallback
+
+    constructor(callback: IntersectionObserverCallback) {
+      this.callback = callback
+    }
+
+    observe(target: Element) {
+      this.callback(
+        [{ isIntersecting: true, target } as IntersectionObserverEntry],
+        this as unknown as IntersectionObserver,
+      )
+    }
+
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return []
+    }
+    root = null
+    rootMargin = ''
+    thresholds = [0]
+  }
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver
+}
+
 // 4. Clean Database & Reset Zustand stores between tests
 beforeEach(async () => {
   // Clear in-memory storage shims

@@ -380,7 +380,7 @@ describe('FormatterPage queue filters and Next navigation', () => {
     await selectOption(user, 'Scope', 'Remaining')
 
     await waitFor(() => expect(screen.getByText('Overview (2 of 3)')).toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: /third --ar 16:9 --video/i }))
+    await user.click(screen.getByRole('option', { name: /third --ar 16:9 --video/i }))
 
     await waitFor(() => expect(screen.getByText('Prompt #3')).toBeInTheDocument())
     await waitFor(async () => {

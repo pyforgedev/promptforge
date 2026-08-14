@@ -1,12 +1,12 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useRef } from 'react'
+import { cn } from '@/lib/utils'
 import { ActivePromptDisplay } from './ActivePromptDisplay'
 import { QueueControls } from './QueueControls'
 import { QueueFilters } from './QueueFilters'
-import { OverviewList } from './OverviewList'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { AnimatedList } from '@/components/ui/AnimatedList'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, List, Trash2 } from 'lucide-react'
+import { Check, List, Play, RotateCcw, Trash2 } from 'lucide-react'
 import type { DownloadScope, FormatterItem, PromptType, QueueSort } from '../types'
 
 interface QueueViewProps {
@@ -59,18 +59,11 @@ export function QueueView({
   const { t } = useTranslation()
   const progressPercent = totalItems > 0 ? (copiedCount / totalItems) * 100 : 0
   const currentItem = items[currentIndex]
-  const viewportRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const viewport = viewportRef.current
-    const activeEl = viewport?.querySelector('[data-active-item="true"]')
-    if (!viewport || !activeEl) return
-    const top =
-      activeEl.getBoundingClientRect().top -
-      viewport.getBoundingClientRect().top +
-      viewport.scrollTop
-    viewport.scrollTop = top
-  }, [currentIndex])
+  const promptTexts = useMemo(() => items.map((item) => item.promptText), [items])
+  const overviewLabel = t('formatter.overviewCount', {
+    filtered: items.length,
+    total: totalItems,
+  })
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[60%_1fr] animate-stagger-2">
@@ -139,13 +132,60 @@ export function QueueView({
       <div className="card-spotlight flex h-[520px] flex-col rounded-xl border border-border-subtle bg-surface">
         <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle px-4 py-2.5">
           <List className="h-4 w-4 text-muted" />
-          <span className="text-caption-ui font-medium text-muted">
-            {t('formatter.overviewCount', { filtered: items.length, total: totalItems })}
-          </span>
+          <span className="text-caption-ui font-medium text-muted">{overviewLabel}</span>
         </div>
-        <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
-          <OverviewList items={items} currentIndex={currentIndex} onJump={onJump} />
-        </ScrollArea>
+        <AnimatedList
+          items={promptTexts}
+          selectedIndex={currentIndex}
+          onItemSelect={(_item, index) => onJump(index)}
+          onNavigate={onJump}
+          ariaLabel={overviewLabel}
+          className="flex-1 min-h-0"
+          scrollClassName="h-full max-h-none px-2 py-2"
+          itemClassName=""
+          renderItem={(text, { index, selected }) => {
+            const item = items[index]
+            const isCopied = item?.status === 'copied'
+            return (
+              <div
+                className={cn(
+                  'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150',
+                  selected && 'bg-brand-primary/10 ring-1 ring-brand-primary/30',
+                  !selected && isCopied && 'opacity-60 hover:opacity-90',
+                  !selected && !isCopied && 'hover:bg-surface-hover',
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption-ui font-medium transition-all',
+                    selected
+                      ? 'bg-brand-primary text-text-on-brand'
+                      : 'bg-surface-hover text-muted',
+                  )}
+                >
+                  {selected ? <Play className="h-3 w-3 fill-current" /> : item.order + 1}
+                </span>
+                <span
+                  className={cn(
+                    'flex-1 truncate font-mono text-[13px] leading-relaxed',
+                    isCopied ? 'text-muted line-through decoration-muted/30' : 'text-primary',
+                  )}
+                >
+                  {text}
+                </span>
+                {isCopied ? (
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-success/15">
+                    <Check className="h-3 w-3 text-brand-success" />
+                  </span>
+                ) : selected ? (
+                  <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-brand-primary" />
+                ) : (
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-border-subtle" />
+                )}
+              </div>
+            )
+          }}
+        />
       </div>
     </div>
   )
