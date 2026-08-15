@@ -139,14 +139,19 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
         input: { ...state.input, basePromptReference: undefined },
         batch: state.batch,
       }),
-      version: 1,
+      version: 2,
       migrate: (persistedState) => {
         const state = persistedState as Partial<PromptGeneratorStoreState>
         const toAI = <T extends { mode: string; value?: string } | undefined>(field: T) =>
           field?.mode === 'user' && field.value === 'none' ? { mode: 'system' as const } : field
+        const normalizeBatchSize = (value: unknown) => {
+          if (typeof value !== 'number' || !Number.isFinite(value)) return generatorInputDefaults.batchSize
+          return Math.min(10, Math.max(1, Math.round(value)))
+        }
         const normalizeInput = (input: GeneratorInput): GeneratorInput => ({
           ...generatorInputDefaults,
           ...input,
+          batchSize: normalizeBatchSize(input.batchSize),
           mood: toAI(input.mood) ?? generatorInputDefaults.mood,
           colorPalette: toAI(input.colorPalette) ?? generatorInputDefaults.colorPalette,
           artStyle: toAI(input.artStyle) ?? generatorInputDefaults.artStyle,

@@ -126,6 +126,7 @@
     "deleting": "Menghapus...",
     "edit": "Edit",
     "search": "Cari",
+    "noResults": "Tidak ada hasil.",
     "close": "Tutup",
     "confirm": "Konfirmasi",
     "all": "Semua",
@@ -300,7 +301,8 @@
     "loadingIdeas": "Memuat ide...",
     "stylePreset": "Praseleksi Gaya",
     "customStylePlaceholder": "Jelaskan gaya kustom Anda...",
-    "generateCount": "Hasilkan",
+    "generateCount": "Total Prompt",
+    "generateCountHint": "Masukkan 1 hingga 10 prompt.",
     "prompt": "Prompt",
     "prompts": "Prompt",
     "generate": "Hasilkan Prompt",
@@ -366,9 +368,9 @@
       "targetPlatform": {
         "label": "Generator Target",
         "options": {
-          "both": "Kedua Platform",
-          "dalle3": "DALL-E 3 / GPT Image 2",
-          "nano_banana": "Nano Banana Pro / 2"
+          "both": "Model Umum",
+          "dalle3": "DALL-E / GPT IMAGE",
+          "nano_banana": "Nano Banana"
         }
       },
       "includeDiversity": {
@@ -476,13 +478,20 @@
       },
       "customInstructions": {
         "label": "Instruksi Kustom",
-        "placeholder": "mis., Fokus pada pencahayaan alami, hindari latar berantakan, tekankan tekstur..."
+        "placeholder": "mis., Fokus pada pencahayaan alami, hindari latar berantakan, tekankan tekstur...",
+        "characterCount": "{{count}} dari {{max}} karakter"
       },
       "includeHistory": {
+        "sectionTitle": "Konteks Variasi",
         "label": "Sertakan Riwayat untuk Variasi Lebih Baik",
         "description": "Gunakan prompt terbaru dari riwayat Anda untuk menghindari konten yang mirip",
         "tooltip": "Menyertakan sejumlah prompt terbaru dari Kategori yang dipilih sebagai konteks, sehingga generasi baru tidak mengulanginya. Angka lebih tinggi menggunakan lebih banyak token per generasi.",
-        "sliderLabel": "Batas riwayat"
+        "sliderLabel": "Batas riwayat",
+        "levels": {
+          "low": "Konteks ringan: hemat token dengan pemeriksaan variasi yang terfokus.",
+          "moderate": "Konteks lebih luas: memakai lebih banyak token untuk membandingkan riwayat tambahan.",
+          "high": "Konteks berat: penggunaan token tertinggi dan generasi berpotensi lebih lambat."
+        }
       },
       "diverseRepresentation": {
         "disabledTooltip": "Tidak berlaku saat Model Manusia diatur ke Tanpa Orang"

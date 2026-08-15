@@ -713,6 +713,10 @@ or **AI** (Compose Engine determines all preferences). The visible labels are
   specific field delegates that single field to the Compose Engine while the
   remaining fields stay user-pinned. This is the per-field fallback that
   replaces the old "None" value.
+- **AI option visual indicator:** The "AI" option prepended to each per-field
+  combobox is marked with a subtle `Sparkles` icon (`text-brand-primary`,
+  `h-3.5 w-3.5`) that pulses via `motion-safe:animate-pulse`, giving users an
+  at-a-glance signal that the field is delegated to the Compose Engine.
 - **Generic None is no longer visible:** There is no "None" option in the
   combobox. The old behavior of selecting "None" to mean "let the engine pick"
   is now expressed by the "AI" option on each field (in User mode) or by
@@ -772,6 +776,20 @@ or **AI** (Compose Engine determines all preferences). The visible labels are
   )}
 </FieldRow>
 ```
+
+## 6.10 Composer Input Controls
+
+- **Category and language:** Category uses the searchable `Combobox` because it
+  contains a longer taxonomy; Language uses the ordinary Radix `Select` because
+  it has only two choices. Labels must be connected to their triggers by `id`.
+- **Custom Instructions:** Use `maxLength={500}` and show a live character
+  counter. The textarea may resize vertically, but is capped at `max-h-48` with
+  vertical scrolling so it cannot expand the Composer indefinitely.
+- **Variation Context:** The history slider spans 5–50 and pairs its segmented
+  track color with persistent explanatory text: 5–15 uses success/low, 16–35
+  uses warning/moderate, and 36–50 uses danger/high. Tier changes use a subtle
+  120ms opacity/translate transition, respect reduced motion, and announce from
+  a persistent `aria-live="polite"` wrapper.
 
 ## 6.11 Scrollbar
 

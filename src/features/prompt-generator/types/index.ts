@@ -8,7 +8,7 @@ export type TargetMarket = 'global' | 'us' | 'eu' | 'asia' | 'latin_america'
 
 export type ImagePlatform = 'dalle3' | 'nano_banana' | 'both'
 
-export type BatchSize = 1 | 3 | 5 | 10
+export type BatchSize = number
 
 export type NicheCategory =
   | 'technology'

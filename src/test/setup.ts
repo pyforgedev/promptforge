@@ -143,6 +143,7 @@ if (typeof Element !== 'undefined') {
   Element.prototype.hasPointerCapture ??= () => false
   Element.prototype.setPointerCapture ??= () => {}
   Element.prototype.releasePointerCapture ??= () => {}
+  Element.prototype.scrollIntoView ??= () => {}
 }
 
 // 6. ResizeObserver stub (jsdom gap — Radix ScrollArea constructs it on mount)

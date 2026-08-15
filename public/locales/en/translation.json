@@ -126,6 +126,7 @@
     "deleting": "Deleting...",
     "edit": "Edit",
     "search": "Search",
+    "noResults": "No results found.",
     "close": "Close",
     "confirm": "Confirm",
     "all": "All",
@@ -300,7 +301,8 @@
     "loadingIdeas": "Loading ideas...",
     "stylePreset": "Style Preset",
     "customStylePlaceholder": "Describe your custom style...",
-    "generateCount": "Generate",
+    "generateCount": "Total Prompts",
+    "generateCountHint": "Enter 1 to 10 prompts.",
     "prompt": "Prompt",
     "prompts": "Prompts",
     "generate": "Generate Prompt",
@@ -366,9 +368,9 @@
       "targetPlatform": {
         "label": "Target Generator",
         "options": {
-          "both": "Both Platforms",
-          "dalle3": "DALL-E 3 / GPT Image 2",
-          "nano_banana": "Nano Banana Pro / 2"
+          "both": "General Model",
+          "dalle3": "DALL-E / GPT IMAGE",
+          "nano_banana": "Nano Banana"
         }
       },
       "includeDiversity": {
@@ -476,13 +478,20 @@
       },
       "customInstructions": {
         "label": "Custom Instructions",
-        "placeholder": "e.g., Focus on natural lighting, avoid cluttered backgrounds, emphasize textures..."
+        "placeholder": "e.g., Focus on natural lighting, avoid cluttered backgrounds, emphasize textures...",
+        "characterCount": "{{count}} of {{max}} characters"
       },
       "includeHistory": {
+        "sectionTitle": "Variation Context",
         "label": "Include History for Better Variations",
         "description": "Use recent prompts from your history to avoid generating similar content",
         "tooltip": "Includes this many recent prompts from the selected Category as context, so new generations avoid repeating them. Higher numbers use more tokens per generation.",
-        "sliderLabel": "History limit"
+        "sliderLabel": "History limit",
+        "levels": {
+          "low": "Light context: efficient token use with focused variation checks.",
+          "moderate": "Broader context: uses more tokens to compare against additional history.",
+          "high": "Heavy context: highest token use and potentially slower generation."
+        }
       },
       "diverseRepresentation": {
         "disabledTooltip": "Not applicable when Human Model is set to No People"

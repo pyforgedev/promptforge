@@ -10,8 +10,8 @@ describe('generatorInputDefaults — style preferences default to system/AI', ()
     expect(generatorInputDefaults.background).toEqual({ mode: 'system' })
   })
 
-  it('humanModel defaults to no_people', () => {
-    expect(generatorInputDefaults.humanModel).toEqual({ mode: 'user', value: 'no_people' })
+  it('humanModel defaults to AI (mode "system")', () => {
+    expect(generatorInputDefaults.humanModel).toEqual({ mode: 'system' })
   })
 
   it('parsing a valid input without style fields applies system/AI defaults', () => {
@@ -36,12 +36,27 @@ describe('generatorInputDefaults — style preferences default to system/AI', ()
     expect(parsed.colorPalette).toEqual({ mode: 'system' })
     expect(parsed.artStyle).toEqual({ mode: 'system' })
     expect(parsed.background).toEqual({ mode: 'system' })
-    expect(parsed.humanModel).toEqual({ mode: 'user', value: 'no_people' })
+    expect(parsed.humanModel).toEqual({ mode: 'system' })
   })
 })
 
 describe('OPTION_LABELS — "none" now represents AI', () => {
   it('maps "none" to "AI" so the UI can expose an AI option', () => {
     expect(OPTION_LABELS.none).toBe('AI')
+  })
+})
+
+describe('generatorInputSchema — batch size', () => {
+  const validInput = {
+    ...generatorInputDefaults,
+    niche: 'remote worker at home',
+  }
+
+  it.each([1, 2, 6, 10])('accepts an integer batch size of %i', (batchSize) => {
+    expect(generatorInputSchema.parse({ ...validInput, batchSize }).batchSize).toBe(batchSize)
+  })
+
+  it.each([0, 11, 1.5])('rejects an invalid batch size of %s', (batchSize) => {
+    expect(() => generatorInputSchema.parse({ ...validInput, batchSize })).toThrow()
   })
 })

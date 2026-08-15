@@ -1,8 +1,8 @@
 import { memo, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info, Sliders, Palette, History } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Sparkles, RefreshCw, AlertTriangle, AlertCircle, Settings as SettingsIcon, ChevronDown, ChevronUp, Info, Sliders, Palette, History, UserRound } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useShallow } from 'zustand/react/shallow'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
@@ -10,6 +10,7 @@ import { ROUTES } from '@/app/routePaths'
 import { RandomIdeaButton } from './RandomIdeaButton'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -25,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { cn } from '@/lib/utils'
-import type { BatchSize, NicheCategory, TargetMarket, UsageContext, ImagePlatform, MoodOption, ColorPaletteOption, ArtStyleOption, BackgroundOption, HumanModelOption } from '../types'
+import type { NicheCategory, TargetMarket, UsageContext, ImagePlatform, MoodOption, ColorPaletteOption, ArtStyleOption, BackgroundOption, HumanModelOption } from '../types'
 import { OPTION_LABELS, MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
 
 function SectionGroup({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
@@ -58,6 +59,7 @@ const humanModelOptions = makeOptions(HUMAN_MODEL_OPTIONS)
 
 export const GeneratorForm = memo(function GeneratorForm() {
   const { t } = useTranslation()
+  const prefersReducedMotion = useReducedMotion()
 
   const { input, setInput, generatePrompts, isGenerating, error, advancedOptionsOpen, setAdvancedOptionsOpen } = usePromptGeneratorStore(
     useShallow((state) => ({
@@ -75,6 +77,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const [customInstructionsEnabled, setCustomInstructionsEnabled] = useState(() => !!input.customInstructions)
   const [basePromptRefEnabled, setBasePromptRefEnabled] = useState(() => !!input.basePromptReference)
+  const [batchSizeDraft, setBatchSizeDraft] = useState<string | null>(null)
 
   const isDiverseDisabled = input.humanModel?.mode === 'user' && input.humanModel?.value === 'no_people' || false
 
@@ -138,11 +141,6 @@ export const GeneratorForm = memo(function GeneratorForm() {
     [setInput],
   )
 
-  const languageOptions: ComboboxOption[] = [
-    { value: 'en', label: t('generator.form.language.options.en') },
-    { value: 'id', label: t('generator.form.language.options.id') },
-  ]
-
   const aspectRatioOptions: ComboboxOption[] = [
     { value: 'random', label: t('generator.form.aspectRatio.random') },
     { value: '1:1', label: '1:1' },
@@ -155,8 +153,16 @@ export const GeneratorForm = memo(function GeneratorForm() {
   ]
 
   const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
+  const categoryOptions: ComboboxOption[] = nicheCategories.map((category) => ({
+    value: category,
+    label: t(`generator.form.category.options.${category}`),
+  }))
 
-  const aiOption: ComboboxOption = { value: 'ai', label: t('generator.form.styleMode.systemLabel') }
+  const aiOption: ComboboxOption = {
+    value: 'ai',
+    label: t('generator.form.styleMode.systemLabel'),
+    icon: <Sparkles className="h-3.5 w-3.5 text-brand-primary motion-safe:animate-pulse" />,
+  }
   const styleFields: { key: StyleFieldKey; options: ComboboxOption[] }[] = [
     { key: 'mood', options: [aiOption, ...moodOptions] },
     { key: 'colorPalette', options: [aiOption, ...colorPaletteOptions] },
@@ -164,6 +170,18 @@ export const GeneratorForm = memo(function GeneratorForm() {
     { key: 'background', options: [aiOption, ...backgroundOptions] },
     { key: 'humanModel', options: [aiOption, ...humanModelOptions] },
   ]
+
+  const historyTier = input.includeHistoryCount <= 15
+    ? 'low'
+    : input.includeHistoryCount <= 35
+      ? 'moderate'
+      : 'high'
+  const historyTierConfig = {
+    low: { icon: Info, className: 'text-brand-success' },
+    moderate: { icon: AlertTriangle, className: 'text-brand-warning' },
+    high: { icon: AlertCircle, className: 'text-brand-danger' },
+  } as const
+  const HistoryTierIcon = historyTierConfig[historyTier].icon
 
   return (
     <Card className="border-border-subtle card-spotlight">
@@ -180,53 +198,61 @@ export const GeneratorForm = memo(function GeneratorForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="niche-category">{t('generator.form.category.label')}</Label>
-              <Select
-                value={input.category}
-                onValueChange={(v) => setInput({ category: v as NicheCategory })}
-              >
-                <SelectTrigger id="niche-category">
-                  <SelectValue placeholder={t('generator.form.category.placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {nicheCategories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{t(`generator.form.category.options.${cat}`)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="niche-category"
+                options={categoryOptions}
+                value={input.category ?? ''}
+                onValueChange={(value) => setInput({ category: value as NicheCategory })}
+                placeholder={t('generator.form.category.placeholder')}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="batchSize">{t('generator.generateCount')}</Label>
-              <Select
-                value={String(input.batchSize)}
-                onValueChange={(v) => setInput({ batchSize: Number(v) as BatchSize })}
-              >
-                <SelectTrigger id="batchSize">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 3, 5, 10].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {n} {n === 1 ? t('generator.prompt') : t('generator.prompts')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="batchSize"
+                type="number"
+                min={1}
+                max={10}
+                step={1}
+                inputMode="numeric"
+                value={batchSizeDraft ?? String(input.batchSize)}
+                aria-describedby="batchSize-hint"
+                onChange={(event) => {
+                  const draft = event.currentTarget.value
+                  const value = Number(draft)
+                  setBatchSizeDraft(draft)
+                  if (Number.isInteger(value) && value >= 1 && value <= 10) {
+                    setInput({ batchSize: value })
+                  }
+                }}
+                onBlur={() => setBatchSizeDraft(null)}
+              />
+              <p id="batchSize-hint" className="text-caption-ui text-muted">
+                {t('generator.generateCountHint')}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="language">{t('generator.form.language.label')}</Label>
-              <Combobox
-                options={languageOptions}
+              <Select
                 value={input.language}
-                onValueChange={(v) => setInput({ language: v as 'en' | 'id' })}
-                placeholder={t('generator.form.language.label')}
-              />
+                onValueChange={(value) => setInput({ language: value as 'en' | 'id' })}
+              >
+                <SelectTrigger id="language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">{t('generator.form.language.options.en')}</SelectItem>
+                  <SelectItem value="id">{t('generator.form.language.options.id')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="aspect-ratio">{t('generator.form.aspectRatio.label')}</Label>
               <Combobox
+                id="aspect-ratio"
                 options={aspectRatioOptions}
                 value={input.aspectRatio}
                 onValueChange={(v) => setInput({ aspectRatio: v as typeof input.aspectRatio })}
@@ -365,30 +391,43 @@ export const GeneratorForm = memo(function GeneratorForm() {
               type="single"
               value={input.styleMode}
               onValueChange={(val) => val && handleStyleModeChange(val as 'user' | 'system')}
-              className="flex gap-0"
+              className="inline-flex items-center gap-px rounded-lg border border-border-subtle bg-surface-hover p-0.5"
             >
-              <ToggleGroup.Item
-                value="user"
-                className={cn(
-                  "flex h-9 cursor-pointer items-center justify-center rounded-l-md border border-r-0 border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                  "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
-                  "hover:bg-surface-hover/80"
-                )}
-              >
-                {t('generator.form.styleMode.userLabel')}
-              </ToggleGroup.Item>
-              <ToggleGroup.Item
-                value="system"
-                className={cn(
-                  "flex h-9 cursor-pointer items-center justify-center rounded-r-md border border-border-subtle bg-surface-hover px-4 text-sm font-medium text-secondary transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
-                  "data-[state=on]:bg-brand-primary data-[state=on]:text-text-on-brand",
-                  "hover:bg-surface-hover/80"
-                )}
-              >
-                {t('generator.form.styleMode.systemLabel')}
-              </ToggleGroup.Item>
+              {(['user', 'system'] as const).map((mode) => {
+                const active = input.styleMode === mode
+                const Icon = mode === 'user' ? UserRound : Sparkles
+                return (
+                  <ToggleGroup.Item
+                    key={mode}
+                    value={mode}
+                    className={cn(
+                      "relative flex h-9 min-w-24 cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 text-sm font-medium text-secondary transition-colors duration-200 active:scale-[0.98]",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app",
+                      "data-[state=on]:text-text-on-brand"
+                    )}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="style-mode-pill"
+                        transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 600, damping: 45 }}
+                        className="absolute inset-0 rounded-md bg-brand-primary"
+                      />
+                    )}
+                    <motion.span
+                      key={`${mode}-${active ? 'active' : 'idle'}`}
+                      initial={prefersReducedMotion ? false : { opacity: 0, y: 4, scale: 0.92 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="relative z-10 flex items-center gap-1.5"
+                    >
+                      <Icon className={cn('h-4 w-4 transition-transform duration-200', active && 'scale-110')} />
+                      {mode === 'user'
+                        ? t('generator.form.styleMode.userLabel')
+                        : t('generator.form.styleMode.systemLabel')}
+                    </motion.span>
+                  </ToggleGroup.Item>
+                )
+              })}
             </ToggleGroup.Root>
           </div>
 
@@ -400,6 +439,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                   <div key={key} className="flex flex-col gap-1.5">
                     <Label htmlFor={`${key}-value`}>{t(`generator.form.${key}.label`)}</Label>
                     <Combobox
+                      id={`${key}-value`}
                       options={options}
                       value={field?.mode === 'user' ? field.value : 'ai'}
                       onValueChange={(v) => handleStyleValueChange(key, v)}
@@ -427,19 +467,33 @@ export const GeneratorForm = memo(function GeneratorForm() {
             />
           </div>
           {customInstructionsEnabled && (
-            <Textarea
-              id="customInstructions"
-              value={input.customInstructions}
-              onChange={(e) => setInput({ customInstructions: e.target.value })}
-              placeholder={t('generator.form.customInstructions.placeholder')}
-              className="min-h-[80px]"
-            />
+            <div className="flex flex-col gap-1.5">
+              <Textarea
+                id="customInstructions"
+                value={input.customInstructions}
+                maxLength={500}
+                aria-describedby="customInstructions-count"
+                onChange={(e) => setInput({ customInstructions: e.target.value })}
+                placeholder={t('generator.form.customInstructions.placeholder')}
+                className="min-h-[80px] max-h-48 resize-y overflow-y-auto"
+              />
+              <span
+                id="customInstructions-count"
+                aria-label={t('generator.form.customInstructions.characterCount', {
+                  count: input.customInstructions.length,
+                  max: 500,
+                })}
+                className="self-end text-caption-ui tabular-nums text-muted"
+              >
+                {input.customInstructions.length}/500
+              </span>
+            </div>
           )}
         </div>
 
         <SectionDivider />
 
-        <SectionGroup icon={History} title="Variation Context">
+        <SectionGroup icon={History} title={t('generator.form.includeHistory.sectionTitle')}>
           <TooltipProvider delayDuration={300}>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-hover/30 px-4 py-3">
@@ -515,6 +569,24 @@ export const GeneratorForm = memo(function GeneratorForm() {
                   <div className="flex justify-between text-caption-ui text-muted px-0.5">
                     <span>5</span>
                     <span>50</span>
+                  </div>
+                  <div aria-live="polite" aria-atomic="true">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.p
+                        key={historyTier}
+                        initial={prefersReducedMotion ? false : { opacity: 0, y: 3 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -3 }}
+                        transition={{ duration: 0.12, ease: 'easeOut' }}
+                        className={cn(
+                          'flex items-start gap-1.5 text-caption-ui',
+                          historyTierConfig[historyTier].className,
+                        )}
+                      >
+                        <HistoryTierIcon aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        {t(`generator.form.includeHistory.levels.${historyTier}`)}
+                      </motion.p>
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
