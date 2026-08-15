@@ -4,13 +4,8 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from './i18n'
 import { AppProvider } from '@/app/providers'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { clearEncryptionKey } from '@/lib/crypto'
 import App from './App'
 import './index.css'
-
-window.addEventListener('beforeunload', () => {
-  clearEncryptionKey()
-})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

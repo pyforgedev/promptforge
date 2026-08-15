@@ -68,6 +68,13 @@ export function AIProviderSection({
           disabled={provider !== 'custom'}
         />
       </FieldRow>
+      {provider === 'custom' && (
+        <p className="pl-5 text-caption-ui text-secondary">
+          {t('settings.customEndpointHint', {
+            defaultValue: 'Your custom endpoint must be HTTPS and allowed by the site’s Content Security Policy (connect-src).',
+          })}
+        </p>
+      )}
     </SectionGroup>
   )
 }

@@ -6,6 +6,8 @@ import db, {
   deletePrompt,
   getSetting,
   saveSetting,
+  peekRawSetting,
+  deleteSetting,
   saveGeneratedPromptBatch,
   getHistoryItems,
   deleteHistoryItem,
@@ -78,17 +80,29 @@ describe('Dexie Storage Service CRUD', () => {
 
   it('encrypts settings that contain sensitive config keys and decrypts them', async () => {
     const sensitiveVal = { apiKey: 'sensitive-secret-token' }
-    await saveSetting('api_key_config', sensitiveVal)
+    await saveSetting('active_ai_config', sensitiveVal)
 
     // Verify raw db value is encrypted string
-    const rawVal = await db.settings.get('api_key_config')
+    const rawVal = await db.settings.get('active_ai_config')
     expect(rawVal).toBeDefined()
     expect(typeof rawVal?.value).toBe('string')
     expect(rawVal?.value).not.toContain('sensitive-secret-token')
 
     // Read via helper decrypter
-    const decrypted = await getSetting('api_key_config')
+    const decrypted = await getSetting('active_ai_config')
     expect(decrypted).toEqual(sensitiveVal)
+  })
+
+  it('encrypts preset lists under sensitive keys', async () => {
+    const presets = [{ id: 'p1', name: 'My OpenAI', provider: 'openai', apiKey: 'tok-1', model: 'gpt-4', endpoint: '', createdAt: Date.now() }]
+    await saveSetting('ai_config_presets', presets)
+
+    const rawVal = await db.settings.get('ai_config_presets')
+    expect(typeof rawVal?.value).toBe('string')
+    expect(rawVal?.value).not.toContain('tok-1')
+
+    const decrypted = await getSetting('ai_config_presets')
+    expect(decrypted).toEqual(presets)
   })
 
   it('does not encrypt non-sensitive settings keys', async () => {
@@ -102,40 +116,56 @@ describe('Dexie Storage Service CRUD', () => {
   })
 
   it('falls back to legacy plaintext JSON under sensitive keys without deleting it', async () => {
-    await db.settings.put({ key: 'legacy_config', value: '{"a":1}' })
+    await db.settings.put({ key: 'active_ai_config', value: '{"a":1}' })
 
-    const readVal = await getSetting('legacy_config')
+    const readVal = await getSetting('active_ai_config')
     expect(readVal).toEqual({ a: 1 })
 
-    const record = await db.settings.get('legacy_config')
+    const record = await db.settings.get('active_ai_config')
     expect(record).toBeDefined()
   })
 
   it('returns legacy non-string values under sensitive keys as-is', async () => {
-    await db.settings.put({ key: 'legacy_config', value: { raw: 'data' } })
+    await db.settings.put({ key: 'active_ai_config', value: { raw: 'data' } })
 
-    const readVal = await getSetting('legacy_config')
+    const readVal = await getSetting('active_ai_config')
     expect(readVal).toEqual({ raw: 'data' })
 
-    const record = await db.settings.get('legacy_config')
+    const record = await db.settings.get('active_ai_config')
     expect(record).toBeDefined()
   })
 
-  it('returns corrupted encrypted settings as-is without deleting them', async () => {
-    await db.settings.put({ key: 'corrupt_config', value: 'not-a-valid-ciphertext!!' })
+  it('returns undefined for orphan ciphertext without leaking it or deleting it', async () => {
+    await db.settings.put({ key: 'active_ai_config', value: 'not-a-valid-ciphertext!!' })
 
-    const readVal = await getSetting('corrupt_config')
-    expect(readVal).toBe('not-a-valid-ciphertext!!')
+    const readVal = await getSetting('active_ai_config')
+    expect(readVal).toBeUndefined()
 
-    const record = await db.settings.get('corrupt_config')
+    const record = await db.settings.get('active_ai_config')
     expect(record).toBeDefined()
   })
 
   it('rejects non-serializable values for sensitive settings keys', async () => {
-    await expect(saveSetting('api_key_config', undefined)).rejects.toThrow(TypeError)
+    await expect(saveSetting('active_ai_config', undefined)).rejects.toThrow(TypeError)
 
-    const record = await db.settings.get('api_key_config')
+    const record = await db.settings.get('active_ai_config')
     expect(record).toBeUndefined()
+  })
+
+  it('deletes settings via deleteSetting and peeks raw values via peekRawSetting', async () => {
+    await saveSetting('theme', 'dark')
+
+    const raw = await peekRawSetting('theme')
+    expect(raw).toBe('dark')
+
+    await deleteSetting('theme')
+    expect(await db.settings.get('theme')).toBeUndefined()
+
+    // peekRawSetting returns raw ciphertext for sensitive keys — never parsed
+    await saveSetting('active_ai_config', { apiKey: 'k' })
+    const rawSensitive = await peekRawSetting('active_ai_config')
+    expect(typeof rawSensitive).toBe('string')
+    expect(rawSensitive).not.toContain('"k"')
   })
 
   it('saves batch generated prompts and retrieves history items', async () => {

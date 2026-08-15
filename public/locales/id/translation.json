@@ -181,7 +181,17 @@
     "masterPromptWarning": "Mengedit ini memengaruhi setiap generasi ke depan. Gunakan Reset jika hasil memburuk.",
     "masterPromptPlaceholder": "Master prompt bawaan akan muncul di sini...",
     "masterPromptSaved": "Master prompt disimpan",
-    "masterPromptReset": "Master prompt berhasil direset ke bawaan"
+    "masterPromptReset": "Master prompt berhasil direset ke bawaan",
+    "configRecoverBanner": "Konfigurasi API tersimpan tidak dapat dipulihkan. Konfigurasi tersebut dienkripsi dengan kunci sesi sebelumnya yang sudah tidak ada. Masukkan ulang untuk melanjutkan.",
+    "clearAndReenter": "Bersihkan & masukkan ulang",
+    "sessionOnlyKey": "Jangan ingat kunci API antar sesi",
+    "sessionOnlyKeyDescription": "Jika diaktifkan, kunci API Anda tidak pernah disimpan ke disk — Anda akan memasukkannya ulang setiap kunjungan. Endpoint dan model tetap disimpan.",
+    "removeStoredKeys": "Hapus kunci API yang sudah tersimpan",
+    "apiKeysForgotten": "Kunci API tersimpan dihapus",
+    "apiKeysForgetFailed": "Gagal menghapus kunci API tersimpan",
+    "orphanCleared": "Konfigurasi yang tidak dapat dipulihkan dibersihkan",
+    "orphanClearFailed": "Gagal membersihkan konfigurasi yang tidak dapat dipulihkan",
+    "customEndpointHint": "Endpoint kustom Anda harus menggunakan HTTPS (HTTP polos diblokir sebagai mixed content). Permintaan ke endpoint HTTPS mana pun diizinkan."
   },
   "history": {
     "pageTitle": "Riwayat Prompt",

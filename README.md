@@ -68,7 +68,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 - **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + React Bits (animated components) + Framer Motion 12
 - **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
 - **State Management:** Zustand 5
-- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks`
+- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — current schema is v9, with a dedicated `cryptoKeys` table that persists the non-extractable AES-GCM master key and a `settings` table holding sensitive config (e.g. `active_ai_config`, `ai_config_presets`) encrypted at rest.
 - **Form & Validation:** React Hook Form + Zod 4
 - **Routing:** React Router DOM v7
 - **Internationalization:** i18next 26 + `react-i18next` + `i18next-browser-languagedetector`
@@ -148,6 +148,10 @@ PromptForge implements a strict design system detailed in [`DESIGN.md`](./DESIGN
 
 > [!TIP]
 > The testing setup utilizes Vitest 4, `@testing-library/react`, `@testing-library/jest-dom`, and `fake-indexeddb` to execute tests under a simulated IndexedDB environment.
+
+## Security
+
+PromptForge is a **client-side only** application — no data leaves your browser except explicit AI provider requests you initiate. Sensitive settings (including your configured API key) are encrypted at rest with AES-GCM 256 in IndexedDB; the master key is a non-extractable `CryptoKey` persisted in the same database. This is *encrypted-at-rest, not zero-leak*. See [`SECURITY.md`](./SECURITY.md) for the full threat model, and the *"Don't remember API key between sessions"* setting for a true zero-leak mode in which the API key is kept only in memory.
 
 ## Contributing
 

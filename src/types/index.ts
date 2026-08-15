@@ -3,6 +3,7 @@ export type Theme = 'light' | 'dark' | 'system'
 export interface AppPreferences {
   theme: Theme
   language: string
+  rememberApiKey: boolean
 }
 
 export interface Prompt {

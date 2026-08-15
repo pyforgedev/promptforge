@@ -8,6 +8,12 @@ import db from '@/services/storage/indexeddb'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
 import { useHistoryStore } from '@/store/useHistoryStore'
+import {
+  setCryptoKeyStore,
+  resetEncryptionCache,
+  type CryptoKeyStore,
+} from '@/lib/crypto'
+import { setPreferencesCache } from '@/lib/preferencesState'
 
 import enTranslation from '../../public/locales/en/translation.json'
 import idTranslation from '../../public/locales/id/translation.json'
@@ -88,6 +94,35 @@ Object.defineProperty(globalThis, 'sessionStorage', {
   writable: true,
 })
 
+// 3b. Crypto: inject an in-memory CryptoKeyStore for tests.
+// fake-indexeddb (Node) cannot structured-clone a CryptoKey
+// (DataCloneError), so tests must never touch the IndexedDB-backed default
+// store — production browser behavior is verified via QA. If the test
+// runtime ever gains CryptoKey clone support, the real backend is used.
+let testMasterKey: CryptoKey | null = null
+const testCryptoKeyStore: CryptoKeyStore = {
+  load: async () => testMasterKey ?? undefined,
+  save: async (key) => {
+    testMasterKey = key
+  },
+  clear: async () => {
+    testMasterKey = null
+  },
+}
+
+let canStructuredCloneCryptoKey = false
+try {
+  const probe = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 128 }, false, ['encrypt', 'decrypt'])
+  structuredClone(probe)
+  canStructuredCloneCryptoKey = true
+} catch {
+  // runtime lacks CryptoKey structured-clone support — keep injection below
+}
+
+if (!canStructuredCloneCryptoKey) {
+  setCryptoKeyStore(testCryptoKeyStore)
+}
+
 // 4. Mock MatchMedia (needed for Radix UI and layout checks)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -156,6 +191,11 @@ beforeEach(async () => {
   memoryStorage.clear()
   memorySessionStorage.clear()
 
+  // Drop the in-memory key cache so each test starts from the store
+  resetEncryptionCache()
+  await testCryptoKeyStore.clear()
+  setPreferencesCache(null)
+
   // Clear indexeddb tables
   await Promise.all(
     db.tables.map(table => table.clear())
@@ -168,6 +208,8 @@ beforeEach(async () => {
     isReady: true,
     isLoading: false,
     error: null,
+    recoveryNeeded: false,
+    recoveryKeys: [],
   })
   
   usePromptGeneratorStore.setState({

@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { AppPreferences, Theme } from '@/types'
 import { getSetting, saveSetting } from '@/services/storage/indexeddb'
+import { APP_PREFERENCES_KEY } from '@/lib/storageKeys'
+import { setPreferencesCache } from '@/lib/preferencesState'
 import { AppContext } from './AppContext'
 
 const defaultPreferences: AppPreferences = {
   theme: 'dark',
   language: 'en',
+  rememberApiKey: true,
 }
-
-const PREFERENCES_KEY = 'app-preferences'
 
 function disableTransitions(root: HTMLElement) {
   root.classList.add('theme-switching')
@@ -41,7 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const load = async () => {
-      const stored = await getSetting(PREFERENCES_KEY)
+      const stored = await getSetting(APP_PREFERENCES_KEY)
       if (stored) {
         setPreferences({ ...defaultPreferences, ...(stored as AppPreferences) })
       }
@@ -50,9 +51,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void load()
   }, [])
 
+  // Keep the live cache in sync with React state (single writer for the store)
+  useEffect(() => {
+    setPreferencesCache(preferences)
+  }, [preferences])
+
   useEffect(() => {
     if (isReady) {
-      void saveSetting(PREFERENCES_KEY, preferences)
+      void saveSetting(APP_PREFERENCES_KEY, preferences)
       applyTheme(preferences.theme)
     }
   }, [preferences, isReady])
@@ -66,8 +72,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPreferences((prev) => ({ ...prev, language }))
   }, [])
 
+  const setRememberApiKey = useCallback((remember: boolean) => {
+    setPreferences((prev) => ({ ...prev, rememberApiKey: remember }))
+  }, [])
+
   return (
-    <AppContext.Provider value={{ preferences, isReady, setTheme, setLanguage }}>
+    <AppContext.Provider value={{ preferences, isReady, setTheme, setLanguage, setRememberApiKey }}>
       {children}
     </AppContext.Provider>
   )

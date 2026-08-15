@@ -6,6 +6,7 @@ export interface AppContextType {
   isReady: boolean
   setTheme: (theme: Theme) => void
   setLanguage: (language: string) => void
+  setRememberApiKey: (remember: boolean) => void
 }
 
 export const AppContext = createContext<AppContextType | null>(null)

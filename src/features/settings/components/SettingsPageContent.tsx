@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Cpu, RefreshCw, CheckCircle2, AlertCircle, Save, Play,
+  Cpu, RefreshCw, CheckCircle2, AlertCircle, Save, Play, TriangleAlert,
 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
+import { useAppContext } from '@/hooks/useAppContext'
 import { testConnection } from '@/services/ai/aiService'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import {
   Card,
   CardContent,
@@ -31,7 +33,32 @@ export function SettingsPageContent() {
     activeConfig,
     isReady,
     setActiveConfig,
+    recoveryNeeded,
+    recoveryKeys,
+    clearOrphanedConfigs,
+    forgetStoredApiKeys,
   } = useAIConfigStore()
+
+  const { preferences, setRememberApiKey } = useAppContext()
+  const rememberApiKey = preferences.rememberApiKey !== false
+
+  const handleForgetApiKeys = async () => {
+    try {
+      await forgetStoredApiKeys()
+      showToast('success', t('settings.apiKeysForgotten', { defaultValue: 'Stored API keys removed' }))
+    } catch {
+      showToast('error', t('settings.apiKeysForgetFailed', { defaultValue: 'Failed to remove stored API keys' }))
+    }
+  }
+
+  const handleClearOrphaned = async () => {
+    try {
+      await clearOrphanedConfigs(recoveryKeys)
+      showToast('success', t('settings.orphanCleared', { defaultValue: 'Unrecoverable configuration cleared' }))
+    } catch {
+      showToast('error', t('settings.orphanClearFailed', { defaultValue: 'Failed to clear unrecoverable configuration' }))
+    }
+  }
 
   const [provider, setProvider] = useState<AIProvider>(activeConfig?.provider || 'openai')
   const [apiKey, setApiKey] = useState(activeConfig?.apiKey || '')
@@ -136,6 +163,25 @@ export function SettingsPageContent() {
         </div>
       ) : (
         <>
+          {recoveryNeeded && (
+            <div
+              role="alert"
+              className="flex flex-col gap-3 rounded-xl border border-brand-danger/30 bg-brand-danger/10 p-4"
+            >
+              <div className="flex items-center gap-2">
+                <TriangleAlert className="h-4 w-4 shrink-0 text-brand-danger" />
+                <p className="text-sm text-primary">
+                  {t('settings.configRecoverBanner', {
+                    defaultValue: 'Your saved API configuration could not be restored. It was encrypted with a previous session-only key that no longer exists. Re-enter it to continue.',
+                  })}
+                </p>
+              </div>
+              <Button variant="destructive" onClick={handleClearOrphaned} className="w-fit">
+                {t('settings.clearAndReenter', { defaultValue: 'Clear & re-enter' })}
+              </Button>
+            </div>
+          )}
+
           <Card className="card-spotlight">
             <CardHeader className="flex flex-row items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary/10">
@@ -192,6 +238,36 @@ export function SettingsPageContent() {
                   )}
                   {t('settings.testConnection', { defaultValue: 'Test Connection' })}
                 </Button>
+              </div>
+
+              <SectionDivider />
+
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-label-ui text-primary">
+                    {t('settings.sessionOnlyKey', { defaultValue: "Don't remember API key between sessions" })}
+                  </span>
+                  <span className="text-caption-ui text-secondary">
+                    {t('settings.sessionOnlyKeyDescription', { defaultValue: 'When enabled, your API key is never saved to disk — you will re-enter it on every visit. Endpoint and model are still remembered.' })}
+                  </span>
+                  {!rememberApiKey && (
+                    <button
+                      type="button"
+                      onClick={handleForgetApiKeys}
+                      className="mt-1 w-fit text-caption-ui font-medium text-brand-primary underline-offset-4 hover:underline"
+                    >
+                      {t('settings.removeStoredKeys', { defaultValue: 'Remove API keys already stored' })}
+                    </button>
+                  )}
+                </div>
+                <Switch
+                  checked={!rememberApiKey}
+                  onCheckedChange={(checked) => {
+                    setRememberApiKey(!checked)
+                    if (checked) void handleForgetApiKeys()
+                  }}
+                  aria-label={t('settings.sessionOnlyKey', { defaultValue: "Don't remember API key between sessions" })}
+                />
               </div>
 
               <SectionDivider />

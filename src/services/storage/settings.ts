@@ -1,24 +1,28 @@
 import db, { ensureDbReady } from './db'
 import { encrypt, decrypt } from '@/lib/crypto'
+import { isSensitiveSettingKey } from '@/lib/storageKeys'
 
 export async function getSetting(key: string): Promise<unknown> {
   await ensureDbReady()
   const record = await db.settings.get(key)
   if (!record) return undefined
 
-  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+  if (isSensitiveSettingKey(key)) {
     if (typeof record.value === 'string') {
       try {
         const decrypted = await decrypt(record.value)
         return JSON.parse(decrypted)
       } catch {
-        if (import.meta.env.DEV) {
-          console.warn(`[Storage] Failed to decrypt setting "${key}", falling back to raw value`)
-        }
         try {
           return JSON.parse(record.value)
         } catch {
-          return record.value
+          // Ciphertext that cannot be decrypted (orphan): return undefined
+          // instead of leaking the raw base64 blob to callers. The record is
+          // left in place so the store can flag recoveryNeeded.
+          if (import.meta.env.DEV) {
+            console.warn(`[Storage] Setting "${key}" cannot be decrypted (orphan data)`)
+          }
+          return undefined
         }
       }
     }
@@ -28,10 +32,20 @@ export async function getSetting(key: string): Promise<unknown> {
   return record.value
 }
 
+/**
+ * Read the raw stored value without decryption/parsing. Used to detect
+ * orphan records (record exists but getSetting returned undefined).
+ */
+export async function peekRawSetting(key: string): Promise<unknown> {
+  await ensureDbReady()
+  const record = await db.settings.get(key)
+  return record?.value
+}
+
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   await ensureDbReady()
   let valToSave = value
-  if (key.includes('config') || key.includes('preset') || key.includes('api_key')) {
+  if (isSensitiveSettingKey(key)) {
     let json: string
     try {
       const serialized = JSON.stringify(value)
@@ -48,4 +62,9 @@ export async function saveSetting(key: string, value: unknown): Promise<void> {
     valToSave = await encrypt(json)
   }
   await db.settings.put({ key, value: valToSave })
+}
+
+export async function deleteSetting(key: string): Promise<void> {
+  await ensureDbReady()
+  await db.settings.delete(key)
 }

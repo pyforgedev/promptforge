@@ -181,7 +181,17 @@
     "masterPromptWarning": "Editing this affects every generation going forward. Use Reset if results get worse.",
     "masterPromptPlaceholder": "The default master prompt will appear here...",
     "masterPromptSaved": "Master prompt saved",
-    "masterPromptReset": "Master prompt reset to default"
+    "masterPromptReset": "Master prompt reset to default",
+    "configRecoverBanner": "Your saved API configuration could not be restored. It was encrypted with a previous session-only key that no longer exists. Re-enter it to continue.",
+    "clearAndReenter": "Clear & re-enter",
+    "sessionOnlyKey": "Don't remember API key between sessions",
+    "sessionOnlyKeyDescription": "When enabled, your API key is never saved to disk — you will re-enter it on every visit. Endpoint and model are still remembered.",
+    "removeStoredKeys": "Remove API keys already stored",
+    "apiKeysForgotten": "Stored API keys removed",
+    "apiKeysForgetFailed": "Failed to remove stored API keys",
+    "orphanCleared": "Unrecoverable configuration cleared",
+    "orphanClearFailed": "Failed to clear unrecoverable configuration",
+    "customEndpointHint": "Your custom endpoint must use HTTPS (plain HTTP is blocked as mixed content). Requests to any HTTPS endpoint are allowed."
   },
   "history": {
     "pageTitle": "Prompt History",

@@ -17,6 +17,7 @@ interface RenderWithProvidersOptions extends Omit<RenderOptions, 'queries'> {
 const defaultPreferences: AppPreferences = {
   theme: 'system',
   language: 'en',
+  rememberApiKey: true,
 }
 
 export function renderWithProviders(
@@ -37,6 +38,7 @@ export function renderWithProviders(
     setLanguage: (lang: string) => {
       void i18n.changeLanguage(lang)
     },
+    setRememberApiKey: () => {},
   }
 
   function Wrapper({ children }: { children: ReactNode }) {

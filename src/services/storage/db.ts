@@ -16,6 +16,7 @@ class PromptForgeDB extends Dexie {
   prompt_batches!: EntityTable<PromptBatchRecord, 'batchId'>
   folders!: EntityTable<Folder, 'id'>
   settings!: EntityTable<{ key: string; value: unknown }, 'key'>
+  cryptoKeys!: EntityTable<{ key: string; value: CryptoKey }, 'key'>
   generatorState!: EntityTable<{ key: string; value: unknown }, 'key'>
   idea_cache!: EntityTable<IdeaCacheEntry, 'cacheKey'>
   formatter_batch!: EntityTable<FormatterBatch, 'id'>
@@ -156,6 +157,21 @@ class PromptForgeDB extends Dexie {
       prompts: 'id, name, category, createdAt',
       folders: 'id, name, parentId, createdAt',
       settings: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+      formatter_batch: '++id, createdAt',
+      formatter_items: '++id, order, status',
+    })
+
+    // Version 9: dedicated table for the persistent (non-extractable) master
+    // encryption key. New table only — no upgrade logic needed, safe for v8 users.
+    this.version(9).stores({
+      prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy, category, folderId',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+      prompts: 'id, name, category, createdAt',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      cryptoKeys: 'key',
       generatorState: 'key',
       idea_cache: 'cacheKey, lastUpdated',
       formatter_batch: '++id, createdAt',
