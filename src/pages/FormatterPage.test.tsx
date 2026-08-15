@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderWithProviders, screen, waitFor, userEvent } from '@/test/utils'
+import { renderWithProviders, screen, waitFor, userEvent, fireEvent } from '@/test/utils'
 import FormatterPage from '@/pages/FormatterPage'
 import { Toaster } from '@/components/ui/sonner'
 import {
@@ -429,5 +429,59 @@ describe('FormatterPage queue filters and Next navigation', () => {
       'href',
       'https://github.com/pyforgedev/promptforge/blob/main/docs/supported-format-paste.md'
     )
+  })
+})
+
+describe('FormatterPage section format paste', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+  })
+
+  it('creates a batch with prompts and aspect ratios from section format', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    const textarea = await screen.findByPlaceholderText('Paste one prompt per line...')
+
+    const sectionText = [
+      '--- Prompt 1 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'Prompt:',
+      'A photorealistic raccoon body.',
+      '',
+      '--- Prompt 2 ---',
+      '',
+      'Prompt:',
+      'A squirrel prompt body.',
+    ].join('\n')
+
+    fireEvent.change(textarea, { target: { value: sectionText } })
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+
+    await waitFor(async () => {
+      const batch = await getActiveBatch()
+      expect(batch).not.toBeNull()
+      expect(batch!.items).toHaveLength(2)
+      expect(batch!.items[0].promptText).toBe('A photorealistic raccoon body.')
+      expect(batch!.items[0].detectedAspectRatio).toBe('16:9')
+      expect(batch!.items[1].promptText).toBe('A squirrel prompt body.')
+      expect(batch!.items[1].detectedAspectRatio).toBeNull()
+    })
+  })
+
+  it('falls back to plain line parsing when a prompt header has no closing dashes', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    const textarea = await screen.findByPlaceholderText('Paste one prompt per line...')
+
+    fireEvent.change(textarea, { target: { value: '--- prompt 1\nplain line two' } })
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+
+    await waitFor(async () => {
+      const batch = await getActiveBatch()
+      expect(batch).not.toBeNull()
+      expect(batch!.items.map((item) => item.promptText)).toEqual(['--- prompt 1', 'plain line two'])
+    })
   })
 })

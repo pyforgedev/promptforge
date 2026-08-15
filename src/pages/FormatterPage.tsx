@@ -21,6 +21,8 @@ import {
   clearQueue,
   exportBatch,
   parseRawText,
+  parsePromptSections,
+  SECTION_HEADER_REGEX,
   parseCsvPreview,
   parseCsvWithColumn,
   detectDuplicates,
@@ -69,7 +71,10 @@ export default function FormatterPage() {
   const [showReplace, setShowReplace] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [showClearQueue, setShowClearQueue] = useState(false)
-  const [pendingPrompts, setPendingPrompts] = useState<string[] | null>(null)
+  const [pendingPrompts, setPendingPrompts] = useState<{
+    prompts: string[]
+    aspectRatios: (string | null)[] | null
+  } | null>(null)
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null)
   const [copySuccess, setCopySuccess] = useState(false)
   const optimisticActionRef = useRef(0)
@@ -155,28 +160,45 @@ export default function FormatterPage() {
     return { cleanCount, skippedBlanks, duplicateCount }
   }, [batch, items])
 
-  const getPromptsFromInput = (): string[] => {
-    if (inputMode === 'paste') {
-      return parseRawText(pasteText)
+  const extractFromText = (text: string): { prompts: string[]; aspectRatios: (string | null)[] | null } => {
+    if (SECTION_HEADER_REGEX.test(text)) {
+      const sections = parsePromptSections(text)
+      if (sections.length > 0) {
+        return {
+          prompts: sections.map((section) => section.prompt),
+          aspectRatios: sections.map((section) => section.aspectRatio),
+        }
+      }
     }
 
-    if (!uploadedFileContent) return []
+    return { prompts: parseRawText(text), aspectRatios: null }
+  }
+
+  const getPromptsFromInput = (): { prompts: string[]; aspectRatios: (string | null)[] | null } => {
+    if (inputMode === 'paste') {
+      return extractFromText(pasteText)
+    }
+
+    if (!uploadedFileContent) return { prompts: [], aspectRatios: null }
 
     if (csvPreview !== null) {
       const column = selectedCsvColumn ?? csvPreview.detectedColumn ?? null
-      if (!column) return []
-      return parseCsvWithColumn(uploadedFileContent, column)
+      if (!column) return { prompts: [], aspectRatios: null }
+      return { prompts: parseCsvWithColumn(uploadedFileContent, column), aspectRatios: null }
     }
 
-    return parseRawText(uploadedFileContent)
+    return extractFromText(uploadedFileContent)
   }
 
-  const executeCreateBatch = async (prompts: string[]) => {
+  const executeCreateBatch = async (
+    prompts: string[],
+    aspectRatios?: (string | null)[] | null,
+  ) => {
     const sourceType = inputMode === 'paste' ? 'paste' : 'file'
     const fileName = inputMode === 'upload' ? uploadedFileName ?? undefined : undefined
 
     try {
-      await createFormatterBatch(prompts, sourceType, fileName)
+      await createFormatterBatch(prompts, sourceType, fileName, aspectRatios ?? undefined)
       showToast('success', t('formatter.batchCreated'))
     } catch (error) {
       showToast('error', t('formatter.batchError'), String(error))
@@ -201,20 +223,20 @@ export default function FormatterPage() {
   }
 
   const handleProcess = () => {
-    const prompts = getPromptsFromInput()
+    const { prompts, aspectRatios } = getPromptsFromInput()
     if (prompts.length === 0) return
 
     if (hasBatch && copiedCount > 0) {
-      setPendingPrompts(prompts)
+      setPendingPrompts({ prompts, aspectRatios })
       setShowReplace(true)
     } else {
-      executeCreateBatch(prompts)
+      executeCreateBatch(prompts, aspectRatios)
     }
   }
 
   const handleConfirmReplace = () => {
     if (pendingPrompts) {
-      executeCreateBatch(pendingPrompts)
+      executeCreateBatch(pendingPrompts.prompts, pendingPrompts.aspectRatios)
     }
     setShowReplace(false)
     setPendingPrompts(null)

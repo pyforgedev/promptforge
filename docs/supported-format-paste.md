@@ -68,23 +68,57 @@ Hasil:
 
 ---
 
+## 4. Section Format (`--- Prompt N ---`)
+
+Jika teks mengandung satu atau lebih delimiter `--- Prompt N ---`, setiap section diekstrak sebagai satu prompt. `Aspect Ratio:` pada section ikut terdeteksi (muncul di filter/sortir aspect ratio queue), label `Prompt:` bisa diisi di baris yang sama atau di baris berikutnya (body multi-baris).
+
+Contoh input:
+
+```
+--- Prompt 1 ---
+
+Aspect Ratio: 16:9
+
+Prompt:
+A single photorealistic raccoon isolated inside a professional seamless
+chroma key green studio, entire body visible from ears to paws and full
+ringed tail with generous green space around the silhouette.
+
+--- Prompt 2 ---
+
+Aspect Ratio: 9:16
+
+Prompt: A single ultra realistic red squirrel isolated against a seamless green studio.
+```
+
+Hasil:
+
+- `A single photorealistic raccoon ...` — aspect ratio `16:9`
+- `A single ultra realistic red squirrel ...` — aspect ratio `9:16`
+
+> Catatan: Section tanpa label `Prompt:` (atau body kosong) diabaikan. Format ini juga didukung pada upload file `.txt`.
+
+---
+
 ## Upload File
 
 Selain paste, input juga bisa dari upload file:
 
-- **`.txt`** — diproses dengan `parseRawText` (sama seperti mode paste, mendukung kedua format di atas)
+- **`.txt`** — diproses dengan `parseRawText` (sama seperti mode paste, mendukung keempat format di atas, termasuk Section Format dengan deteksi aspect ratio)
 - **`.csv`** — pengguna memilih kolom yang berisi prompt, lalu nilai kolom diproses lewat `parseRawText` (jadi format `Prompt:` juga bisa digunakan di dalam sel)
 
 ---
 
 ## Detail Teknis
 
-Parser: `parseRawText()` di `src/services/formatter/formatterService.ts`
+Parser: `parseRawText()` dan `parsePromptSections()` di `src/services/formatter/formatterService.ts`
 
-Alur:
+Alur (mode paste & upload `.txt`):
 
-1. Normalisasi CRLF → LF
-2. Split per baris, trim whitespace
-3. Filter baris kosong
-4. Jika ada baris cocok `/^prompt\s*:/i` → ekstrak nilai setelah label
-5. Jika tidak → gunakan semua baris apa adanya
+1. Jika ada baris yang cocok `SECTION_HEADER_REGEX` (`--- Prompt N ---`) dan section menghasilkan minimal satu prompt → gunakan `parsePromptSections` (setiap section = satu prompt, `Aspect Ratio:` menjadi metadata aspect ratio)
+2. Jika tidak → `parseRawText`:
+   1. Normalisasi CRLF → LF
+   2. Split per baris, trim whitespace
+   3. Filter baris kosong
+   4. Jika ada baris cocok `/^prompt\s*:/i` → ekstrak nilai setelah label
+   5. Jika tidak → gunakan semua baris apa adanya

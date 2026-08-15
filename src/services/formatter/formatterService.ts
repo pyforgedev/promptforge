@@ -129,6 +129,67 @@ export function applyQueueView(items: FormatterItem[], options: QueueViewOptions
   return visible
 }
 
+export interface ParsedPromptSection {
+  prompt: string
+  aspectRatio: string | null
+}
+
+export const SECTION_HEADER_REGEX = /^---\s*prompt(?:\s+\d+)?\s*---$/im
+
+export function parsePromptSections(input: string): ParsedPromptSection[] {
+  const lines = input.replace(/\r\n/g, '\n').split('\n')
+  const sections: ParsedPromptSection[] = []
+  let aspectRatio: string | null = null
+  let body: string[] = []
+  let inBody = false
+
+  const closeSection = () => {
+    const prompt = body.join(' ').trim()
+    if (prompt.length > 0) {
+      sections.push({ prompt, aspectRatio })
+    }
+    aspectRatio = null
+    body = []
+    inBody = false
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+
+    if (SECTION_HEADER_REGEX.test(line)) {
+      closeSection()
+      continue
+    }
+
+    if (aspectRatio === null) {
+      const arMatch = line.match(/^aspect\s+ratio\s*:\s*(\d{1,3}:\d{1,3})$/i)
+      if (arMatch) {
+        aspectRatio = arMatch[1]
+        continue
+      }
+    }
+
+    if (!inBody) {
+      if (/^prompt\s*:/i.test(line)) {
+        inBody = true
+        const inlineValue = line.replace(/^prompt\s*:\s*/i, '').trim()
+        if (inlineValue) {
+          body.push(inlineValue)
+        }
+      }
+      continue
+    }
+
+    if (line.length > 0) {
+      body.push(line)
+    }
+  }
+
+  closeSection()
+
+  return sections
+}
+
 export function parseRawText(input: string): string[] {
   const normalized = input
     .replace(/\r\n/g, '\n')
@@ -223,6 +284,7 @@ export async function createFormatterBatch(
   prompts: string[],
   sourceType: FormatterSourceType,
   originalFileName?: string,
+  aspectRatios?: (string | null)[],
 ): Promise<void> {
   const sanityLevel = checkSanityLimit(prompts.length)
 
@@ -243,7 +305,7 @@ export async function createFormatterBatch(
     promptText,
     status: 'pending',
     copiedAt: null,
-    detectedAspectRatio: detectAspectRatio(promptText),
+    detectedAspectRatio: aspectRatios?.[order] ?? detectAspectRatio(promptText),
   }))
 
   await db.transaction('rw', db.formatter_batch, db.formatter_items, async () => {

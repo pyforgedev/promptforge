@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import db from '@/services/storage/indexeddb'
 import {
   parseRawText,
+  parsePromptSections,
   parseCsvPreview,
   parseCsvWithColumn,
   detectDuplicates,
@@ -110,6 +111,141 @@ describe('parseRawText', () => {
     const input = '- **Judul:** something\n- **Type:** image'
     const result = parseRawText(input)
     expect(result).toEqual(['- **Judul:** something', '- **Type:** image'])
+  })
+})
+
+describe('parsePromptSections', () => {
+  const raccoonPrompt =
+    'A single photorealistic raccoon isolated inside a professional seamless chroma key green studio. ' +
+    'The raccoon begins standing naturally on all four legs, subtly breathes, looks toward screen-left.'
+
+  it('extracts prompt and aspect ratio from multiple sections', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'Prompt:',
+      raccoonPrompt,
+      '',
+      '--- Prompt 2 ---',
+      '',
+      'Aspect Ratio: 9:16',
+      '',
+      'Prompt: A single red squirrel.',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([
+      { prompt: raccoonPrompt, aspectRatio: '16:9' },
+      { prompt: 'A single red squirrel.', aspectRatio: '9:16' },
+    ])
+  })
+
+  it('extracts multi-line prompt body until next section header', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      'Aspect Ratio: 1:1',
+      'Prompt:',
+      'First line of the prompt.',
+      'Second line continues the prompt.',
+      '--- Prompt 2 ---',
+      'Prompt:',
+      'Short body.',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([
+      { prompt: 'First line of the prompt. Second line continues the prompt.', aspectRatio: '1:1' },
+      { prompt: 'Short body.', aspectRatio: null },
+    ])
+  })
+
+  it('returns aspect ratio null when section has no Aspect Ratio label', () => {
+    const input = ['--- Prompt 1 ---', '', 'Prompt:', 'Just a prompt body.'].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([{ prompt: 'Just a prompt body.', aspectRatio: null }])
+  })
+
+  it('ignores sections without a Prompt: label or empty body', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'Prompt:',
+      'Valid prompt body.',
+      '',
+      '--- Prompt 2 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'Prompt:',
+      '',
+      '--- Prompt 3 ---',
+      '',
+      'Prompt: Another valid one.',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([
+      { prompt: 'Valid prompt body.', aspectRatio: '16:9' },
+      { prompt: 'Another valid one.', aspectRatio: null },
+    ])
+  })
+
+  it('normalizes CRLF line endings', () => {
+    const input = '--- Prompt 1 ---\r\n\r\nAspect Ratio: 4:3\r\n\r\nPrompt:\r\nBody text here.\r\n'
+    const result = parsePromptSections(input)
+    expect(result).toEqual([{ prompt: 'Body text here.', aspectRatio: '4:3' }])
+  })
+
+  it('accepts header variations (no number, lowercase, no surrounding spaces)', () => {
+    const input = [
+      '--- Prompt ---',
+      'Prompt: First one.',
+      '',
+      '--- prompt 2 ---',
+      'Prompt: Second one.',
+      '',
+      '---Prompt 3---',
+      'Prompt: Third one.',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result.map((section) => section.prompt)).toEqual([
+      'First one.',
+      'Second one.',
+      'Third one.',
+    ])
+  })
+
+  it('captures Aspect Ratio appearing after the Prompt label', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      'Prompt:',
+      'A long prompt body that ends with metadata.',
+      'Aspect Ratio: 16:9',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([
+      { prompt: 'A long prompt body that ends with metadata.', aspectRatio: '16:9' },
+    ])
+  })
+
+  it('keeps a second Prompt: line inside the body as content', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      'Prompt:',
+      'Body that instructs an output format:',
+      'Prompt: The literal output label.',
+    ].join('\n')
+    const result = parsePromptSections(input)
+    expect(result).toEqual([
+      { prompt: 'Body that instructs an output format: Prompt: The literal output label.', aspectRatio: null },
+    ])
+  })
+
+  it('returns empty array when no sections detected', () => {
+    expect(parsePromptSections('')).toEqual([])
+    expect(parsePromptSections('just a plain line\nanother line')).toEqual([])
+    expect(parsePromptSections('---\njust a markdown rule')).toEqual([])
   })
 })
 
@@ -332,6 +468,16 @@ describe('createFormatterBatch', () => {
     expect(batchData!.items[0].detectedAspectRatio).toBe('16:9')
     expect(batchData!.items[1].detectedAspectRatio).toBeNull()
     expect(batchData!.items[2].detectedAspectRatio).toBe('1:1')
+  })
+
+  it('uses provided aspect ratios, falling back to inline detection', async () => {
+    const prompts = ['prompt one', 'prompt two', 'prompt three --ar 21:9']
+    await createFormatterBatch(prompts, 'paste', undefined, ['16:9', null, null])
+
+    const batchData = await getActiveBatch()
+    expect(batchData!.items[0].detectedAspectRatio).toBe('16:9')
+    expect(batchData!.items[1].detectedAspectRatio).toBeNull()
+    expect(batchData!.items[2].detectedAspectRatio).toBe('21:9')
   })
 
   it('getUniqueAspectRatios returns unique sorted ratios', async () => {
