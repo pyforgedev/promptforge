@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import type { PromptSegments } from '../types'
+import type { SegmentSource, SegmentSources } from '../utils/segmentSources'
 
 const SEGMENT_KEYS = [
   'subject',
@@ -21,9 +22,10 @@ const SEGMENT_KEYS = [
 interface SegmentRowProps {
   label: string
   value: string
+  source: SegmentSource
 }
 
-function SegmentRow({ label, value }: SegmentRowProps) {
+function SegmentRow({ label, value, source }: SegmentRowProps) {
   const [copied, setCopied] = useState(false)
   const { t } = useTranslation()
 
@@ -36,7 +38,14 @@ function SegmentRow({ label, value }: SegmentRowProps) {
 
   return (
     <div className="flex items-start gap-2 py-1.5">
-      <span className="w-28 shrink-0 text-caption-ui font-medium text-muted">{label}</span>
+      <span className="flex w-28 shrink-0 flex-col items-start gap-1 text-caption-ui font-medium text-muted">
+        {label}
+        <span className={source === 'user'
+          ? 'rounded-sm border border-brand-primary/30 bg-brand-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-brand-primary'
+          : 'rounded-sm border border-border-subtle bg-surface-hover px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted'}>
+          {t(`promptCard.segments.source.${source}`)}
+        </span>
+      </span>
       <span className="flex-1 text-body-ui leading-relaxed text-primary">{value}</span>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -63,10 +72,11 @@ function SegmentRow({ label, value }: SegmentRowProps) {
 
 interface SegmentsPanelProps {
   segments: PromptSegments
+  sources: SegmentSources
   unavailable?: boolean
 }
 
-export function SegmentsPanel({ segments, unavailable }: SegmentsPanelProps) {
+export function SegmentsPanel({ segments, sources, unavailable }: SegmentsPanelProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
@@ -105,6 +115,7 @@ export function SegmentsPanel({ segments, unavailable }: SegmentsPanelProps) {
                       key={key}
                       label={t(`promptCard.segments.${key}`)}
                       value={segments[key]}
+                      source={sources[key]}
                     />
                   ))
                 )}

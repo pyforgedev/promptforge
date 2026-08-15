@@ -139,6 +139,37 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
         input: { ...state.input, basePromptReference: undefined },
         batch: state.batch,
       }),
+      version: 1,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<PromptGeneratorStoreState>
+        const toAI = <T extends { mode: string; value?: string } | undefined>(field: T) =>
+          field?.mode === 'user' && field.value === 'none' ? { mode: 'system' as const } : field
+        const normalizeInput = (input: GeneratorInput): GeneratorInput => ({
+          ...generatorInputDefaults,
+          ...input,
+          mood: toAI(input.mood) ?? generatorInputDefaults.mood,
+          colorPalette: toAI(input.colorPalette) ?? generatorInputDefaults.colorPalette,
+          artStyle: toAI(input.artStyle) ?? generatorInputDefaults.artStyle,
+          background: toAI(input.background) ?? generatorInputDefaults.background,
+          humanModel: input.humanModel ?? generatorInputDefaults.humanModel,
+        })
+
+        if (!state.input) return state
+        const batch = state.batch
+
+        return {
+          ...state,
+          input: normalizeInput(state.input),
+          batch: batch ? {
+            ...batch,
+            generatorInput: normalizeInput(batch.generatorInput),
+            prompts: batch.prompts.map((prompt) => ({
+              ...prompt,
+              generatorInput: normalizeInput(prompt.generatorInput),
+            })),
+          } : batch,
+        }
+      },
       onRehydrateStorage: () => {
         return (state) => {
           if (state) {

@@ -116,28 +116,35 @@ function buildDimensionInstructions(input: GeneratorInput): string[] {
     const label = input.mood.mode === 'user'
       ? OPTION_LABELS[input.mood.value] ?? input.mood.value
       : ''
-    lines.push(`Mood: ${label} — maintain this mood consistently across all variants.`)
+    lines.push(`USER CONSTRAINT — Mood: ${label}. Every mood segment and full_prompt MUST preserve this semantic intent; enrich it without contradicting it.`)
   }
 
   if (colorPaletteStatus === 'pinned') {
     const label = input.colorPalette.mode === 'user'
       ? OPTION_LABELS[input.colorPalette.value] ?? input.colorPalette.value
       : ''
-    lines.push(`Color Palette: ${label} — maintain this color palette consistently across all variants.`)
+    lines.push(`USER CONSTRAINT — Color Palette: ${label}. Every color_palette segment and full_prompt MUST preserve this semantic intent; enrich it without contradicting it.`)
   }
 
   if (backgroundStatus === 'pinned') {
     const label = input.background.mode === 'user'
       ? OPTION_LABELS[input.background.value] ?? input.background.value
       : ''
-    lines.push(`Background / Environment: ${label} — maintain this background consistently across all variants.`)
+    lines.push(`USER CONSTRAINT — Background / Environment: ${label}. Every environment segment and full_prompt MUST preserve this semantic intent; enrich it without contradicting it.`)
   }
 
   if (artStyleStatus === 'pinned') {
     const label = input.artStyle.mode === 'user'
       ? OPTION_LABELS[input.artStyle.value] ?? input.artStyle.value
       : ''
-    lines.push(`Art Style: ${label} — apply this style consistently across all variants.`)
+    lines.push(`USER CONSTRAINT — Art Style: ${label}. Every style segment and full_prompt MUST preserve this semantic intent; enrich it without contradicting it.`)
+  }
+
+  if (input.humanModel.mode === 'user') {
+    const label = OPTION_LABELS[input.humanModel.value] ?? input.humanModel.value
+    lines.push(input.humanModel.value === 'no_people'
+      ? 'USER CONSTRAINT — Human Presence: No People. Do not include people, hands, faces, silhouettes, body parts, or implied human presence in subject, environment, or full_prompt.'
+      : `USER CONSTRAINT — Human Presence: ${label}. Every subject segment and full_prompt MUST preserve this constraint without contradiction.`)
   }
 
   return lines

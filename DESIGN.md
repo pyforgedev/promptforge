@@ -695,32 +695,52 @@ Every icon-only button in a PR diff MUST pass all of these:
 
 ## 6.9 Dual-Mode Select
 
-A specialized pattern for fields that can be either "user pinned" (constant
-across a batch) or "system driven" (included in the variation pool).
+A specialized pattern for fields that can be either **User** (explicitly pinned)
+or **AI** (Compose Engine determines all preferences). The visible labels are
+"User" and "AI" — not "User Defined" / "System Defined."
 
-- **Structure:** Two segmented buttons ("User Defined" / "System Defined") as a
-  toggle, followed by a conditional combobox that appears only when "User Defined"
-  is selected.
+- **Structure:** Two segmented buttons ("User" / "AI") as a toggle, followed
+  by a conditional combobox that appears only when "User" is selected.
 - **Segmented buttons:** `SegmentGroup` or two `Toggle` buttons grouped together.
   Active segment uses `brand-primary` background with `text-on-brand`; inactive
   uses `bg-surface-hover` with `text-secondary`. The segments are separated by a
   thin `border-subtle` divider, not spaced apart.
-- **Combobox conditional:** When "User Defined" is active, show a `Combobox`
-  (Radix/Shadcn) below the segmented control. When "System Defined" is active,
-  hide the combobox — the field will be handled by the variation engine.
-- **Empty value handling:** If the user selects "none" (or "no_people" for human
-  models) in User Defined mode, the field is treated as "excluded" — the prompt
-  will not mention that attribute at all. This is distinct from "System Defined"
-  where the engine picks a value from the pool.
-- **Why not a Switch:** This pattern needs three states (User Pinned / User
-  Excluded / System Driven) that a simple on/off toggle cannot represent cleanly.
-  The segmented control makes the user's intent explicit without ambiguity.
+- **Combobox conditional:** When "User" is active, show a `Combobox`
+  (Radix/Shadcn) below the segmented control. When "AI" is active, hide the
+  combobox — the Compose Engine determines the value.
+- **Per-field AI fallback in User mode:** Within User mode, the combobox for
+  each field can also be set to "AI" (the first option). Selecting "AI" on a
+  specific field delegates that single field to the Compose Engine while the
+  remaining fields stay user-pinned. This is the per-field fallback that
+  replaces the old "None" value.
+- **Generic None is no longer visible:** There is no "None" option in the
+  combobox. The old behavior of selecting "None" to mean "let the engine pick"
+  is now expressed by the "AI" option on each field (in User mode) or by
+  switching the global mode to "AI" (which delegates all fields at once).
+- **AI mode is authoritative:** When the global mode is "AI," all style fields
+  (mood, color palette, art style, background) and human presence are
+  recomputed by the Compose Engine. Any stale per-field User values are
+  discarded during `resolveInputPreferences` — AI mode overrides everything.
+- **No People remains explicit exclusion:** "No People" is still a direct
+  selection in the human model combobox (User mode). It emits an authoritative
+  "No People" constraint that forbids any human presence in the subject,
+  environment, or full prompt. This is not an AI fallback — it is an explicit
+  user constraint, just like selecting "Peaceful" for mood.
 - **Focus:** `focus-visible:ring-2 focus-visible:ring-brand-primary
   focus-visible:ring-offset-2` on both the segmented buttons and the combobox
   trigger.
+- **Prompt Breakdown source indicators:** In `SegmentsPanel`, each segment row
+  now displays a source badge — "USER" (brand-primary accent) when the value was
+  user-pinned, or "AI" (neutral surface) when determined by the Compose Engine.
+  The badge uses `brand-primary/10` for USER and `bg-surface-hover` for AI, with
+  `border border-border-subtle` and `text-[10px] font-semibold` text. The
+  `SegmentSources` type (`Record<keyof PromptSegments, SegmentSource>`) maps each
+  segment key to its source.
 - **Implementation:** Use Radix/Shadcn `ToggleGroup` for the mode selector and
   `Combobox` for the value selector. Wire the conditional visibility to the mode
-  state — show the combobox only when `mode === 'user'`.
+  state — show the combobox only when `mode === 'user'`. Prepend an "AI" option
+  to each field's combobox options so users can delegate individual fields
+  without switching the global mode.
 
 ```tsx
 <FieldRow label="Mood" htmlFor="mood-mode">
@@ -734,20 +754,20 @@ across a batch) or "system driven" (included in the variation pool).
       value="user"
       className="data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand rounded-r-none border border-r-0 border-border-subtle"
     >
-      User Defined
+      User
     </ToggleGroupItem>
     <ToggleGroupItem
       value="system"
       className="data-[state=on]:bg-brand-primary data-[state=on]:text-on-brand rounded-l-none border border-border-subtle"
     >
-      System Driven
+      AI
     </ToggleGroupItem>
   </ToggleGroup>
   {field.mode === 'user' && (
     <Combobox
-      options={MOOD_OPTIONS.map((v) => ({ value: v, label: OPTION_LABELS[v] }))}
-      value={field.value}
-      onChange={(val) => field.onChange({ ...field, value: val })}
+      options={[aiOption, ...MOOD_OPTIONS.map((v) => ({ value: v, label: OPTION_LABELS[v] }))]}
+      value={field.mode === 'user' ? field.value : 'ai'}
+      onChange={(val) => handleStyleValueChange(key, val)}
     />
   )}
 </FieldRow>

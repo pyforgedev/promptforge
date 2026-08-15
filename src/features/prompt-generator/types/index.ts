@@ -74,7 +74,7 @@ export type DualModeField<T extends string> =
   | { mode: 'system' }
 
 export const OPTION_LABELS: Record<string, string> = {
-  none: 'None',
+  none: 'AI',
   peaceful: 'Peaceful',
   joyful: 'Joyful',
   energetic: 'Energetic',

@@ -454,10 +454,10 @@
       },
       "styleMode": {
         "label": "Mode Adegan",
-        "userLabel": "Manual",
-        "systemLabel": "Otomatis",
-        "tooltip": "Manual memungkinkan Anda memilih nilai spesifik untuk suasana, warna, gaya seni, latar belakang, dan model manusia. Otomatis membiarkan sistem menentukan semuanya berdasarkan Tingkat Variasi.",
-        "systemDescription": "Sistem akan secara otomatis menentukan suasana, warna, gaya seni, latar belakang, dan model manusia berdasarkan Tingkat Variasi."
+        "userLabel": "User",
+        "systemLabel": "AI",
+        "tooltip": "User memungkinkan Anda menetapkan batasan atau menyerahkan preferensi tertentu kepada AI. AI membiarkan Compose Engine menentukan semua preferensi.",
+        "systemDescription": "AI akan menentukan suasana, warna, gaya seni, latar belakang, dan kehadiran manusia dari prompt serta konteks komposisi."
       },
       "mood": {
         "label": "Suasana"
@@ -542,7 +542,7 @@
       }
     },
     "segments": {
-      "title": "Segmen Fotografi",
+      "title": "Rincian Prompt",
       "unavailable": "Segmen tidak tersedia untuk prompt lama.",
       "subject": "Subjek",
       "composition": "Komposisi",
@@ -551,7 +551,11 @@
       "style": "Gaya",
       "technical": "Teknis",
       "colorPalette": "Palet Warna",
-      "environment": "Lingkungan"
+      "environment": "Lingkungan",
+      "source": {
+        "user": "USER",
+        "ai": "AI"
+      }
     },
     "negative": {
       "title": "Prompt Negatif",

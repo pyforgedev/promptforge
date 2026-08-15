@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { AdobeScoreBadge, AdobeScoreDisplay } from './AdobeScoreDisplay'
 import { SegmentsPanel } from './SegmentsPanel'
+import { deriveSegmentSources } from '../utils/segmentSources'
 import { NegativePromptPanel } from './NegativePromptPanel'
 import type { GeneratedPrompt } from '../types'
 
@@ -119,6 +120,7 @@ export function GeneratorPromptCard({
   const [duplicateWarningDismissed, setDuplicateWarningDismissed] = useState(false)
 
   const displayText = prompt.platformVariants[activePlatform]
+  const segmentSources = deriveSegmentSources(prompt.generatorInput)
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(displayText)
@@ -279,6 +281,7 @@ export function GeneratorPromptCard({
 
       <SegmentsPanel
         segments={prompt.segments}
+        sources={segmentSources}
         unavailable={prompt.legacy}
       />
 

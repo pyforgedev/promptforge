@@ -15,11 +15,37 @@ import type {
   PromptSegments,
   AdobeStockScore,
 } from '../types'
+import { OPTION_LABELS } from '../types'
 import { MetaPromptBuilder } from './MetaPromptBuilder'
 import { useMasterPromptStore } from '@/store/useMasterPromptStore'
 import { generateNegativePrompt } from './NegativePromptGenerator'
 import { scorePrompt } from './AdobeStockScorer'
 import { adaptForPlatform } from './PlatformAdapter'
+
+function assemblePrompt(segments: PromptSegments): string {
+  return Object.values(segments).join('. ')
+}
+
+function resolveInputPreferences(input: GeneratorInput): GeneratorInput {
+  if (input.styleMode === 'system') {
+    return {
+      ...input,
+      mood: { mode: 'system' },
+      colorPalette: { mode: 'system' },
+      artStyle: { mode: 'system' },
+      background: { mode: 'system' },
+      humanModel: { mode: 'system' },
+    }
+  }
+
+  return {
+    ...input,
+    mood: input.mood.mode === 'user' && input.mood.value === 'none' ? { mode: 'system' } : input.mood,
+    colorPalette: input.colorPalette.mode === 'user' && input.colorPalette.value === 'none' ? { mode: 'system' } : input.colorPalette,
+    artStyle: input.artStyle.mode === 'user' && input.artStyle.value === 'none' ? { mode: 'system' } : input.artStyle,
+    background: input.background.mode === 'user' && input.background.value === 'none' ? { mode: 'system' } : input.background,
+  }
+}
 
 export interface LLMClientInterface {
   complete(systemPrompt: string, userPrompt: string, options?: { maxTokens?: number }): Promise<string>
@@ -41,7 +67,7 @@ export class PromptComposerEngine {
       throw this.makeError('PROVIDER_ERROR', 'Invalid generator input: ' + parsed.error.message)
     }
 
-    const validInput = parsed.data
+    const validInput = resolveInputPreferences(parsed.data)
 
     const masterPromptOverride = useMasterPromptStore.getState().customPrompt
     const { systemPrompt, userPrompt } = MetaPromptBuilder.build(validInput, masterPromptOverride ?? undefined)
@@ -145,16 +171,25 @@ export class PromptComposerEngine {
     batchId: string,
     input: GeneratorInput,
   ): GeneratedPrompt {
+    const userValue = <T extends string>(field: { mode: 'user'; value: T } | { mode: 'system' }) =>
+      field.mode === 'user' ? OPTION_LABELS[field.value] ?? field.value : null
+
+    const humanConstraint = userValue(input.humanModel)
     const segments: PromptSegments = {
-      subject: p.subject,
+      subject: input.humanModel.mode === 'user'
+        ? input.humanModel.value === 'no_people'
+          ? `${input.niche}; no people, hands, faces, silhouettes, body parts, or implied human presence`
+          : `${humanConstraint}; ${input.niche}`
+        : p.subject,
       composition: p.composition,
       lighting: p.lighting,
-      mood: p.mood,
-      style: p.style,
+      mood: userValue(input.mood) ?? p.mood,
+      style: userValue(input.artStyle) ?? p.style,
       technical: p.technical,
-      colorPalette: p.color_palette,
-      environment: p.environment,
+      colorPalette: userValue(input.colorPalette) ?? p.color_palette,
+      environment: userValue(input.background) ?? p.environment,
     }
+    const fullPrompt = assemblePrompt(segments)
 
     const variationAnchors: VariationAnchors = {
       primaryVariation: p.variation_anchors.primary_variation,
@@ -182,10 +217,10 @@ export class PromptComposerEngine {
       segments,
       negativePrompt: p.negative_prompt,
       platformVariants: {
-        dalle3: p.full_prompt,
-        nano_banana: p.full_prompt,
+        dalle3: fullPrompt,
+        nano_banana: fullPrompt,
       },
-      fullPrompt: p.full_prompt,
+      fullPrompt,
       commercialKeywords: input.includeKeywords ? p.commercial_keywords : [],
       adobeScore: placeholderScore,
       variationAnchors,

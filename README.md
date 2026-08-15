@@ -15,7 +15,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 
 ## Features
 
-- **Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (1/3/5/10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, stock keywords toggling, Adobe Stock scoring, and photography segments.
+- **Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (1/3/5/10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, stock keywords toggling, Adobe Stock scoring, and prompt breakdown (per-segment source badges showing User/AI attribution).
 - **Prompt Quality Rating:** Scores prompts on Commercial Potential, Creativity, Clarity, Marketability, and Uniqueness.
 - **Duplicate Detection:** Similarity analysis against prompt history to prevent repetitive generations.
 - **Templates:** Save, edit, reset, import, and export custom templates.

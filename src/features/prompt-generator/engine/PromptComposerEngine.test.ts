@@ -162,5 +162,79 @@ describe('PromptComposerEngine', () => {
       const result = await engine.compose(makeInput({ batchSize: 1 }))
       expect(result.prompts).toHaveLength(1)
     })
+
+    it('assembles a consistent full prompt from all resolved segments (system defaults)', async () => {
+      const result = await engine.compose(makeInput())
+      const prompt = result.prompts[0]
+      expect(prompt.platformVariants.dalle3).toBe(prompt.fullPrompt)
+      expect(prompt.fullPrompt).not.toContain('Prompt 1: A professional working at a desk')
+      for (const value of Object.values(prompt.segments)) {
+        expect(prompt.fullPrompt).toContain(value)
+      }
+    })
+
+    it('resolves user-pinned style fields into segments and keeps other fields from the LLM', async () => {
+      const result = await engine.compose(makeInput({
+        mood: { mode: 'user', value: 'peaceful' },
+        colorPalette: { mode: 'user', value: 'warm_tones' },
+        artStyle: { mode: 'user', value: 'cinematic_photography' },
+        background: { mode: 'user', value: 'urban_cityscape' },
+      }))
+      const prompt = result.prompts[0]
+      expect(prompt.segments.mood).toBe('Peaceful')
+      expect(prompt.segments.colorPalette).toBe('Warm Tones')
+      expect(prompt.segments.style).toBe('Cinematic Photography')
+      expect(prompt.segments.environment).toBe('Urban Cityscape')
+      // Unpinned style dimensions fall through to the LLM output
+      expect(prompt.segments.composition).toBe('rule of thirds, close-up')
+      expect(prompt.segments.lighting).toBe('softbox studio lighting')
+      expect(prompt.segments.technical).toBe('shallow depth of field, 85mm lens')
+      // Full prompt reflects the same resolved segments
+      expect(prompt.fullPrompt).toContain('Peaceful')
+      expect(prompt.fullPrompt).toContain('Warm Tones')
+      expect(prompt.fullPrompt).toContain('Cinematic Photography')
+      expect(prompt.fullPrompt).toContain('Urban Cityscape')
+    })
+
+    it('forces No People into the subject segment when humanModel is no_people', async () => {
+      const result = await engine.compose(makeInput({
+        humanModel: { mode: 'user', value: 'no_people' },
+      }))
+      const prompt = result.prompts[0]
+      expect(prompt.segments.subject).toBe(
+        'remote worker at home; no people, hands, faces, silhouettes, body parts, or implied human presence',
+      )
+      expect(prompt.segments.subject).not.toBe('a professional working at a desk')
+      expect(prompt.fullPrompt).toContain(
+        'no people, hands, faces, silhouettes, body parts, or implied human presence',
+      )
+    })
+
+    it('prepends the human label to the subject segment for a specific human model', async () => {
+      const result = await engine.compose(makeInput({
+        humanModel: { mode: 'user', value: 'man' },
+      }))
+      const prompt = result.prompts[0]
+      expect(prompt.segments.subject).toBe('Man; remote worker at home')
+    })
+
+    it('uses the LLM subject verbatim when human presence is left to AI (system)', async () => {
+      const result = await engine.compose(makeInput({
+        humanModel: { mode: 'system' },
+      }))
+      expect(result.prompts[0].segments.subject).toBe('a professional working at a desk')
+    })
+
+    it('makes global AI mode authoritative over stale per-field user values', async () => {
+      const result = await engine.compose(makeInput({
+        styleMode: 'system',
+        mood: { mode: 'user', value: 'peaceful' },
+        humanModel: { mode: 'user', value: 'no_people' },
+      }))
+      expect(result.generatorInput.mood).toEqual({ mode: 'system' })
+      expect(result.generatorInput.humanModel).toEqual({ mode: 'system' })
+      expect(result.prompts[0].segments.mood).toBe('focused and productive')
+      expect(result.prompts[0].segments.subject).toBe('a professional working at a desk')
+    })
   })
 })

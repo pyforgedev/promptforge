@@ -454,10 +454,10 @@
       },
       "styleMode": {
         "label": "Scene Mode",
-        "userLabel": "Manual",
-        "systemLabel": "Auto",
-        "tooltip": "Manual lets you pick specific values for mood, colors, art style, background, and human models. Auto lets the system determine all of them based on Variation Level.",
-        "systemDescription": "System will automatically determine mood, colors, art style, background, and human models based on Variation Level."
+        "userLabel": "User",
+        "systemLabel": "AI",
+        "tooltip": "User lets you set explicit constraints or leave individual preferences to AI. AI lets the Compose Engine determine all preferences.",
+        "systemDescription": "AI will determine mood, colors, art style, background, and human presence from your prompt and compose context."
       },
       "mood": {
         "label": "Mood"
@@ -542,7 +542,7 @@
       }
     },
     "segments": {
-      "title": "Photography Segments",
+      "title": "Prompt Breakdown",
       "unavailable": "Segments not available for legacy prompts.",
       "subject": "Subject",
       "composition": "Composition",
@@ -551,7 +551,11 @@
       "style": "Style",
       "technical": "Technical",
       "colorPalette": "Color Palette",
-      "environment": "Environment"
+      "environment": "Environment",
+      "source": {
+        "user": "USER",
+        "ai": "AI"
+      }
     },
     "negative": {
       "title": "Negative Prompt",

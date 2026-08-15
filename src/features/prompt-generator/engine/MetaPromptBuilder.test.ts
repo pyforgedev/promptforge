@@ -29,57 +29,94 @@ function makeInput(overrides: Partial<GeneratorInput> = {}): GeneratorInput {
   }
 }
 
-describe('MetaPromptBuilder.build — pinned dimensions', () => {
-  it('pinned mood appears with "maintain" instruction in userPrompt', () => {
+describe('MetaPromptBuilder.build — pinned dimensions (USER CONSTRAINT wording)', () => {
+  it('pinned mood emits an authoritative USER CONSTRAINT instruction', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       mood: { mode: 'user', value: 'peaceful' },
     }))
-    expect(userPrompt).toMatch(/Mood:.*Peaceful.*maintain.*consistently/i)
+    expect(userPrompt).toContain('USER CONSTRAINT — Mood: Peaceful')
+    expect(userPrompt).toContain('Every mood segment and full_prompt MUST preserve this semantic intent')
   })
 
-  it('pinned colorPalette appears with "maintain" instruction in userPrompt', () => {
+  it('pinned colorPalette emits an authoritative USER CONSTRAINT instruction', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       colorPalette: { mode: 'user', value: 'warm_tones' },
     }))
-    expect(userPrompt).toMatch(/Color Palette:.*Warm Tones.*maintain.*consistently/i)
+    expect(userPrompt).toContain('USER CONSTRAINT — Color Palette: Warm Tones')
+    expect(userPrompt).toContain('Every color_palette segment and full_prompt MUST preserve this semantic intent')
   })
 
-  it('pinned background appears with "maintain" instruction in userPrompt', () => {
+  it('pinned background emits an authoritative USER CONSTRAINT instruction', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       background: { mode: 'user', value: 'urban_cityscape' },
     }))
-    expect(userPrompt).toMatch(/Background.*Urban Cityscape.*maintain.*consistently/i)
+    expect(userPrompt).toContain('USER CONSTRAINT — Background / Environment: Urban Cityscape')
+    expect(userPrompt).toContain('Every environment segment and full_prompt MUST preserve this semantic intent')
   })
 
-  it('pinned artStyle appears with style instruction in userPrompt', () => {
+  it('pinned artStyle emits an authoritative USER CONSTRAINT instruction', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       artStyle: { mode: 'user', value: 'cinematic_photography' },
     }))
-    expect(userPrompt).toMatch(/Art Style:.*Cinematic Photography/i)
+    expect(userPrompt).toContain('USER CONSTRAINT — Art Style: Cinematic Photography')
+    expect(userPrompt).toContain('Every style segment and full_prompt MUST preserve this semantic intent')
   })
 })
 
-describe('MetaPromptBuilder.build — excluded dimensions', () => {
-  it('excluded mood (none) does NOT appear as a dimension instruction line', () => {
+describe('MetaPromptBuilder.build — excluded / system dimensions', () => {
+  it('excluded mood (none) emits no USER CONSTRAINT line', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       mood: { mode: 'user', value: 'none' },
     }))
-    expect(userPrompt).not.toMatch(/Mood:.*maintain/i)
-    expect(userPrompt).not.toMatch(/no mood specified/i)
+    expect(userPrompt).not.toMatch(/USER CONSTRAINT — Mood:/i)
   })
 
-  it('excluded colorPalette (none) does NOT appear as pinned instruction', () => {
+  it('system mood (default) emits no USER CONSTRAINT line', () => {
+    const { userPrompt } = MetaPromptBuilder.build(makeInput({
+      mood: { mode: 'system' },
+    }))
+    expect(userPrompt).not.toMatch(/USER CONSTRAINT — Mood:/i)
+  })
+
+  it('excluded colorPalette (none) emits no USER CONSTRAINT line', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       colorPalette: { mode: 'user', value: 'none' },
     }))
-    expect(userPrompt).not.toMatch(/Color Palette:.*maintain/i)
+    expect(userPrompt).not.toMatch(/USER CONSTRAINT — Color Palette:/i)
   })
 
-  it('excluded background (none) does NOT appear as pinned instruction', () => {
+  it('excluded background (none) emits no USER CONSTRAINT line', () => {
     const { userPrompt } = MetaPromptBuilder.build(makeInput({
       background: { mode: 'user', value: 'none' },
     }))
-    expect(userPrompt).not.toMatch(/Background.*maintain/i)
+    expect(userPrompt).not.toMatch(/USER CONSTRAINT — Background \/ Environment:/i)
+  })
+})
+
+describe('MetaPromptBuilder.build — human presence (No People / AI omission)', () => {
+  it('pinned humanModel "no_people" emits the authoritative No People constraint', () => {
+    const { userPrompt } = MetaPromptBuilder.build(makeInput({
+      humanModel: { mode: 'user', value: 'no_people' },
+    }))
+    expect(userPrompt).toContain('USER CONSTRAINT — Human Presence: No People')
+    expect(userPrompt).toContain(
+      'Do not include people, hands, faces, silhouettes, body parts, or implied human presence in subject, environment, or full_prompt.',
+    )
+  })
+
+  it('pinned humanModel with a specific person emits a Human Presence USER CONSTRAINT', () => {
+    const { userPrompt } = MetaPromptBuilder.build(makeInput({
+      humanModel: { mode: 'user', value: 'man' },
+    }))
+    expect(userPrompt).toContain('USER CONSTRAINT — Human Presence: Man')
+    expect(userPrompt).toContain('Every subject segment and full_prompt MUST preserve this constraint without contradiction.')
+  })
+
+  it('system humanModel (AI-determined) emits no Human Presence constraint line', () => {
+    const { userPrompt } = MetaPromptBuilder.build(makeInput({
+      humanModel: { mode: 'system' },
+    }))
+    expect(userPrompt).not.toMatch(/USER CONSTRAINT — Human Presence:/i)
   })
 })
 

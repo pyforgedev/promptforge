@@ -45,7 +45,9 @@ function SectionDivider() {
 }
 
 function makeOptions(options: readonly string[]): ComboboxOption[] {
-  return options.map((v) => ({ value: v, label: OPTION_LABELS[v] ?? v }))
+  return options
+    .filter((value) => value !== 'none')
+    .map((value) => ({ value, label: OPTION_LABELS[value] ?? value }))
 }
 
 const moodOptions = makeOptions(MOOD_OPTIONS)
@@ -99,10 +101,10 @@ export const GeneratorForm = memo(function GeneratorForm() {
       if (mode === 'user') {
         setInput({
           styleMode: 'user',
-          mood: { mode: 'user', value: save.mood as MoodOption },
-          colorPalette: { mode: 'user', value: save.colorPalette as ColorPaletteOption },
-          artStyle: { mode: 'user', value: save.artStyle as ArtStyleOption },
-          background: { mode: 'user', value: save.background as BackgroundOption },
+          mood: save.mood === 'none' ? { mode: 'system' } : { mode: 'user', value: save.mood as MoodOption },
+          colorPalette: save.colorPalette === 'none' ? { mode: 'system' } : { mode: 'user', value: save.colorPalette as ColorPaletteOption },
+          artStyle: save.artStyle === 'none' ? { mode: 'system' } : { mode: 'user', value: save.artStyle as ArtStyleOption },
+          background: save.background === 'none' ? { mode: 'system' } : { mode: 'user', value: save.background as BackgroundOption },
           humanModel: { mode: 'user', value: save.humanModel as HumanModelOption },
         })
       } else {
@@ -126,6 +128,10 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const handleStyleValueChange = useCallback(
     (field: StyleFieldKey, value: string) => {
+      if (value === 'ai') {
+        setInput({ [field]: { mode: 'system' as const } } as Partial<typeof input>)
+        return
+      }
       lastStyleModeUserValues.current[field] = value
       setInput({ [field]: { mode: 'user' as const, value } } as Partial<typeof input>)
     },
@@ -150,12 +156,13 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
 
+  const aiOption: ComboboxOption = { value: 'ai', label: t('generator.form.styleMode.systemLabel') }
   const styleFields: { key: StyleFieldKey; options: ComboboxOption[] }[] = [
-    { key: 'mood', options: moodOptions },
-    { key: 'colorPalette', options: colorPaletteOptions },
-    { key: 'artStyle', options: artStyleOptions },
-    { key: 'background', options: backgroundOptions },
-    { key: 'humanModel', options: humanModelOptions },
+    { key: 'mood', options: [aiOption, ...moodOptions] },
+    { key: 'colorPalette', options: [aiOption, ...colorPaletteOptions] },
+    { key: 'artStyle', options: [aiOption, ...artStyleOptions] },
+    { key: 'background', options: [aiOption, ...backgroundOptions] },
+    { key: 'humanModel', options: [aiOption, ...humanModelOptions] },
   ]
 
   return (
@@ -394,7 +401,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     <Label htmlFor={`${key}-value`}>{t(`generator.form.${key}.label`)}</Label>
                     <Combobox
                       options={options}
-                      value={field?.mode === 'user' ? field?.value ?? 'none' : 'none'}
+                      value={field?.mode === 'user' ? field.value : 'ai'}
                       onValueChange={(v) => handleStyleValueChange(key, v)}
                       placeholder={t(`generator.form.${key}.label`)}
                     />
