@@ -44,7 +44,7 @@ the higher layers genuinely don't fit.
 | Tier | Source | Covers | Never used for |
 |---|---|---|---|
 | 1 | **shadcn/ui** — Radix primitives, `src/components/ui/` | Interactive patterns: buttons, dialogs, dropdowns, selects, comboboxes, tooltips, switches, tabs, scroll areas — anything with ARIA/focus/keyboard requirements (§5.1) | Decorative animation |
-| 2 | **React Bits** — `@react-bits` registry, TS + Tailwind variants, flat files in `src/components/` (e.g. `AnimatedContent.tsx`, `SpotlightCard.tsx`) | Animation-forward components shadcn doesn't ship: text entrances (`SplitText`, `RotatingText`, `TextType`, `ShinyText`), entrance wrappers (`AnimatedContent`, `FadeContent`), backgrounds (`Aurora`), decorative cards (`SpotlightCard`), grain (`Noise`), counters (`CountUp`) | Interactive primitives — never as a replacement for a shadcn control |
+| 2 | **React Bits** — `@react-bits` registry, TS + Tailwind variants, vendored flat files in `src/components/animations/` (e.g. `AnimatedContent.tsx`, `SpotlightCard.tsx`) | Animation-forward components shadcn doesn't ship: text entrances (`SplitText`, `RotatingText`, `TextType`, `ShinyText`), entrance wrappers (`AnimatedContent`, `FadeContent`), backgrounds (`Aurora`), decorative cards (`SpotlightCard`), grain (`Noise`), counters (`CountUp`) | Interactive primitives — never as a replacement for a shadcn control |
 | 3 | **Framer Motion** — `motion/react` | Custom motion composed from primitives: layout animations, `AnimatePresence`, the Skeleton shimmer (§6.17), press feedback beyond `btn-press` | Patterns with a ready React Bits component |
 | 4 | **Custom Tailwind/CSS** — `src/index.css` | What tiers 1–3 don't cover or need deep token theming: glassmorphism utilities (§4), scrollbar styling (§6.11), keyframes (`slide-up-fade`, `btn-press`, §1.4), the static grain fallback (§6.15) | Anything a higher tier already provides |
 
@@ -991,7 +991,7 @@ A subtle noise texture overlays the entire application to add visual depth
 without distracting from content.
 
 - **Implementation tier (§0):** tier 2 — the React Bits `Noise` component
-  (`src/components/Noise.tsx`, props: `patternSize`, `patternScaleX/Y`,
+  (`src/components/animations/Noise.tsx`, props: `patternSize`, `patternScaleX/Y`,
   `patternRefreshInterval`, `patternAlpha`) is the animated option when the
   grain must refresh continuously. The `body::before` data-URI approach below
   is the tier-4 fallback: zero JS, one static pass — use it for the app-wide
@@ -1037,7 +1037,7 @@ Interactive cards gain a luminous border effect that follows the cursor
 position, providing visual feedback on hover.
 
 - **Implementation tier (§0):** tier 2 — the React Bits `SpotlightCard`
-  component (`src/components/SpotlightCard.tsx`) is the standard
+  component (`src/components/animations/SpotlightCard.tsx`) is the standard
   implementation for card-shaped surfaces. Home feature tiles render it
   directly (defaults token-aligned on adoption per §0 rule 3). The
   `.card-spotlight` + `useSpotlightBorder`

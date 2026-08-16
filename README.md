@@ -90,11 +90,11 @@ src/
 │   ├── routes.tsx                    # Route definitions
 │   └── providers/                    # App providers
 ├── components/
+│   ├── animations/                   # React Bits animated components (AnimatedContent, Aurora, Aurora.test, CountUp, FadeContent, FadeContent.test, Noise, RotatingText, ShinyText, SplitText, SpotlightCard, TextType)
 │   ├── common/                       # AppLogo, EmptyState, LazyFallback, LoadingSpinner, PageHeader
 │   ├── forms/                        # FormField
 │   ├── layout/                       # Header, Layout, Sidebar
-│   ├── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
-│   └── *.tsx                         # React Bits animated components (AnimatedContent, Aurora, SpotlightCard, etc.)
+│   └── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
 ├── features/
 │   ├── formatter/                    # Prompt formatting & queue (components, types)
 │   ├── history/                      # Prompt history (components, hooks, types)
@@ -105,7 +105,7 @@ src/
 ├── hooks/                            # Shared hooks (useAppContext, useEffectiveTheme, useFavicon, useSpotlightBorder, useToast)
 ├── i18n/                             # i18next configuration
 ├── lib/                              # Utilities (axiosSetup, constants, crypto, eventBus, rateLimiter, sanitizeError, utils, validation)
-├── pages/                            # Page components (Home, GeneratorPage, HistoryPage, TemplatesPage, Settings, FormatterPage, ErrorPage)
+├── pages/                            # Page components (HomePage, GeneratorPage, HistoryPage, TemplatesPage, SettingsPage, FormatterPage, ErrorPage, NotFoundPage)
 ├── services/
 │   ├── ai/                           # AI service (API integration)
 │   ├── export/                       # Export services (history, txt)
@@ -126,6 +126,7 @@ src/
 - `/history` → Prompt history log
 - `/templates` → Template management page
 - `/settings` → Configuration page (AI config, theme, and locale)
+- `*` → NotFoundPage (catch-all 404 route)
 
 ## Design System
 

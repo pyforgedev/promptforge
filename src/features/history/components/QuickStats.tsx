@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import db from '@/services/storage/indexeddb'
 import { Image, Star } from 'lucide-react'
 import { MetricTileSkeleton } from '@/components/ui/skeleton'
-import CountUp from '@/components/CountUp'
+import CountUp from '@/components/animations/CountUp'
 
 export const QuickStats = memo(function QuickStats() {
   const { t } = useTranslation()

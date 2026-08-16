@@ -3,7 +3,7 @@ import { renderWithProviders, screen, waitFor } from '@/test/utils'
 import { QuickStats } from './QuickStats'
 import db from '@/services/storage/indexeddb'
 
-vi.mock('@/components/CountUp', () => ({
+vi.mock('@/components/animations/CountUp', () => ({
   default: ({ to, className }: { to: number; className?: string }) => (
     <span className={className}>{to}</span>
   ),

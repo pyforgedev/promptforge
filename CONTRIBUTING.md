@@ -33,10 +33,16 @@ Thanks for your interest in contributing! This guide covers the essentials for w
 - `src/app/` — routing: route definitions, lazy-loaded page imports, providers
 - `src/pages/` — page components (thin wrappers)
 - `src/features/` — self-contained feature modules (components, hooks, services, stores, schemas, types, tests colocated)
-- `src/components/` — shared components (`common/`, `layout/`, `ui/` = shadcn primitives)
+- `src/components/` — shared components (`animations/` for React Bits, `common/`, `layout/`, `ui/` = shadcn primitives)
 - `src/services/` — external integrations & core logic (AI clients, Dexie storage, export, similarity)
 - `src/store/` — global Zustand stores
 - `src/lib/` — utilities (crypto, constants, validation)
+
+## Project Structure Conventions
+
+- **Page components** — every page component lives in `src/pages/` with a uniform `*Page.tsx` suffix (e.g. `HomePage.tsx`, `SettingsPage.tsx`, `NotFoundPage.tsx`). The lazy-load barrel in `src/app/pages.tsx` imports from these names.
+- **Animated components** — React Bits animated components live in `src/components/animations/` as vendored, read-only TSX files (e.g. `SpotlightCard.tsx`, `Aurora.tsx`, `SplitText.tsx`). See [DESIGN.md §0](./DESIGN.md) for the component-selection priority and the one-time token-alignment policy.
+- **Feature folders** — feature directories under `src/features/` (and shared `src/components/` subfolders) should stay flat by default. Only add a subfolder when the feature's component count or internal complexity (engine, hooks, services, store, schemas) justifies the extra nesting. Colocating tests (`*.test.ts`) next to the code they cover is always allowed regardless of nesting.
 
 ## Code Conventions
 
