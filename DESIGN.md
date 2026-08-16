@@ -201,8 +201,8 @@ animation with incremental delays:
 | Token | Min-width | Notes |
 |---|---|---|
 | `sm` | 640px | — |
-| `md` | 768px | Sidebar still collapsible |
-| `lg` | 1024px | Sidebar becomes persistent (no drawer) |
+| `md` | 768px | Sidebar still collapsible (drawer) |
+| `lg` | 1024px | Sidebar becomes persistent and resizable (no drawer) |
 | `xl` | 1280px | Max content width reached |
 
 These match Tailwind's defaults intentionally — don't override Tailwind's
@@ -1262,10 +1262,30 @@ and title all agree).
 
 ## 7. Layout & Spacing
 
+- **App shell (two columns):** on `lg+` the layout is a flex row: the sidebar
+  is a full-height sticky column on the left, and the right column (header on
+  top, main below) takes the remaining `flex-1` width. Main content must never
+  offset itself with a hardcoded left margin — the sidebar pushes it via the
+  flex layout.
+- **Sidebar:** resizable on `lg+`. Width range **220–400 px**, default
+  **260 px**, persisted in `localStorage` (only the last valid width — the
+  hidden state is not persisted). A drag handle sits on the sidebar's right
+  edge (Pointer Events, `touch-action: none`, `cursor-col-resize`, ARIA
+  separator semantics, keyboard resizing, double-click resets to 260 px).
+  Dragging below 220 px collapses the sidebar completely; the header hamburger
+  (visible on `lg+` only while collapsed) reopens it at the last valid width.
+  Below `lg` (§1.5), the sidebar is an off-canvas glass drawer at `z-drawer`
+  (fixed 260 px, overlay, follows the overlay rules in §4) — the persisted
+  desktop width never applies to the drawer.
+- **Header:** spans only the right column (not the sidebar) — `sticky top-0`,
+  `h-14`, `z-sticky`, brand-free: the logo and the close toggle live in the
+  sidebar. Mobile hamburger (`<lg`) opens the drawer; on `lg+` an open
+  button appears in the header only while the desktop sidebar is hidden —
+  and only *after* the close slide has finished (200ms, `SIDEBAR_TRANSITION_MS`),
+  fading in via `animate-in` so it never flashes beside the collapsing
+  sidebar (reduced-motion users get it instantly, delay 0).
 - **Container:** max-width `1280px` (`xl` breakpoint, §1.5) for the main
   generator dashboard, so text lines stay readable.
-- **Sidebar:** fixed `260px`. Below `lg` (§1.5), it collapses into a glass
-  drawer at `z-drawer`, following the overlay rules in §4.
 - **Spacing rhythm:** `lg` (24px) between major sections (e.g. Input Form →
   Output Results) so the interface has room to breathe.
 - **Settings container:** `max-w-3xl` (768px) — wider than the default
@@ -1281,9 +1301,23 @@ and title all agree).
   Safari's viewport jump on address bar hide/show.
 - **Main content padding:** `p-4 md:p-6` (tightened from `p-6`) for denser
   information density.
-- **Header:** `h-14`. Background is `bg-surface/80 backdrop-blur-md`. App name
-  uses `text-label-ui font-semibold tracking-tight` instead of `text-heading`.
-- **Sidebar:** navigation container uses `gap-0.5` and `p-3`. Nav items use
+- **Header:** `h-14`. Background is `bg-surface/80 backdrop-blur-md`.
+- **Sidebar:** sidebar-top brand block holds the logo mark (light/dark pair,
+  theme-aware) plus the app name (`text-label-ui font-semibold tracking-tight`)
+  inside `gap-2.5 px-3`, fixed at exactly `h-14` so its bottom `border-b` sits
+  on the same line as the header's bottom border (the two lines connect
+  across the shell). The desktop close toggle (`MenuButton`, close variant)
+  sits at the right end of the brand row (`ml-auto`) and collapses the
+  sidebar; it renders only while the sidebar is visible. Open/close animates
+  on `lg+` with a 200ms ease-out `transition-[width,transform,visibility]`:
+  the sidebar slides out (`-translate-x-full`), width eases to 0 so the main
+  column follows, and `visibility` stays visible through the slide-out then
+  flips to hidden (collapsed content is unfocusable and out of the
+  accessibility tree). While the resize handle is dragged, the transition is
+  suspended (`lg:transition-none`) so the width tracks the pointer 1:1, and
+  `motion-reduce:transition-none` makes open/close instant for reduced-motion
+  users. Navigation
+  container uses `gap-0.5` and `p-3`. Nav items use
   `rounded-lg` (was `rounded-md`). Active items get a left accent bar
   (`absolute left-0 h-5 w-0.5 rounded-full bg-brand-primary`). Icons transition
   to `text-brand-primary` when active, `text-muted group-hover:text-primary`

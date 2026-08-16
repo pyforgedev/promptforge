@@ -132,7 +132,10 @@
     "all": "Semua",
     "selectLanguage": "Pilih bahasa",
     "options": "Opsi",
-    "openNavigation": "Buka navigasi"
+    "openNavigation": "Buka navigasi",
+    "closeNavigation": "Tutup navigasi",
+    "resizeSidebar": "Ubah lebar sidebar",
+    "resizeSidebarHint": "Seret untuk mengubah lebar — klik dua kali untuk reset"
   },
   "prompts": {
     "name": "Nama",

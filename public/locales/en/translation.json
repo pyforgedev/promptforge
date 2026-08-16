@@ -132,7 +132,10 @@
     "all": "All",
     "selectLanguage": "Select language",
     "options": "Options",
-    "openNavigation": "Open navigation"
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "resizeSidebar": "Resize sidebar",
+    "resizeSidebarHint": "Drag to resize — double-click to reset"
   },
   "prompts": {
     "name": "Name",

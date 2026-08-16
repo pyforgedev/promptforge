@@ -1,11 +1,12 @@
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { useFavicon } from '@/hooks/useFavicon'
+import { useSidebarState } from '@/hooks/useSidebarState'
 
 export function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const sidebar = useSidebarState()
   const { pathname } = useLocation()
 
   useFavicon()
@@ -16,14 +17,23 @@ export function Layout() {
   }, [pathname])
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-app">
-      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+    <div className="relative flex min-h-dvh flex-col bg-app lg:flex-row">
+      <Sidebar
+        isDrawerOpen={sidebar.mobileDrawerOpen}
+        onCloseDrawer={sidebar.closeDrawer}
+        isDesktopVisible={sidebar.desktopVisible}
+        width={sidebar.width}
+        onWidthChange={sidebar.setWidthValid}
+        onCollapse={sidebar.collapseDesktop}
+        onResetWidth={sidebar.resetWidth}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Header
+          onMobileMenuToggle={sidebar.toggleDrawer}
+          isDesktopSidebarHidden={!sidebar.desktopVisible}
+          onDesktopMenuToggle={sidebar.openDesktop}
         />
-        <main className="z-base flex-1 p-4 md:p-6 lg:ml-[260px] animate-fade-in">
+        <main className="z-base flex-1 p-4 md:p-6 animate-fade-in">
           <div className="mx-auto w-full max-w-[1280px]">
             <Outlet />
           </div>

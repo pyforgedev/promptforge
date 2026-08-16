@@ -1,9 +1,7 @@
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Menu } from 'lucide-react'
 import { SiGithub } from '@icons-pack/react-simple-icons'
 import { US, ID } from 'country-flag-icons/react/3x2'
-import { AppLogo } from '@/components/common/AppLogo'
 import {
   Select,
   SelectContent,
@@ -13,9 +11,37 @@ import {
 } from '@/components/ui/select'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { ToggleTheme } from '@/components/ui/toggle-theme'
+import { SIDEBAR_TRANSITION_MS } from '@/hooks/useSidebarState'
+import { MenuButton } from './MenuButton'
 
-export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
+interface HeaderProps {
+  onMobileMenuToggle: () => void
+  /** True when the persistent desktop sidebar is collapsed/hidden. */
+  isDesktopSidebarHidden: boolean
+  onDesktopMenuToggle: () => void
+}
+
+export const Header = memo(function Header({
+  onMobileMenuToggle,
+  isDesktopSidebarHidden,
+  onDesktopMenuToggle,
+}: HeaderProps) {
   const { t, i18n } = useTranslation()
+  const [showDesktopOpenButton, setShowDesktopOpenButton] = useState(isDesktopSidebarHidden)
+
+  // The desktop open button must appear only *after* the sidebar has finished
+  // closing — rendering it instantly while the collapse animation (200ms) is
+  // still playing looks like a FOUC/glitch in the header.
+  useEffect(() => {
+    if (!isDesktopSidebarHidden) {
+      setShowDesktopOpenButton(false)
+      return
+    }
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const delay = prefersReducedMotion ? 0 : SIDEBAR_TRANSITION_MS
+    const timeoutId = window.setTimeout(() => setShowDesktopOpenButton(true), delay)
+    return () => window.clearTimeout(timeoutId)
+  }, [isDesktopSidebarHidden])
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)
@@ -24,19 +50,20 @@ export const Header = memo(function Header({ onMenuToggle }: { onMenuToggle: () 
   return (
     <header className="sticky top-0 z-sticky flex h-14 items-center justify-between border-b border-border-subtle bg-surface/80 px-4 md:px-6 backdrop-blur-md">
       <div className="flex items-center gap-3">
-        <button
-          className="cursor-pointer rounded-md p-1.5 transition-colors duration-150 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-app lg:hidden"
-          onClick={onMenuToggle}
-          aria-label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
-        >
-          <Menu className="h-5 w-5 text-primary" />
-        </button>
-        <div className="flex items-center gap-2.5">
-          <AppLogo size="sm" />
-          <span className="text-label-ui font-semibold text-primary tracking-tight">
-            {t('app.name')}
-          </span>
-        </div>
+        <MenuButton
+          onClick={onMobileMenuToggle}
+          className="lg:hidden"
+          label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
+          variant="open"
+        />
+        {isDesktopSidebarHidden && showDesktopOpenButton && (
+          <MenuButton
+            onClick={onDesktopMenuToggle}
+            className="hidden lg:flex animate-in motion-reduce:animate-none"
+            label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
+            variant="open"
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-2">
