@@ -31,6 +31,7 @@ import {
   detectPromptType,
 } from '@/services/formatter/formatterService'
 import { Sparkles } from 'lucide-react'
+import { downloadFile } from '@/lib/download'
 import type {
   InputMode,
   DownloadFormat,
@@ -329,18 +330,10 @@ export default function FormatterPage() {
 
   const handleDownload = () => {
     const content = exportBatch(visibleItems, downloadFormat)
-    const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    
+    const mimeType =
+      downloadFormat === 'csv' ? 'text/csv' : downloadFormat === 'json' ? 'application/json' : 'text/plain'
     const arSuffix = queueAspectRatio ? `-${queueAspectRatio.replace(/:/g, 'x')}` : ''
-    a.download = `formatter-export-${queueScope}${arSuffix}.${downloadFormat}`
-    
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadFile(content, `formatter-export-${queueScope}${arSuffix}.${downloadFormat}`, mimeType)
     showToast('success', t('toast.downloadSuccess'))
   }
 

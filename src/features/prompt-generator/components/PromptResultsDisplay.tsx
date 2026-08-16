@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { GenerationService } from '../services/generationService'
+import { downloadFile } from '@/lib/download'
+import { toCsvRow } from '@/lib/csv'
 
 import { GeneratorPromptCard } from './GeneratorPromptCard'
 import { BatchActionBar } from './BatchActionBar'
@@ -42,7 +44,7 @@ export function PromptResultsDisplay() {
 
   const handleExportCSV = useCallback(() => {
     if (!batch) return
-    const rows = batch.prompts.map((p) => [
+    const rows = batch.prompts.map((p) => toCsvRow([
       p.id,
       p.variantIndex,
       p.fullPrompt,
@@ -52,18 +54,12 @@ export function PromptResultsDisplay() {
       p.commercialKeywords.join('; '),
       p.adobeScore.total,
       p.isFavorite,
-    ])
+    ]))
     const csv = [
       ['id', 'variantIndex', 'fullPrompt', 'dalle3', 'nano_banana', 'negativePrompt', 'keywords', 'adobeScore', 'isFavorite'].join(','),
-      ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+      ...rows,
     ].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `prompts-${batch.batchId}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadFile(csv, `prompts-${batch.batchId}.csv`, 'text/csv')
     toast.success(t('batchActionBar.exported'))
   }, [batch, t])
 
@@ -73,13 +69,7 @@ export function PromptResultsDisplay() {
 
   const handleExportJSON = useCallback(() => {
     if (!batch) return
-    const blob = new Blob([JSON.stringify(batch, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `prompts-${batch.batchId}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadFile(JSON.stringify(batch, null, 2), `prompts-${batch.batchId}.json`, 'application/json')
     toast.success(t('batchActionBar.exported'))
   }, [batch, t])
 

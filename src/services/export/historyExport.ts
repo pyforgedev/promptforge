@@ -1,6 +1,8 @@
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import i18n from '@/i18n'
 import { toast } from 'sonner'
+import { downloadFile } from '@/lib/download'
+import { toCsvRow } from '@/lib/csv'
 
 export function exportToTxt(items: PromptHistoryRecord[]): string {
   return items
@@ -23,27 +25,15 @@ export function exportToJson(items: PromptHistoryRecord[]): string {
 
 export function exportToCsv(items: PromptHistoryRecord[]): string {
   const headers = ['id', 'content', 'niche', 'category', 'score', 'createdAt']
-  const rows = items.map(item => [
+  const rows = items.map(item => toCsvRow([
     item.id,
-    `"${item.fullPrompt.replace(/"/g, '""')}"`,
+    item.fullPrompt,
     item.niche,
     item.category,
     item.adobeScore?.total?.toString() ?? '',
-    new Date(item.createdAt).toISOString()
-  ])
-  return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-}
-
-export function downloadFile(content: string, filename: string, mimeType: string): void {
-  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+    new Date(item.createdAt).toISOString(),
+  ]))
+  return [headers.join(','), ...rows].join('\n')
 }
 
 export async function bulkExport(items: PromptHistoryRecord[], format: 'txt' | 'json' | 'csv') {

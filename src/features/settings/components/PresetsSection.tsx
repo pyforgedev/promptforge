@@ -4,6 +4,8 @@ import {
   Upload, Download, Save, FileJson, RotateCcw, Trash2,
 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
+import { getErrorMessage } from '@/lib/sanitizeError'
+import { downloadFile } from '@/lib/download'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,23 +74,14 @@ export function PresetsSection({
       setPresetDialogOpen(false)
       showToast('success', t('toast.presetSaved', { defaultValue: 'Preset saved' }))
     } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      const debugMsg = getErrorMessage(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.saveFailed', { defaultValue: 'Failed to save preset' }))
     }
   }
 
   const handleExport = () => {
     const data = { presets, activeConfig }
-    const json = JSON.stringify(data, null, 2)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'promptforge-ai-presets.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadFile(JSON.stringify(data, null, 2), 'promptforge-ai-presets.json', 'application/json')
     showToast('success', t('toast.exportSuccess', { defaultValue: 'Presets exported' }))
   }
 
@@ -108,7 +101,7 @@ export function PresetsSection({
       setImportOpen(false)
       showToast('success', t('toast.importSuccess', { defaultValue: 'Presets imported' }))
     } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      const debugMsg = getErrorMessage(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.importFailed', { defaultValue: 'Failed to import presets' }))
     }
   }

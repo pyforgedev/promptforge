@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, Download, Upload, RotateCcw, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePrompts } from '@/features/prompts/hooks/usePrompts'
+import { downloadFile } from '@/lib/download'
 import { ROUTES } from '@/app/routePaths'
 import { PromptList } from '@/features/prompts/components/PromptList'
 import { PromptForm } from '@/features/prompts/components/PromptForm'
@@ -40,7 +41,7 @@ import {
 import type { Prompt } from '@/types'
 import type { PromptFormData } from '@/features/prompts/utils/promptValidators'
 import type { NicheCategory } from '@/features/prompt-generator/types'
-import { exportPromptsToTxt, downloadAsTxt, parsePromptsFromTxt } from '@/services/export/txtExport'
+import { exportPromptsToTxt, parsePromptsFromTxt } from '@/services/export/txtExport'
 import { defaultTemplate, getDefaultTemplateContent } from '@/features/templates/defaultTemplate'
 
 export default function TemplatesPage() {
@@ -94,7 +95,7 @@ export default function TemplatesPage() {
 
   const handleExport = () => {
     const txt = exportPromptsToTxt(prompts)
-    downloadAsTxt(txt, 'promptforge-templates.txt')
+    downloadFile(txt, 'promptforge-templates.txt', 'text/plain')
   }
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
