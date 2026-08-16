@@ -1,26 +1,44 @@
 const SENSITIVE_PATTERNS = [
   /['"]?api[_-]?key['"]?\s*[:=]\s*['"][^'"]+['"]/gi,
+  /['"]?api[_-]?key['"]?\s*[:=]\s*[^&"',;\s})\]]+/gi,
   /['"]?x-goog-api-key['"]?\s*[:=]\s*['"][^'"]+['"]/gi,
   /x-goog-api-key[:\s]+[A-Za-z0-9\-_]+/gi,
   /['"]?x-api-key['"]?\s*[:=]\s*['"][^'"]+['"]/gi,
   /['"]?authorization['"]?\s*[:=]\s*['"][^'"]+['"]/gi,
   /['"]?Authorization['"]?\s*[:=]\s*['"][^'"]+['"]/gi,
-  /Bearer\s+[A-Za-z0-9\-._~+/]+/gi,
-  /bearer\s+[A-Za-z0-9\-._~+/]+/gi,
+  /Bearer\s+['"]?[A-Za-z0-9\-._~+/]+['"]?/gi,
+  /bearer\s+['"]?[A-Za-z0-9\-._~+/]+['"]?/gi,
 ]
 
 export function sanitizeMessage(message: string): string {
   let sanitized = message
   for (const pattern of SENSITIVE_PATTERNS) {
     sanitized = sanitized.replace(pattern, (match) => {
-      const separator = match.includes('":"') ? '":"' : match.includes("': '") ? "': '" : match.includes('=') ? '=' : ': '
-      const parts = separator === '=' ? match.split('=') : match.split(separator)
-      if (parts.length < 2) return match
-      const prefix = parts[0] + separator
+      const prefix = findSecretPrefix(match)
       return prefix + '***REDACTED***'
     })
   }
   return sanitized
+}
+
+function findSecretPrefix(match: string): string {
+  if (match.includes('=')) {
+    return match.slice(0, match.indexOf('=') + 1)
+  }
+  if (match.includes(':')) {
+    return match.slice(0, match.indexOf(':') + 1)
+  }
+  const tokens = match.split(/\s+/)
+  if (tokens.length > 1) {
+    return tokens[0] + ' '
+  }
+  return match
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return sanitizeMessage(error.message)
+  if (typeof error === 'object' && error !== null) return sanitizeError(error)
+  return sanitizeMessage(String(error))
 }
 
 export function sanitizeError(error: unknown): string {

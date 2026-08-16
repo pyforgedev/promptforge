@@ -1,7 +1,7 @@
 import { PromptComposerEngine } from '../engine/PromptComposerEngine'
 import { AIService } from '@/services/ai/aiService'
 import { saveGeneratedPromptBatch, togglePromptFavorite, getRecentRelevantHistory } from '@/services/storage/indexeddb'
-import { sanitizeError } from '@/lib/sanitizeError'
+import { getErrorMessage, sanitizeError } from '@/lib/sanitizeError'
 import { calculateSimilarity } from '@/services/similarity/similarityService'
 import { SIMILARITY_THRESHOLD } from '@/lib/constants'
 import type { AIConfig } from '@/features/settings/types'
@@ -115,7 +115,7 @@ export class GenerationService {
       await togglePromptFavorite(promptId)
       return { data: null, error: null }
     } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      const debugMsg = getErrorMessage(err)
       return {
         data: null,
         error: {

@@ -8,6 +8,7 @@ import {
 } from '@/features/prompts/services/promptService'
 import type { CreatePromptInput, UpdatePromptInput } from '@/features/prompts/types'
 import i18n from '@/i18n'
+import { getErrorMessage } from '@/lib/sanitizeError'
 
 interface UsePromptsReturn {
   prompts: Prompt[]
@@ -38,7 +39,7 @@ export function usePrompts(): UsePromptsReturn {
       setPrompts(data)
     } catch (err) {
       setError(import.meta.env.DEV
-        ? (err instanceof Error ? err.message : String(err))
+        ? getErrorMessage(err)
         : i18n.t('errors.prompts.loadFailed'))
     } finally {
       setLoading(false)
@@ -61,7 +62,7 @@ export function usePrompts(): UsePromptsReturn {
       return prompt
     } catch (err) {
       const message = import.meta.env.DEV
-        ? (err instanceof Error ? err.message : String(err))
+        ? getErrorMessage(err)
         : i18n.t('errors.prompts.createFailed')
       setError(message)
       throw err
@@ -79,7 +80,7 @@ export function usePrompts(): UsePromptsReturn {
       return prompt
     } catch (err) {
       const message = import.meta.env.DEV
-        ? (err instanceof Error ? err.message : String(err))
+        ? getErrorMessage(err)
         : i18n.t('errors.prompts.updateFailed')
       setError(message)
       throw err
@@ -96,7 +97,7 @@ export function usePrompts(): UsePromptsReturn {
       setPrompts((prev) => prev.filter((p) => p.id !== id))
     } catch (err) {
       const message = import.meta.env.DEV
-        ? (err instanceof Error ? err.message : String(err))
+        ? getErrorMessage(err)
         : i18n.t('errors.prompts.deleteFailed')
       setError(message)
       throw err

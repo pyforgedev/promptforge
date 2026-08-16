@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { bulkExport } from '@/services/export/historyExport'
+import { getErrorMessage } from '@/lib/sanitizeError'
 import { useToast } from '@/hooks/useToast'
 import { useTranslation } from 'react-i18next'
 import { ExportMenu } from './ExportMenu'
@@ -27,7 +28,7 @@ export const BulkActionBar = () => {
       await bulkDelete()
       showToast('success', t('toast.itemsDeleted', { count }))
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : t('toast.error')
+      const errorMsg = import.meta.env.DEV ? getErrorMessage(err) : t('toast.error')
       showToast('error', errorMsg)
     }
   }
@@ -40,7 +41,7 @@ export const BulkActionBar = () => {
         : t('history.allPrompts')
       showToast('success', t('toast.itemsMoved', { count, folder: folderName }))
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : t('toast.error')
+      const errorMsg = import.meta.env.DEV ? getErrorMessage(err) : t('toast.error')
       showToast('error', errorMsg)
     }
   }

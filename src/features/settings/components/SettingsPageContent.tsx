@@ -4,6 +4,7 @@ import {
   Cpu, RefreshCw, CheckCircle2, AlertCircle, Save, Play, TriangleAlert,
 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
+import { getErrorMessage } from '@/lib/sanitizeError'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { useAppContext } from '@/hooks/useAppContext'
 import { testConnection } from '@/services/ai/aiService'
@@ -133,7 +134,7 @@ export function SettingsPageContent() {
       await setActiveConfig({ provider, apiKey, endpoint, model })
       showToast('success', t('toast.configApplied', { defaultValue: 'Configuration applied' }))
     } catch (err) {
-      const debugMsg = err instanceof Error ? err.message : String(err)
+      const debugMsg = getErrorMessage(err)
       showToast('error', import.meta.env.DEV ? debugMsg : t('toast.applyFailed', { defaultValue: 'Failed to apply configuration' }))
     } finally {
       setIsApplying(false)
