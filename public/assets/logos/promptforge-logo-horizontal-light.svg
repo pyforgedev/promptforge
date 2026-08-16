@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="120" viewBox="0 0 520 120" role="img" aria-labelledby="title">
+<title id="title">PromptForge horizontal logo light</title>
+<g transform="translate(16 12) scale(1.5)">
+  <path fill="#2F6FE0" d="M18.6 10 4 32l14.6 22 8.4-5.2L15.8 32 27 15.2 18.6 10Z"/>
+  <path fill="#2F6FE0" d="M45.4 10 60 32 45.4 54 37 48.8 48.2 32 37 15.2 45.4 10Z"/>
+  <path fill="#F59E0B" d="M32 20.5 35.1 28.9 43.5 32 35.1 35.1 32 43.5 28.9 35.1 20.5 32 28.9 28.9 32 20.5Z"/>
+</g>
+<text x="120" y="73" fill="#111317" font-family="Geist, Inter, Segoe UI, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="-1">PromptForge</text>
+</svg>

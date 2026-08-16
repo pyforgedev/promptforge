@@ -9,7 +9,7 @@ interface AppLogoProps {
 }
 
 const sizeMap = {
-  sm: 'h-10',
+  sm: 'h-7',
   md: 'h-12',
   lg: 'h-24',
   xl: 'h-32'
@@ -26,13 +26,13 @@ export const AppLogo = memo(function AppLogo({ size = 'md', className = '' }: Ap
   return (
     <div className={`relative shrink-0 ${heightClass} w-auto ${className}`}>
       <img
-        src="/assets/light-logo.svg"
+        src="/assets/marks/promptforge-main-mark.svg"
         alt={effectiveTheme === 'light' ? t('app.name', 'PromptForge') : ''}
         aria-hidden={effectiveTheme !== 'light'}
         className={`h-full w-auto object-contain ${transitionClass} ${effectiveTheme === 'light' ? 'opacity-100' : 'opacity-0'}`}
       />
       <img
-        src="/assets/dark-logo.svg"
+        src="/assets/marks/promptforge-main-mark-dark.svg"
         alt={effectiveTheme === 'dark' ? t('app.name', 'PromptForge') : ''}
         aria-hidden={effectiveTheme !== 'dark'}
         className={`absolute inset-0 h-full w-auto object-contain ${transitionClass} ${effectiveTheme === 'dark' ? 'opacity-100' : 'opacity-0'}`}

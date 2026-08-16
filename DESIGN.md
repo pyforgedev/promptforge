@@ -456,6 +456,13 @@ direct example of what this section prevents going forward).
   fill/stroke color separately from the text it sits beside.
 - **Sidebar navigation:** nav items use `tracking-tight` for tighter label
   spacing alongside the icon.
+- **Brand assets:** live in `public/assets/` as the official PromptForge pack
+  (`marks/` for in-app mark usage, `logos/` for lockups, `favicons/` for site
+  favicons, `app/` for app tiles/PWA) — full usage guide in
+  `public/assets/README.txt`. Always pair the light/dark variant with
+  the effective theme — never use a single static variant. Brand palette:
+  primary light `#2F6FE0` / dark `#5B8DF8` (identical to `brand-primary`
+  tokens), forge accent `#F59E0B`.
 
 ## 6.2 Streaming Output Panel
 

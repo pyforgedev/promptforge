@@ -15,6 +15,6 @@ export function useFavicon() {
     }
     
     link.type = 'image/svg+xml';
-    link.href = effectiveTheme === 'dark' ? '/assets/favicon-dark.svg' : '/assets/favicon-light.svg';
+    link.href = effectiveTheme === 'dark' ? '/assets/favicons/favicon-dark.svg' : '/assets/favicons/favicon.svg';
   }, [effectiveTheme]);
 }
