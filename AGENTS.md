@@ -16,7 +16,7 @@ npm run test:run  # run the Vitest suite once
 ```
 
 > [!IMPORTANT]
-> Before claiming a task is done, run `npm run build`, `npm run lint`, and `npm run test:run` and ensure all three pass.
+> **Never run `npm run build` (or any build/typecheck command: `npx tsc *`, `npx vite build *`, etc.) without asking the user first.** Builds are slow, so do not run them as routine verification on every small change. Ask for explicit approval before each build; only run it when the user requests it or a build is strictly required for the current task. `npm run lint` and `npm run test:run` may run freely as routine checks.
 
 ## Internationalization
 
