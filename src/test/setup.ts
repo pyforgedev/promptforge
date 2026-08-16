@@ -146,6 +146,11 @@ if (typeof Element !== 'undefined') {
   Element.prototype.scrollIntoView ??= () => {}
 }
 
+// 5b. Window.scrollTo stub (jsdom gap — Layout scrolls to top on route change)
+if (typeof window !== 'undefined') {
+  window.scrollTo ??= () => {}
+}
+
 // 6. ResizeObserver stub (jsdom gap — Radix ScrollArea constructs it on mount)
 if (typeof globalThis.ResizeObserver === 'undefined') {
   class ResizeObserverStub {

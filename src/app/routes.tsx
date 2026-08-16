@@ -9,6 +9,7 @@ import {
   SettingsPage,
   ErrorPage,
   FormatterPage,
+  NotFoundPage,
 } from './pages'
 
 export const routes = [
@@ -44,6 +45,10 @@ export const routes = [
       {
         path: ROUTES.settings,
         element: <SettingsPage />,
+      },
+      {
+        path: ROUTES.notFound,
+        element: <NotFoundPage />,
       },
     ],
   },

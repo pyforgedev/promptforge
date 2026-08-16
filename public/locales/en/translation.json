@@ -602,6 +602,11 @@
     "reloadPage": "Reload page",
     "stackTrace": "Stack trace"
   },
+  "notFoundPage": {
+    "title": "Page not found",
+    "message": "This page does not exist or may have moved.",
+    "goHome": "Go home"
+  },
   "errors": {
     "history": {
       "loadFailed": "Failed to load history.",

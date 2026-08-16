@@ -602,6 +602,11 @@
     "reloadPage": "Muat Ulang Halaman",
     "stackTrace": "Jejak tumpukan"
   },
+  "notFoundPage": {
+    "title": "Halaman tidak ditemukan",
+    "message": "Halaman ini tidak ada atau mungkin telah dipindahkan.",
+    "goHome": "Ke Beranda"
+  },
   "errors": {
     "history": {
       "loadFailed": "Gagal memuat riwayat.",
