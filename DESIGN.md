@@ -1262,6 +1262,31 @@ and title all agree).
 4. Error toasts state what happened and what to do next (§6.4 voice); success
    copy is confident, no exclamation marks.
 
+### 6.19 Page Header Action Toolbar
+
+`PageHeader`'s `action` slot (Templates page: Import / Export / Reset Default /
+Create Template) must never force a single row — it wraps.
+
+- **Toolbar container:** `grid grid-cols-2 gap-2 sm:flex sm:flex-wrap`. Below
+  `sm` the four buttons sit in a deterministic 2×2 grid (equal-width cells,
+  no reliance on wrap behavior); at `sm+` they become a wrapping flex row —
+  buttons keep their natural width (`whitespace-nowrap` from the Button base)
+  and flow to a second line when the viewport can't fit them. No `shrink-0`,
+  no fixed widths.
+- **Action wrapper (`PageHeader`):** `min-w-0 max-w-full` — never
+  `shrink-0`. The wrapper must be allowed to shrink so the inner `flex-wrap`
+  can engage; with `shrink-0` the 4-button row overflows the viewport instead
+  of wrapping.
+- **Sizing:** default `size` (`h-10 px-4 py-2`) — 40px height satisfies the
+  ≥40px touch-target rule up to `lg` (§1.5); icons `h-4 w-4` via the Button
+  base `[&_svg]:size-4`.
+- **Layout:** below `sm` the header stacks (title above, toolbar below,
+  full-width); at `sm+` title and toolbar sit side by side and the toolbar
+  wraps to two lines until there's room for one (≈840px with EN labels).
+- **Hidden file input:** the Import input (`type="file"`, `className="hidden"`)
+  is triggered via a ref — keep it inside the toolbar container so the
+  Import button stays its trigger.
+
 ---
 
 ## 7. Layout & Spacing
@@ -1366,3 +1391,4 @@ and title all agree).
 | v1.7 | Added component selection priority (§0): shadcn/ui → React Bits → Framer Motion → custom Tailwind/CSS. React Bits registry (`@react-bits`, components.json) is the tier-2 source for animation-forward components; aligned §1.4 (stagger), §6.15 (Noise), §6.16 (SpotlightCard), §6.17 (Skeleton) with tier references |
 | v1.8 | Responsive audit against Tailwind default breakpoints (§1.5): touch targets keep ≥40px until `lg` (drawer era) — compact `md:` overrides in FolderSidebar/BulkActionBar moved to `lg:`; history page padding parity at `md` (`md:-m-6` compensation, single `sm:p-6`); added `--height-header` layout token (single source for header/drawer offsets); generator output grid graduates `md:grid-cols-2 lg:grid-cols-3`; removed dead `sm:grid-cols-1` |
 | v1.9 | Mobile drawer animation: slide state moved to `max-lg:` variants with `translate` in the custom transition list (Tailwind v4 maps `translate-x-*` to the CSS `translate` property — `transition-[width,transform,...]` never animated it, so the mobile drawer popped instead of sliding); closed drawer now `max-lg:invisible` (unfocusable, a11y parity with desktop); backdrops (app + folder drawer) always mounted with 200ms `opacity` fade and `pointer-events-none` when closed instead of instant mount/unmount |
+| v1.10 | Page header action toolbar (Templates: Import/Export/Reset/Create) made responsive: toolbar is a deterministic 2×2 grid below `sm` (`grid grid-cols-2 gap-2`) and a wrapping flex row at `sm+` (`sm:flex sm:flex-wrap`); the `PageHeader` action wrapper may shrink (`min-w-0 max-w-full`, was `shrink-0`) — the 4-button row can no longer stay one line and break the viewport edge; new §6.19 documents the pattern |

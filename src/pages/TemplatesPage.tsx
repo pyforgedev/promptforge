@@ -152,7 +152,7 @@ export default function TemplatesPage() {
         title={t('templates.pageTitle')}
         description={t('templates.pageDescription')}
         action={
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <input
               ref={importFileRef}
               type="file"

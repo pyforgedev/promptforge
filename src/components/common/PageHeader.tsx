@@ -17,7 +17,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
           </p>
         )}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="min-w-0 max-w-full">{action}</div>}
     </div>
   )
 }
