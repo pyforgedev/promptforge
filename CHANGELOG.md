@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.0](https://github.com/pyforgedev/promptforge/compare/v0.5.0...v0.6.0) (2026-08-17)
+
+### Features
+
+* **formatter:** Replace queue overview with AnimatedList ([defc1aa](https://github.com/pyforgedev/promptforge/commit/defc1aa967ddd4ac47f58d2637b8d8528963bf14))
+* **formatter:** Support "--- Prompt N ---" section paste format ([5650498](https://github.com/pyforgedev/promptforge/commit/5650498fd74e185534acbd01a5336e0319310dc7))
+* **prompt-generator:** Refine composer controls ([211c544](https://github.com/pyforgedev/promptforge/commit/211c544b0220ff13d2ace3d7cde3b98ce62d3ebb))
+* **prompt-generator:** Synchronize style preferences ([17bfa0c](https://github.com/pyforgedev/promptforge/commit/17bfa0c83b36044d95f949c14bf0fcaf9391ca3e))
+* **ui:** Add 404 page with catch-all route ([e87db01](https://github.com/pyforgedev/promptforge/commit/e87db016721f8bd5ba8a7186d16f3a80223ceefb))
+* **ui:** Add React Bits components and integrate into Home and QuickStats ([96fd979](https://github.com/pyforgedev/promptforge/commit/96fd97955d053f5a56e4623737144ab385d5b97b))
+* **ui:** Add resizable full-height sidebar with panel toggle ([f489c34](https://github.com/pyforgedev/promptforge/commit/f489c3472656107fab5606f925a16f4d20d1cd5a))
+* **ui:** Integrate official PromptForge brand assets ([e7839e6](https://github.com/pyforgedev/promptforge/commit/e7839e61577664c74072f66f790e280c6b026b09)), references [#2F6FE0](https://github.com/pyforgedev/promptforge/issues/2F6FE0) [#5B8DF8](https://github.com/pyforgedev/promptforge/issues/5B8DF8)
+* **ui:** Remove reduced-motion restrictions ([ffa06f6](https://github.com/pyforgedev/promptforge/commit/ffa06f645bfa2ad7f4ddb674291bd53bd967ee94))
+
+### Bug Fixes
+
+* **security:** Redact secrets in error messages ([a13143c](https://github.com/pyforgedev/promptforge/commit/a13143ccd139d0eece7afafdd66f1ee3ebc1e464))
+* **storage:** persist master key in IndexedDB so settings survive refresh ([575f71d](https://github.com/pyforgedev/promptforge/commit/575f71dc8fecf1cd3504e54672fd432928b91299))
+* **templates:** Make page header action toolbar responsive ([d68f67e](https://github.com/pyforgedev/promptforge/commit/d68f67e3a9bb0830a934c35c43b49120b530eff4))
+* **ui:** Animate mobile drawer slide and backdrop fade ([957bd3e](https://github.com/pyforgedev/promptforge/commit/957bd3ea49bbcf124e0361cfc6aee8d321c477f8))
+* **ui:** Remove phantom scrollbar flash on generator page ([9b1a9b4](https://github.com/pyforgedev/promptforge/commit/9b1a9b4f3e43b0de70b0c84aaa09844b1ad13201))
+* **ui:** Restore page scrollbar while Radix Select is open ([2600f04](https://github.com/pyforgedev/promptforge/commit/2600f040bd210304fed5b8681cbcf71d65b542e4))
+
 ## [0.5.0](https://github.com/pyforgedev/promptforge/compare/v0.4.0...v0.5.0) (2026-08-05)
 
 ### Features
