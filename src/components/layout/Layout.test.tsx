@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
-import { render, screen, fireEvent } from '@/test/utils'
+import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import i18n from '@/i18n'
 import { AppContext } from '@/app/providers/AppContext'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -77,25 +77,39 @@ describe('Layout interaction & integration', () => {
       // Mobile hamburger is the initial one rendered in header
       const mobileMenuBtn = openNavButtons[0]
 
-      // Initially overlay is not present
-      expect(document.querySelector('.fixed.inset-0.z-drawer')).toBeNull()
+      const aside = document.querySelector('aside')!
+      // Initially the drawer is closed: translated off-canvas and unfocusable
+      expect(aside.className).toContain('max-lg:-translate-x-full')
+      expect(aside.className).toContain('max-lg:invisible')
+
+      // Overlay is always mounted (so it can fade) but hidden and inert when closed
+      const overlay = document.querySelector('.fixed.inset-0.z-drawer')
+      expect(overlay).not.toBeNull()
+      expect(overlay!.className).toContain('opacity-0')
+      expect(overlay!.className).toContain('pointer-events-none')
 
       // Click mobile hamburger to open drawer
       fireEvent.click(mobileMenuBtn)
-      const overlay = document.querySelector('.fixed.inset-0.z-drawer')
-      expect(overlay).not.toBeNull()
+      expect(aside.className).toContain('max-lg:translate-x-0')
+      expect(aside.className).not.toContain('max-lg:invisible')
+      expect(overlay!.className).toContain('opacity-100')
+      expect(overlay!.className).not.toContain('pointer-events-none')
 
       // Click overlay to close drawer
       fireEvent.click(overlay!)
-      expect(document.querySelector('.fixed.inset-0.z-drawer')).toBeNull()
+      expect(aside.className).toContain('max-lg:-translate-x-full')
+      expect(overlay!.className).toContain('opacity-0')
+      expect(overlay!.className).toContain('pointer-events-none')
 
       // Reopen drawer, then click a NavLink
       fireEvent.click(mobileMenuBtn)
-      expect(document.querySelector('.fixed.inset-0.z-drawer')).not.toBeNull()
+      expect(aside.className).toContain('max-lg:translate-x-0')
 
       const generatorNavLink = screen.getByRole('link', { name: 'Generator' })
       fireEvent.click(generatorNavLink)
-      expect(document.querySelector('.fixed.inset-0.z-drawer')).toBeNull()
+      expect(aside.className).toContain('max-lg:-translate-x-full')
+      expect(aside.className).toContain('max-lg:invisible')
+      expect(overlay!.className).toContain('opacity-0')
     })
   })
 
@@ -156,15 +170,15 @@ describe('Layout interaction & integration', () => {
 
       // Header renders only the mobile open button immediately after collapse —
       // the desktop open button waits for the 200ms close animation to finish
-      let openNavButtons = screen.getAllByRole('button', { name: 'Open navigation' })
-      expect(openNavButtons).toHaveLength(1)
+      expect(screen.getAllByRole('button', { name: 'Open navigation' })).toHaveLength(1)
 
       // ...then appears once the collapse animation has completed
-      openNavButtons = await screen.findAllByRole('button', { name: 'Open navigation' })
-      expect(openNavButtons).toHaveLength(2)
+      await waitFor(() => {
+        expect(screen.getAllByRole('button', { name: 'Open navigation' })).toHaveLength(2)
+      })
 
       // Clicking desktop reopen button restores sidebar at last valid width
-      const desktopMenuBtn = openNavButtons[1]
+      const desktopMenuBtn = screen.getAllByRole('button', { name: 'Open navigation' })[1]
       fireEvent.click(desktopMenuBtn)
 
       const restoredSeparator = screen.getByRole('separator', { name: 'Resize sidebar' })
@@ -272,11 +286,12 @@ describe('Layout interaction & integration', () => {
       expect(screen.getAllByRole('button', { name: 'Open navigation' })).toHaveLength(1)
 
       // ...it appears once the collapse animation has completed
-      const openNavButtons = await screen.findAllByRole('button', { name: 'Open navigation' })
-      expect(openNavButtons).toHaveLength(2)
+      await waitFor(() => {
+        expect(screen.getAllByRole('button', { name: 'Open navigation' })).toHaveLength(2)
+      })
 
       // Clicking desktop reopen button restores sidebar
-      const desktopOpenBtn = openNavButtons[1]
+      const desktopOpenBtn = screen.getAllByRole('button', { name: 'Open navigation' })[1]
       fireEvent.click(desktopOpenBtn)
 
       const restoredSeparator = screen.getByRole('separator', { name: 'Resize sidebar' })
@@ -305,20 +320,25 @@ describe('Layout interaction & integration', () => {
       renderLayoutRouter()
 
       const aside = document.querySelector('aside')!
-      expect(aside.className).toContain('lg:translate-x-0')
-      expect(aside.className).not.toContain('lg:invisible')
+      // Exact-token matching: `max-lg:invisible` (closed mobile drawer) must
+      // not count as the desktop `lg:invisible` collapsed state.
+      const tokens = () => aside.className.split(/\s+/)
+      expect(tokens()).toContain('lg:translate-x-0')
+      expect(tokens()).not.toContain('lg:invisible')
 
       fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }))
 
-      expect(aside.className).toContain('lg:-translate-x-full')
-      expect(aside.className).toContain('lg:w-0')
-      expect(aside.className).toContain('lg:invisible')
+      expect(tokens()).toContain('lg:-translate-x-full')
+      expect(tokens()).toContain('lg:w-0')
+      expect(tokens()).toContain('lg:invisible')
 
       // Reopen restores the visible state (after the delayed open button appears)
-      const openNavButtons = await screen.findAllByRole('button', { name: 'Open navigation' })
-      fireEvent.click(openNavButtons[1])
-      expect(aside.className).toContain('lg:translate-x-0')
-      expect(aside.className).not.toContain('lg:invisible')
+      await waitFor(() => {
+        expect(screen.getAllByRole('button', { name: 'Open navigation' })).toHaveLength(2)
+      })
+      fireEvent.click(screen.getAllByRole('button', { name: 'Open navigation' })[1])
+      expect(tokens()).toContain('lg:translate-x-0')
+      expect(tokens()).not.toContain('lg:invisible')
     })
   })
 

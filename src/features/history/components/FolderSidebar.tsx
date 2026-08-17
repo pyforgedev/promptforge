@@ -89,19 +89,19 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-drawer bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-drawer bg-black/60 backdrop-blur-sm transition-opacity duration-200 ease-out motion-reduce:transition-none lg:hidden ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       <aside
         className={cn(
-          "flex h-[calc(100dvh-3.5rem)] flex-col border-r border-border-subtle bg-surface/80 backdrop-blur-md lg:h-full",
-          "fixed left-0 top-14 z-drawer w-[260px] transition-transform duration-200 lg:static lg:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "flex h-[calc(100dvh-var(--height-header))] flex-col border-r border-border-subtle bg-surface/80 backdrop-blur-md lg:h-full",
+          "fixed left-0 top-(--height-header) z-drawer w-[260px] transition-[translate,visibility] duration-200 motion-reduce:transition-none lg:static lg:translate-x-0",
+          isOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full max-lg:invisible"
         )}
       >
         <div className="flex items-center justify-between p-4 border-b border-border-subtle">
@@ -126,7 +126,7 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="min-h-[40px] min-w-[40px] cursor-pointer rounded-md transition-colors hover:bg-surface-hover md:h-7 md:min-h-0 md:w-7 md:min-w-0"
+                  className="min-h-[40px] min-w-[40px] cursor-pointer rounded-md transition-colors hover:bg-surface-hover lg:h-7 lg:min-h-0 lg:w-7 lg:min-w-0"
                   onClick={handleCreateFolder}
                   aria-label={t('history.newFolder')}
                 >

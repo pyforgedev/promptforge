@@ -48,7 +48,7 @@ export const Header = memo(function Header({
   }
 
   return (
-    <header className="sticky top-0 z-sticky flex h-14 items-center justify-between border-b border-border-subtle bg-surface/80 px-4 md:px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-sticky flex h-(--height-header) items-center justify-between border-b border-border-subtle bg-surface/80 px-4 md:px-6 backdrop-blur-md">
       <div className="flex items-center gap-3">
         <MenuButton
           onClick={onMobileMenuToggle}

@@ -162,17 +162,17 @@ export const Sidebar = memo(function Sidebar({
 
   return (
     <>
-      {isDrawerOpen && (
-        <div
-          className="fixed inset-0 z-drawer bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={onCloseDrawer}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-drawer bg-black/60 backdrop-blur-sm transition-opacity duration-200 ease-out motion-reduce:transition-none lg:hidden ${
+          isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onCloseDrawer}
+        aria-hidden="true"
+      />
 
       <aside
-        className={`fixed left-0 top-0 z-drawer flex h-dvh w-[260px] flex-col border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-[width,transform,visibility] duration-200 ease-out motion-reduce:transition-none lg:sticky lg:top-0 lg:z-auto lg:min-w-0 lg:overflow-hidden lg:w-(--sb-w) ${
-          isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed left-0 top-0 z-drawer flex h-dvh w-[260px] flex-col border-r border-border-subtle bg-surface/95 backdrop-blur-md transition-[width,translate,visibility] duration-200 ease-out motion-reduce:transition-none lg:sticky lg:top-0 lg:z-auto lg:min-w-0 lg:overflow-hidden lg:w-(--sb-w) ${
+          isDrawerOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full max-lg:invisible'
         } ${
           isDesktopVisible
             ? 'lg:translate-x-0'
@@ -181,7 +181,7 @@ export const Sidebar = memo(function Sidebar({
         style={{ '--sb-w': `${width}px` } as React.CSSProperties}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-border-subtle px-3">
+          <div className="flex h-(--height-header) shrink-0 items-center gap-2.5 border-b border-border-subtle px-3">
             <AppLogo size="sm" />
             <span className="text-label-ui font-semibold text-primary tracking-tight">
               {t('app.name')}

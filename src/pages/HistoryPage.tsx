@@ -64,10 +64,10 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden lg:-m-6 lg:h-[calc(100dvh-3.5rem)]">
+    <div className="flex h-full overflow-hidden md:-m-6 lg:h-[calc(100dvh-var(--height-header))]">
       <FolderSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:p-6 [scrollbar-gutter:stable]">
+      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 [scrollbar-gutter:stable]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Button 

@@ -34,6 +34,9 @@
   --color-text-secondary: rgb(var(--text-secondary));
   --color-text-muted: rgb(var(--text-muted));
 
+  /* Layout dimension tokens — §1.3 */
+  --height-header: 3.5rem; /* 56px — header height; single source for drawer offsets (top-*, calc()) */
+
   /* Z-index layers — §1.3 */
   --color-z-base: 0;
   --color-z-sticky: 10;

@@ -144,6 +144,10 @@ typographic control. **Font smoothing** is applied globally:
 | `z-modal` | 40 | Dialogs |
 | `z-toast` | 50 | Toast notifications (see §6.18) |
 
+| Layout dimension token | Value | Used for |
+|---|---|---|
+| `--height-header` | `3.5rem` (56px) | Header height; single source for every drawer offset (`top-(--height-header)`) and full-height calc (`calc(100dvh - var(--height-header))`) — never hardcode `3.5rem` in components |
+
 The grain overlay (`z-grain: 1`) is a fixed-position texture layer that renders
 above the background (`z-base` defaults to 0 via stacking context) but below
 all interactive content (`z-sticky` and above). This ensures it never visually
@@ -1278,7 +1282,7 @@ and title all agree).
   (fixed 260 px, overlay, follows the overlay rules in §4) — the persisted
   desktop width never applies to the drawer.
 - **Header:** spans only the right column (not the sidebar) — `sticky top-0`,
-  `h-14`, `z-sticky`, brand-free: the logo and the close toggle live in the
+  `h-(--height-header)` (§1.3), `z-sticky`, brand-free: the logo and the close toggle live in the
   sidebar. Mobile hamburger (`<lg`) opens the drawer; on `lg+` an open
   button appears in the header only while the desktop sidebar is hidden —
   and only *after* the close slide has finished (200ms, `SIDEBAR_TRANSITION_MS`),
@@ -1301,15 +1305,18 @@ and title all agree).
   Safari's viewport jump on address bar hide/show.
 - **Main content padding:** `p-4 md:p-6` (tightened from `p-6`) for denser
   information density.
-- **Header:** `h-14`. Background is `bg-surface/80 backdrop-blur-md`.
+- **Header:** `h-(--height-header)`. Background is `bg-surface/80 backdrop-blur-md`.
 - **Sidebar:** sidebar-top brand block holds the logo mark (light/dark pair,
   theme-aware) plus the app name (`text-label-ui font-semibold tracking-tight`)
-  inside `gap-2.5 px-3`, fixed at exactly `h-14` so its bottom `border-b` sits
+  inside `gap-2.5 px-3`, fixed at exactly `h-(--height-header)` so its bottom `border-b` sits
   on the same line as the header's bottom border (the two lines connect
   across the shell). The desktop close toggle (`MenuButton`, close variant)
   sits at the right end of the brand row (`ml-auto`) and collapses the
   sidebar; it renders only while the sidebar is visible. Open/close animates
-  on `lg+` with a 200ms ease-out `transition-[width,transform,visibility]`:
+  on `lg+` with a 200ms ease-out
+  `transition-[width,translate,visibility]` (Tailwind v4 maps `translate-x-*`
+  to the CSS `translate` property — custom transition lists must name
+  `translate`, not `transform`):
   the sidebar slides out (`-translate-x-full`), width eases to 0 so the main
   column follows, and `visibility` stays visible through the slide-out then
   flips to hidden (collapsed content is unfocusable and out of the
@@ -1323,6 +1330,25 @@ and title all agree).
   to `text-brand-primary` when active, `text-muted group-hover:text-primary`
   when inactive. Mobile overlay uses `bg-black/60 backdrop-blur-sm`.
   Background: `bg-surface/95 backdrop-blur-md`.
+- **Mobile drawer:** below `lg` the same `<aside>` is an off-canvas drawer
+  (fixed 260px, `z-drawer`) that slides with the same 200ms ease-out — the
+  slide state uses `max-lg:` variants (`max-lg:translate-x-0` ↔
+  `max-lg:-translate-x-full max-lg:invisible`) so closed-drawer content is
+  unfocusable and out of the a11y tree, and never bleeds into the `lg+`
+  persistent state. The backdrop is always mounted (for the fade) with
+  `transition-opacity duration-200` and `opacity-0 pointer-events-none` when
+  closed, so it never pops in/out; both honor `motion-reduce:transition-none`.
+  The History page folder drawer follows the same pattern (§5).
+- **History page shell:** the full-height row compensates the main's `md:p-6`
+  with `md:-m-6` (its own `sm:p-6` then produces a single 24px gutter at
+  `md+`, matching the rest of the app instead of a doubled 48px) and measures
+  itself against the header via `calc(100dvh - var(--height-header))` — see
+  `--height-header` (§1.3). The folder drawer offsets use the same token
+  (`top-(--height-header)`), never hardcoded `3.5rem`.
+- **Touch-target override point:** compact button sizes (`h-7` etc.) and
+  `min-h/min-w` resets apply only at `lg+` (`lg:h-7 lg:min-h-0 ...`) — the
+  drawer era below `lg` keeps ≥40px (ideally 44px) touch targets, per the
+  accessibility table in §2.
 
 ---
 
@@ -1338,3 +1364,5 @@ and title all agree).
 | v1.5 | Added native tooltip suppression rule for simple-icons (title="") to prevent double tooltips |
 | v1.6 | Added toast notification spec (§6.18): neutral surface + status accents (no richColors), status borders/icons/titles/glows, durations, stacking, z-index, usage rules; theme tokens drive Sonner theming in `index.css` |
 | v1.7 | Added component selection priority (§0): shadcn/ui → React Bits → Framer Motion → custom Tailwind/CSS. React Bits registry (`@react-bits`, components.json) is the tier-2 source for animation-forward components; aligned §1.4 (stagger), §6.15 (Noise), §6.16 (SpotlightCard), §6.17 (Skeleton) with tier references |
+| v1.8 | Responsive audit against Tailwind default breakpoints (§1.5): touch targets keep ≥40px until `lg` (drawer era) — compact `md:` overrides in FolderSidebar/BulkActionBar moved to `lg:`; history page padding parity at `md` (`md:-m-6` compensation, single `sm:p-6`); added `--height-header` layout token (single source for header/drawer offsets); generator output grid graduates `md:grid-cols-2 lg:grid-cols-3`; removed dead `sm:grid-cols-1` |
+| v1.9 | Mobile drawer animation: slide state moved to `max-lg:` variants with `translate` in the custom transition list (Tailwind v4 maps `translate-x-*` to the CSS `translate` property — `transition-[width,transform,...]` never animated it, so the mobile drawer popped instead of sliding); closed drawer now `max-lg:invisible` (unfocusable, a11y parity with desktop); backdrops (app + folder drawer) always mounted with 200ms `opacity` fade and `pointer-events-none` when closed instead of instant mount/unmount |

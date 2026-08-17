@@ -62,7 +62,7 @@ export const RecentPrompts = memo(function RecentPrompts() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4">
       <h3 className="text-heading">{t('history.recentPrompts')}</h3>
-      <div className="grid gap-3 sm:grid-cols-1">
+      <div className="grid gap-3">
         {recentItems.map(item => (
           <div
             key={item.id}

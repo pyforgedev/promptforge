@@ -84,7 +84,7 @@ export const BulkActionBar = () => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-7 md:w-7 text-muted hover:text-primary hover:bg-surface-hover rounded-full cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 lg:h-7 lg:w-7 text-muted hover:text-primary hover:bg-surface-hover rounded-full cursor-pointer"
                   onClick={deselectAll}
                   aria-label={t('history.deselectAll')}
                 >
