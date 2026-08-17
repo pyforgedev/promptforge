@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Python (graphify CLI, project-level install)
+.venv/
+
+# graphify output (knowledge graph)
+graphify-out/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
