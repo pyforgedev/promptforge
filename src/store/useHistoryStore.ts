@@ -4,6 +4,7 @@ import {
   deleteHistoryItems,
   deleteAllHistory,
   getFolders,
+  getHistoryCounts,
   saveFolder,
   deleteFolderAndUnassign,
   bulkUpdateHistoryFolder,
@@ -16,10 +17,13 @@ import { sanitizeError } from '@/lib/sanitizeError'
 import i18n from '@/i18n'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import type { HistoryFilters, Folder } from '@/features/history/types'
+import { MAX_FOLDERS, FolderLimitError } from '@/features/history/types'
 
 interface HistoryState {
   items: PromptHistoryRecord[]
   folders: Folder[]
+  folderCounts: Record<string, number>
+  totalPromptCount: number
   selectedIds: string[]
   currentFolderId: string | null
   searchAllFolders: boolean
@@ -53,7 +57,7 @@ interface HistoryState {
   removeItem: (id: string) => Promise<void>
   
   // Folder Actions
-  createFolder: (name: string, parentId?: string | null) => Promise<void>
+  createFolder: (name: string, parentId?: string | null) => Promise<string>
   renameFolder: (id: string, name: string) => Promise<void>
   removeFolder: (id: string) => Promise<void>
 }
@@ -93,9 +97,20 @@ function scheduleSearchFetch(): void {
   }, SEARCH_DEBOUNCE_MS)
 }
 
+async function refreshHistoryCounts(): Promise<void> {
+  try {
+    const { total, byFolder } = await getHistoryCounts()
+    useHistoryStore.setState({ totalPromptCount: total, folderCounts: byFolder })
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[HistoryStore] refreshHistoryCounts failed:', sanitizeError(err))
+  }
+}
+
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   items: [],
   folders: [],
+  folderCounts: {},
+  totalPromptCount: 0,
   selectedIds: [],
   currentFolderId: null,
   searchAllFolders: false,
@@ -172,15 +187,15 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   fetchFolders: async () => {
     set({ error: null })
     try {
-      const folders = await getFolders()
-      set({ folders })
+      const [folders, counts] = await Promise.all([getFolders(), getHistoryCounts()])
+      set({ folders, folderCounts: counts.byFolder, totalPromptCount: counts.total })
     } catch (err) {
       if (_isSchemaError(err)) {
         console.warn('[HistoryStore] fetchFolders failed with schema error, resetting DB...', err)
         try {
           await resetDatabase()
-          const folders = await getFolders()
-          set({ folders })
+          const [folders, counts] = await Promise.all([getFolders(), getHistoryCounts()])
+          set({ folders, folderCounts: counts.byFolder, totalPromptCount: counts.total })
           return
         } catch (retryErr) {
           if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders DB reset failed:', sanitizeError(retryErr))
@@ -235,6 +250,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       emit('history:items-deleted', selectedIds)
       get().fetchHistory()
       set({ selectedIds: [], loading: false })
+      void refreshHistoryCounts()
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] bulkDelete failed:', sanitizeError(err))
       get().fetchHistory()
@@ -259,6 +275,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       if (currentFolderId !== null && !searchAllFolders) {
         get().fetchHistory()
       }
+      void refreshHistoryCounts()
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] bulkMove failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.moveItemsFailed'), loading: false })
@@ -271,7 +288,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     try {
       await deleteAllHistory()
       emit('history:all-deleted')
-      set({ items: [], selectedIds: [] })
+      set({ items: [], selectedIds: [], totalPromptCount: 0, folderCounts: {} })
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeAll failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.clearFailed') })
@@ -288,6 +305,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         items: state.items.filter(item => item.id !== id),
         selectedIds: state.selectedIds.filter(i => i !== id)
       }))
+      void refreshHistoryCounts()
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeItem failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.deleteItemFailed') })
@@ -296,6 +314,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   createFolder: async (name, parentId = null) => {
+    if (get().folders.length >= MAX_FOLDERS) {
+      throw new FolderLimitError(`Folder limit of ${MAX_FOLDERS} reached`)
+    }
     set({ error: null })
     try {
       const newFolder: Folder = {
@@ -306,6 +327,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       }
       await saveFolder(newFolder)
       set((state) => ({ folders: [...state.folders, newFolder] }))
+      return newFolder.id
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] createFolder failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.createFolderFailed') })
@@ -331,14 +353,20 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({ error: null })
     try {
       await deleteFolderAndUnassign(id)
-      set((state) => ({
-        folders: state.folders.filter(f => f.id !== id),
-        currentFolderId: state.currentFolderId === id ? null : state.currentFolderId,
-        searchAllFolders: state.currentFolderId === id ? false : state.searchAllFolders,
-        items: state.items.map(item =>
-          item.folderId === id ? { ...item, folderId: null } : item
-        )
-      }))
+      set((state) => {
+        const folderCounts = { ...state.folderCounts }
+        delete folderCounts[id]
+        return {
+          folders: state.folders.filter(f => f.id !== id),
+          currentFolderId: state.currentFolderId === id ? null : state.currentFolderId,
+          searchAllFolders: state.currentFolderId === id ? false : state.searchAllFolders,
+          folderCounts,
+          items: state.items.map(item =>
+            item.folderId === id ? { ...item, folderId: null } : item
+          )
+        }
+      })
+      void refreshHistoryCounts()
       if (get().currentFolderId === null) {
         get().fetchHistory()
       }

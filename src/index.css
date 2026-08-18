@@ -272,18 +272,42 @@ html::-webkit-scrollbar-thumb:hover {
   background: var(--color-secondary);
 }
 
-/* Radix Select (modal-only) locks the page scroll via react-remove-scroll
-   (body[data-scroll-locked] → overflow: hidden), hiding the page scrollbar
-   while the dropdown is open. Restore the scrollbar for Select only — other
-   modals (Dialog/AlertDialog) intentionally keep their scroll lock. Pure CSS
-   (:has on the Select viewport which only exists while the dropdown is in the
-   DOM) so the override applies in the same style recalc as the scroll lock —
-   no JS toggle, no one-frame flicker on open or close. §6.11 */
-body[data-scroll-locked]:has([data-radix-select-viewport]) {
+/* Radix Select & DropdownMenu (modal-only) lock the page scroll via
+   react-remove-scroll (body[data-scroll-locked] → overflow: hidden), hiding
+   the page scrollbar while the dropdown is open. Restore the scrollbar for
+   Select and DropdownMenu only — other modals (Dialog/AlertDialog)
+   intentionally keep their scroll lock. Pure CSS (:has on the Select viewport
+   / menu content which only exist while the dropdown is in the DOM) so the
+   override applies in the same style recalc as the scroll lock — no JS
+   toggle, no one-frame flicker on open or close. §6.11 */
+body[data-scroll-locked]:has([data-radix-select-viewport]),
+body[data-scroll-locked]:has([data-radix-menu-content]) {
   overflow-y: auto !important;
   margin-right: 0 !important;
   padding-right: 0 !important;
   --removed-body-scroll-bar-size: 0 !important;
+}
+
+/* Folder chip row (§7): styled thin horizontal scrollbar that is always
+   visible. Default overlay scrollbars hide while the pointer is outside the
+   row (e.g. over the kebab dropdown menu, which is portaled to the body),
+   which reads as the scrollbar "disappearing" during menu interaction. */
+.chips-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.chips-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.chips-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chips-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+.chips-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
 }
 
 /* Lucide global icon styles — §6.1 */

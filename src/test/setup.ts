@@ -253,6 +253,8 @@ beforeEach(async () => {
   useHistoryStore.setState({
     items: [],
     folders: [],
+    folderCounts: {},
+    totalPromptCount: 0,
     selectedIds: [],
     currentFolderId: null,
     searchAllFolders: false,

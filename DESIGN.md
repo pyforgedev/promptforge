@@ -825,14 +825,24 @@ CSS) and the custom Radix `ScrollArea` component.
   requiring a separate hover color variable.
 - **Radix ScrollArea** (`src/components/ui/scroll-area.tsx`) wraps content in a
   `ScrollAreaPrimitive.Viewport` and renders its own `ScrollBar` with the thumb
-  coloured by `bg-border-strong`. This is used in the FolderSidebar
-  (`FolderSidebar.tsx`) and any panel where content overflows within a fixed
-  container.
+  coloured by `bg-border-strong`. Kept as a primitive for panels with fixed
+  scroll areas; overflow rows (e.g. the folder chips bar) use native
+  `overflow-x-auto` plus the `.chips-scrollbar` class, which applies the same
+  thin-token styling to a nested horizontal scrollbar — deliberately always
+  visible, because default overlay scrollbars hide while the pointer is
+  outside the row (e.g. over an open kebab dropdown menu, which is portaled to
+  the body) and read as a disappearing scrollbar.
 - **Native page scrollbar** (`src/index.css`) is styled globally with
   `scrollbar-color` / `scrollbar-width` for Firefox and `::-webkit-scrollbar`
   pseudo-elements for Chromium browsers. These rules are scoped to `<html>` so
   they affect only the document-level scroll, not third-party widgets or nested
   scrollable containers.
+- **Dropdown scroll-lock restore:** Radix `Select` and `DropdownMenu` are
+  modal by default, so `react-remove-scroll` locks the page scroll
+  (`body[data-scroll-locked]` → `overflow: hidden`) while open, hiding the page
+  scrollbar. A pure-CSS `:has()` override restores it for these two controls
+  only (Dialog/AlertDialog keep their lock) — see the rule in `src/index.css`
+  next to §6.11.
 
 ```css
 /* Firefox */
@@ -1363,13 +1373,23 @@ Create Template) must never force a single row — it wraps.
   persistent state. The backdrop is always mounted (for the fade) with
   `transition-opacity duration-200` and `opacity-0 pointer-events-none` when
   closed, so it never pops in/out; both honor `motion-reduce:transition-none`.
-  The History page folder drawer follows the same pattern (§5).
-- **History page shell:** the full-height row compensates the main's `md:p-6`
-  with `md:-m-6` (its own `sm:p-6` then produces a single 24px gutter at
-  `md+`, matching the rest of the app instead of a doubled 48px) and measures
-  itself against the header via `calc(100dvh - var(--height-header))` — see
-  `--height-header` (§1.3). The folder drawer offsets use the same token
-  (`top-(--height-header)`), never hardcoded `3.5rem`.
+- **History page folder nav:** folder navigation no longer uses a page-level
+  sidebar/drawer — it is a toolbar row under the page header: a folder
+  `Combobox` (`FolderSwitcher.tsx`) plus a horizontally scrollable chip row
+  (`FolderChips.tsx`, native `overflow-x-auto` + `.chips-scrollbar` thin
+  always-visible scrollbar, `scrollbar-gutter:stable`).
+  Chips are `rounded-full` pills: active folder gets `border-brand-primary
+  bg-brand-primary/10 text-brand-primary`, inactive `border-border-subtle
+  bg-surface`; each chip carries a count badge (`tabular-nums`) and a kebab
+  `DropdownMenu` for rename/delete. Counts come from the `folderId` index via
+  `getHistoryCounts()` (`db.prompt_history.orderBy('folderId').keys()` + one
+  `count()`), so the badge never loads full records. Folder creation is capped
+  at `MAX_FOLDERS = 10` (enforced in `useHistoryStore.createFolder`, throws
+  `FolderLimitError`); the switcher surfaces it as a warning toast
+  (`toast.folderLimitReached`).
+- **History page shell:** the page is a plain column inside the layout
+  `<main>` (whose `p-4 md:p-6` provides the gutter) — no full-height row, no
+  `md:-m-6` compensation, no drawer offset tokens.
 - **Touch-target override point:** compact button sizes (`h-7` etc.) and
   `min-h/min-w` resets apply only at `lg+` (`lg:h-7 lg:min-h-0 ...`) — the
   drawer era below `lg` keeps ≥40px (ideally 44px) touch targets, per the
@@ -1392,3 +1412,4 @@ Create Template) must never force a single row — it wraps.
 | v1.8 | Responsive audit against Tailwind default breakpoints (§1.5): touch targets keep ≥40px until `lg` (drawer era) — compact `md:` overrides in FolderSidebar/BulkActionBar moved to `lg:`; history page padding parity at `md` (`md:-m-6` compensation, single `sm:p-6`); added `--height-header` layout token (single source for header/drawer offsets); generator output grid graduates `md:grid-cols-2 lg:grid-cols-3`; removed dead `sm:grid-cols-1` |
 | v1.9 | Mobile drawer animation: slide state moved to `max-lg:` variants with `translate` in the custom transition list (Tailwind v4 maps `translate-x-*` to the CSS `translate` property — `transition-[width,transform,...]` never animated it, so the mobile drawer popped instead of sliding); closed drawer now `max-lg:invisible` (unfocusable, a11y parity with desktop); backdrops (app + folder drawer) always mounted with 200ms `opacity` fade and `pointer-events-none` when closed instead of instant mount/unmount |
 | v1.10 | Page header action toolbar (Templates: Import/Export/Reset/Create) made responsive: toolbar is a deterministic 2×2 grid below `sm` (`grid grid-cols-2 gap-2`) and a wrapping flex row at `sm+` (`sm:flex sm:flex-wrap`); the `PageHeader` action wrapper may shrink (`min-w-0 max-w-full`, was `shrink-0`) — the 4-button row can no longer stay one line and break the viewport edge; new §6.19 documents the pattern |
+| v1.11 | History folder nav moved out of the page-level sidebar/drawer into a toolbar row: `FolderSwitcher` (Combobox with footer-action pattern + per-option count badges) + `FolderChips` (rounded-full pills, kebab menu, count badges via `getHistoryCounts()`); `FolderSidebar.tsx` and the drawer (backdrop, `top-(--height-header)` offset) removed; History page is now a plain column in `<main>` (no `md:-m-6` compensation, no `calc(100dvh - …)` shell); combobox gained optional `badge` + `footer` props; folder creation capped at `MAX_FOLDERS = 10` (`FolderLimitError` + warning toast); scrollbar fix: dropdown-menu scroll-lock restore extended from Select to `DropdownMenu` (§6.11 `:has` rule) + `.chips-scrollbar` (styled thin nested scrollbar so it no longer hides while the kebab menu is open) |

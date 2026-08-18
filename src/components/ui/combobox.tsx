@@ -12,6 +12,8 @@ export interface ComboboxOption {
   value: string
   label: string
   icon?: React.ReactNode
+  /** Optional trailing content aligned to the right (e.g. a count badge) */
+  badge?: React.ReactNode
 }
 
 interface ComboboxProps {
@@ -22,6 +24,8 @@ interface ComboboxProps {
   className?: string
   disabled?: boolean
   id?: string
+  /** Optional action row rendered below the option list (e.g. "create new") */
+  footer?: React.ReactNode
 }
 
 export function Combobox({
@@ -32,6 +36,7 @@ export function Combobox({
   className,
   disabled,
   id,
+  footer,
 }: ComboboxProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
@@ -59,9 +64,10 @@ export function Combobox({
             className
           )}
         >
-          <span className={cn("flex min-w-0 items-center gap-1.5", selectedOption ? "text-primary" : "text-muted")}>
+          <span className={cn("flex min-w-0 flex-1 items-center gap-1.5", selectedOption ? "text-primary" : "text-muted")}>
             {selectedOption?.icon && <span aria-hidden="true">{selectedOption.icon}</span>}
             <span className="truncate">{selectedOption?.label || placeholder}</span>
+            {selectedOption?.badge && <span className="ml-auto rounded-full bg-surface-hover px-1.5 py-0.5 text-caption-ui tabular-nums text-muted">{selectedOption.badge}</span>}
           </span>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
@@ -104,9 +110,19 @@ export function Combobox({
                     {opt.icon && <span aria-hidden="true" className="transition-transform duration-150 group-hover:scale-110">{opt.icon}</span>}
                     <span className="truncate">{opt.label}</span>
                   </span>
+                  {opt.badge && (
+                    <span className="ml-auto shrink-0 rounded-full bg-surface-hover px-1.5 py-0.5 text-caption-ui tabular-nums text-muted">
+                      {opt.badge}
+                    </span>
+                  )}
                 </Command.Item>
               ))}
             </Command.List>
+            {footer && (
+              <div className="border-t border-border-subtle p-1">
+                {footer}
+              </div>
+            )}
           </Command>
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Portal>

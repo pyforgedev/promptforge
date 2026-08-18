@@ -57,6 +57,24 @@ export async function getHistoryItems(): Promise<PromptHistoryRecord[]> {
   return db.prompt_history.toArray()
 }
 
+export interface HistoryCounts {
+  total: number
+  byFolder: Record<string, number>
+}
+
+export async function getHistoryCounts(): Promise<HistoryCounts> {
+  const [total, folderKeys] = await Promise.all([
+    db.prompt_history.count(),
+    db.prompt_history.orderBy('folderId').keys(),
+  ])
+  const byFolder: Record<string, number> = {}
+  for (const key of folderKeys) {
+    if (typeof key !== 'string') continue
+    byFolder[key] = (byFolder[key] ?? 0) + 1
+  }
+  return { total, byFolder }
+}
+
 export async function getRecentRelevantHistory(category: string, limit: number): Promise<PromptHistoryRecord[]> {
   const targetCategory = category || 'other'
   return db.prompt_history

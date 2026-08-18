@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useHistoryStore } from '@/store/useHistoryStore'
+import { MAX_FOLDERS, FolderLimitError } from '@/features/history/types'
 
 describe('useHistoryStore', () => {
   beforeEach(() => {
     useHistoryStore.setState({
       items: [],
       folders: [],
+      folderCounts: {},
+      totalPromptCount: 0,
       selectedIds: [],
       currentFolderId: null,
       searchAllFolders: false,
@@ -47,5 +50,18 @@ describe('useHistoryStore', () => {
     useHistoryStore.getState().setCurrentFolder('folder-1')
     expect(useHistoryStore.getState().searchAllFolders).toBe(false)
     expect(useHistoryStore.getState().currentFolderId).toBe('folder-1')
+  })
+
+  it('rejects folder creation when the folder limit is reached', async () => {
+    const manyFolders = Array.from({ length: MAX_FOLDERS }, (_, i) => ({
+      id: `folder-${i}`,
+      name: `Folder ${i}`,
+      parentId: null,
+      createdAt: i,
+    }))
+    useHistoryStore.setState({ folders: manyFolders })
+
+    await expect(useHistoryStore.getState().createFolder('One Too Many')).rejects.toBeInstanceOf(FolderLimitError)
+    expect(useHistoryStore.getState().folders).toHaveLength(MAX_FOLDERS)
   })
 })

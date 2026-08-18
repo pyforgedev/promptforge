@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2, Download, Menu } from 'lucide-react'
+import { Trash2, Download } from 'lucide-react'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { HistoryList } from '@/features/history/components/HistoryList'
 import { HistoryFiltersBar } from '@/features/history/components/HistoryFilters'
-import { FolderSidebar } from '@/features/history/components/FolderSidebar'
+import { FolderSwitcher } from '@/features/history/components/FolderSwitcher'
+import { FolderChips } from '@/features/history/components/FolderChips'
 import { BulkActionBar } from '@/features/history/components/BulkActionBar'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/useToast'
@@ -25,6 +26,7 @@ export default function HistoryPage() {
   const { showCopySuccess, showToast } = useToast()
   const {
     items,
+    folders,
     loading,
     error,
     filters,
@@ -36,7 +38,6 @@ export default function HistoryPage() {
     removeAll
   } = useHistoryStore()
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [deleteAllOpen, setDeleteAllOpen] = useState(false)
 
   useEffect(() => {
@@ -64,79 +65,69 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden md:-m-6 lg:h-[calc(100dvh-var(--height-header))]">
-      <FolderSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="relative flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 [scrollbar-gutter:stable]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-9 w-9 shrink-0 cursor-pointer lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-              aria-label={t('common.openNavigation', { defaultValue: 'Open navigation' })}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div className="flex flex-col gap-1 min-w-0">
-              <h1 className="text-heading text-primary truncate">{t('history.pageTitle')}</h1>
-              <p className="text-body-ui text-muted truncate">{t('history.pageDescription')}</p>
-            </div>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={handleExport} disabled={items.length === 0} className="cursor-pointer">
-              <Download className="mr-2 h-4 w-4" />
-              {t('history.export')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteAllOpen(true)}
-              disabled={items.length === 0}
-              className="cursor-pointer"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t('history.deleteAll')}
-            </Button>
-          </div>
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="text-heading text-primary truncate">{t('history.pageTitle')}</h1>
+          <p className="text-body-ui text-muted truncate">{t('history.pageDescription')}</p>
         </div>
-
-        <HistoryFiltersBar
-          filters={filters}
-          onFilterChange={setFilter}
-          onReset={resetFilters}
-        />
-
-        <HistoryList
-          items={items}
-          loading={loading}
-          error={error}
-          onCopy={handleCopy}
-          onDelete={removeItem}
-        />
-
-        <BulkActionBar />
-
-        <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('history.deleteAllTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('history.deleteAllConfirmation')}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="border-border-subtle bg-transparent hover:bg-surface-hover">{t('common.cancel')}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAll}
-                className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
-              >
-                {t('common.delete')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={handleExport} disabled={items.length === 0} className="cursor-pointer">
+            <Download className="mr-2 h-4 w-4" />
+            {t('history.export')}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setDeleteAllOpen(true)}
+            disabled={items.length === 0}
+            className="cursor-pointer"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {t('history.deleteAll')}
+          </Button>
+        </div>
       </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <FolderSwitcher className="w-full sm:w-64 shrink-0" />
+        {folders.length > 0 && <FolderChips />}
+      </div>
+
+      <HistoryFiltersBar
+        filters={filters}
+        onFilterChange={setFilter}
+        onReset={resetFilters}
+      />
+
+      <HistoryList
+        items={items}
+        loading={loading}
+        error={error}
+        onCopy={handleCopy}
+        onDelete={removeItem}
+      />
+
+      <BulkActionBar />
+
+      <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('history.deleteAllTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('history.deleteAllConfirmation')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border-subtle bg-transparent hover:bg-surface-hover">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
