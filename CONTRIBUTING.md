@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This guide covers the essentials for w
 
 ## Development Setup
 
-1. **Prerequisites:** Node.js >= 22.12 (see `engines` in package.json) and npm.
+1. **Prerequisites:** Node.js >= 22.13 (see `engines` in package.json) and npm.
 2. **Install:**
    ```bash
    git clone https://github.com/pyforgedev/promptforge.git
