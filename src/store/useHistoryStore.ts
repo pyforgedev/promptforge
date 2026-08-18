@@ -22,7 +22,7 @@ interface HistoryState {
   folders: Folder[]
   selectedIds: string[]
   currentFolderId: string | null
-  searchMode: 'global' | 'local'
+  searchAllFolders: boolean
   filters: HistoryFilters
   loading: boolean
   error: string | null
@@ -37,7 +37,7 @@ interface HistoryState {
   setFilter: <K extends keyof HistoryFilters>(key: K, value: HistoryFilters[K]) => void
   resetFilters: () => void
   setCurrentFolder: (id: string | null) => void
-  setSearchMode: (mode: 'global' | 'local') => void
+  setSearchAllFolders: (value: boolean) => void
   
   // Multi-select
   toggleSelect: (id: string) => void
@@ -98,7 +98,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   folders: [],
   selectedIds: [],
   currentFolderId: null,
-  searchMode: 'local',
+  searchAllFolders: false,
   filters: defaultFilters,
   loading: false,
   error: null,
@@ -109,10 +109,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   fetchHistory: async () => {
     set({ loading: true, error: null, offset: 0 })
     try {
-      const { currentFolderId, searchMode, filters } = get()
+      const { currentFolderId, searchAllFolders, filters } = get()
       const { items, hasMore } = await queryHistoryItems({
-        folderId: currentFolderId,
-        searchMode,
+        folderId: searchAllFolders ? null : currentFolderId,
         minRating: filters.minRating,
         search: filters.search,
         offset: 0,
@@ -124,10 +123,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         console.warn('[HistoryStore] fetchHistory failed with schema error, resetting DB...', err)
         try {
           await resetDatabase()
-          const { currentFolderId, searchMode, filters } = get()
+          const { currentFolderId, searchAllFolders, filters } = get()
           const { items, hasMore } = await queryHistoryItems({
-            folderId: currentFolderId,
-            searchMode,
+            folderId: searchAllFolders ? null : currentFolderId,
             minRating: filters.minRating,
             search: filters.search,
             offset: 0,
@@ -151,10 +149,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     if (get().loading || !get().hasMore) return
     set({ loading: true, error: null })
     try {
-      const { currentFolderId, searchMode, filters, offset, items: existingItems } = get()
+      const { currentFolderId, searchAllFolders, filters, offset, items: existingItems } = get()
       const { items: newItems, hasMore } = await queryHistoryItems({
-        folderId: currentFolderId,
-        searchMode,
+        folderId: searchAllFolders ? null : currentFolderId,
         minRating: filters.minRating,
         search: filters.search,
         offset,
@@ -211,12 +208,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   setCurrentFolder: (id) => {
-    set({ currentFolderId: id, selectedIds: [] })
+    set({ currentFolderId: id, selectedIds: [], searchAllFolders: false })
     get().fetchHistory()
   },
 
-  setSearchMode: (mode) => {
-    set({ searchMode: mode })
+  setSearchAllFolders: (value) => {
+    set({ searchAllFolders: value })
     get().fetchHistory()
   },
 
@@ -258,7 +255,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         selectedIds: [],
         loading: false
       }))
-      if (get().searchMode === 'local') {
+      const { currentFolderId, searchAllFolders } = get()
+      if (currentFolderId !== null && !searchAllFolders) {
         get().fetchHistory()
       }
     } catch (err) {
@@ -336,6 +334,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       set((state) => ({
         folders: state.folders.filter(f => f.id !== id),
         currentFolderId: state.currentFolderId === id ? null : state.currentFolderId,
+        searchAllFolders: state.currentFolderId === id ? false : state.searchAllFolders,
         items: state.items.map(item =>
           item.folderId === id ? { ...item, folderId: null } : item
         )

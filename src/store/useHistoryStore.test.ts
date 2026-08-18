@@ -8,7 +8,7 @@ describe('useHistoryStore', () => {
       folders: [],
       selectedIds: [],
       currentFolderId: null,
-      searchMode: 'local',
+      searchAllFolders: false,
       filters: {
         aspectRatio: 'all',
         stylePreset: 'all',
@@ -32,8 +32,20 @@ describe('useHistoryStore', () => {
     expect(useHistoryStore.getState().selectedIds).not.toContain('item-1')
   })
 
-  it('sets filters and search mode correctly', () => {
-    useHistoryStore.getState().setSearchMode('global')
-    expect(useHistoryStore.getState().searchMode).toBe('global')
+  it('sets search-all-folders scope correctly', () => {
+    useHistoryStore.getState().setSearchAllFolders(true)
+    expect(useHistoryStore.getState().searchAllFolders).toBe(true)
+
+    useHistoryStore.getState().setSearchAllFolders(false)
+    expect(useHistoryStore.getState().searchAllFolders).toBe(false)
+  })
+
+  it('resets search-all-folders scope when switching folders', () => {
+    useHistoryStore.getState().setSearchAllFolders(true)
+    expect(useHistoryStore.getState().searchAllFolders).toBe(true)
+
+    useHistoryStore.getState().setCurrentFolder('folder-1')
+    expect(useHistoryStore.getState().searchAllFolders).toBe(false)
+    expect(useHistoryStore.getState().currentFolderId).toBe('folder-1')
   })
 })

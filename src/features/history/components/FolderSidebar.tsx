@@ -1,4 +1,4 @@
-import { Plus, Folder as FolderIcon, MoreVertical, Globe, MapPin, Trash2, Edit2, X } from 'lucide-react'
+import { Plus, Folder as FolderIcon, MoreVertical, Trash2, Edit2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -44,8 +44,6 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
     folders, 
     currentFolderId, 
     setCurrentFolder, 
-    searchMode, 
-    setSearchMode,
     createFolder,
     renameFolder,
     removeFolder
@@ -135,35 +133,6 @@ export const FolderSidebar = ({ isOpen, onClose }: FolderSidebarProps) => {
               </TooltipTrigger>
               <TooltipContent>{t('history.newFolder')}</TooltipContent>
             </Tooltip>
-          </div>
-        </div>
-
-        <div className="p-4 border-b border-border-subtle">
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-surface-hover border border-border-subtle">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 text-caption-ui gap-2 rounded-md transition-all cursor-pointer",
-                searchMode === 'local' ? "bg-brand-primary text-text-on-brand" : "text-secondary hover:bg-surface-hover hover:text-primary"
-              )}
-              onClick={() => setSearchMode('local')}
-            >
-              <MapPin className="h-3 w-3" />
-              {t('history.local')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 text-caption-ui gap-2 rounded-md transition-all cursor-pointer",
-                searchMode === 'global' ? "bg-brand-primary text-text-on-brand" : "text-secondary hover:bg-surface-hover hover:text-primary"
-              )}
-              onClick={() => setSearchMode('global')}
-            >
-              <Globe className="h-3 w-3" />
-              {t('history.global')}
-            </Button>
           </div>
         </div>
 

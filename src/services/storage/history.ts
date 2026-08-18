@@ -12,7 +12,6 @@ export type PromptBatchRecord = Omit<GeneratedPromptBatch, 'prompts'>
 
 export interface HistoryQueryParams {
   folderId: string | null
-  searchMode: 'global' | 'local'
   minRating: number
   search: string
   offset: number
@@ -69,10 +68,10 @@ export async function getRecentRelevantHistory(category: string, limit: number):
 }
 
 export async function queryHistoryItems(params: HistoryQueryParams): Promise<{ items: PromptHistoryRecord[], hasMore: boolean }> {
-  const { folderId, searchMode, minRating, search, offset, limit } = params
+  const { folderId, minRating, search, offset, limit } = params
 
   let collection
-  if (searchMode === 'local' && folderId !== null) {
+  if (folderId !== null) {
     collection = db.prompt_history.where('folderId').equals(folderId)
   } else {
     collection = db.prompt_history.orderBy('createdAt').reverse()
@@ -95,7 +94,7 @@ export async function queryHistoryItems(params: HistoryQueryParams): Promise<{ i
 
   const results = await collection.offset(offset).limit(limit + 1).toArray()
 
-  if (searchMode === 'local' && folderId !== null) {
+  if (folderId !== null) {
     results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 

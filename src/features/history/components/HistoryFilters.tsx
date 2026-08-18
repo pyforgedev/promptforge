@@ -13,7 +13,7 @@ import {
 import type { HistoryFilters as HF, LegacyAspectRatio } from '../types'
 
 import { useHistoryStore } from '@/store/useHistoryStore'
-import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 
 interface HistoryFiltersProps {
@@ -28,7 +28,7 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
   onReset,
 }: HistoryFiltersProps) {
   const { t } = useTranslation()
-  const { searchMode, setSearchMode } = useHistoryStore()
+  const { searchAllFolders, setSearchAllFolders, currentFolderId } = useHistoryStore()
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface p-4 card-spotlight">
@@ -38,26 +38,28 @@ export const HistoryFiltersBar = memo(function HistoryFiltersBar({
             <label className="text-caption-ui font-medium text-muted">
               {t('common.search')}
             </label>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="search-mode" className="text-caption-ui text-muted">
-                {searchMode === 'global' ? t('history.global') : t('history.local')}
-              </Label>
-              <Switch 
-                id="search-mode" 
-                checked={searchMode === 'global'}
-                onCheckedChange={(checked) => setSearchMode(checked ? 'global' : 'local')}
-                className="scale-75 data-[state=unchecked]:border"
-              />
-            </div>
+            {currentFolderId !== null && (
+              <div className="flex items-center gap-1.5">
+                <Checkbox
+                  id="search-all-folders"
+                  checked={searchAllFolders}
+                  onCheckedChange={(checked) => setSearchAllFolders(checked === true)}
+                  className="data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
+                />
+                <Label htmlFor="search-all-folders" className="text-caption-ui text-muted cursor-pointer">
+                  {t('history.searchAllFolders')}
+                </Label>
+              </div>
+            )}
           </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <Input
               value={filters.search}
               onChange={(e) => onFilterChange('search', e.target.value)}
-              placeholder={searchMode === 'global'
-                ? t('history.searchGlobalPlaceholder', { defaultValue: 'Search everywhere...' })
-                : t('history.searchLocalPlaceholder', { defaultValue: 'Search in this folder...' })}
+              placeholder={searchAllFolders || currentFolderId === null
+                ? t('history.searchEverywherePlaceholder', { defaultValue: 'Search everywhere...' })
+                : t('history.searchInFolderPlaceholder', { defaultValue: 'Search in this folder...' })}
               className="pl-8"
             />
           </div>

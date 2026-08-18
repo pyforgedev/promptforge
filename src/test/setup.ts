@@ -255,7 +255,7 @@ beforeEach(async () => {
     folders: [],
     selectedIds: [],
     currentFolderId: null,
-    searchMode: 'local',
+    searchAllFolders: false,
     filters: {
       aspectRatio: 'all',
       stylePreset: 'all',

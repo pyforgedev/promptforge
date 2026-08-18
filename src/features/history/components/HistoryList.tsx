@@ -59,7 +59,8 @@ export const HistoryList = memo(function HistoryList({
   validateHistoryListProps({ items, loading, error, onCopy, onDelete })
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { selectedIds, toggleSelect, searchMode, hasMore, loadMore, hasLoaded } = useHistoryStore()
+  const { selectedIds, toggleSelect, currentFolderId, searchAllFolders, hasMore, loadMore, hasLoaded } = useHistoryStore()
+  const isFolderScoped = currentFolderId !== null && !searchAllFolders
 
   const handleCopy = async (content: string) => {
     await onCopy(content)
@@ -97,7 +98,7 @@ export const HistoryList = memo(function HistoryList({
     return (
       <EmptyState
         title={t('history.emptyTitle')}
-        description={searchMode === 'local' ? t('history.emptyFolderDescription', "No prompts found in this folder. Start generating to fill it up!") : t('history.emptyDescription')}
+        description={isFolderScoped ? t('history.emptyFolderDescription', "No prompts found in this folder. Start generating to fill it up!") : t('history.emptyDescription')}
         action={
           <Button asChild variant="default" className="mt-2">
             <Link to={ROUTES.home}>
