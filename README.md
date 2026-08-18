@@ -28,7 +28,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 ## Quick Start
 
 > [!NOTE]
-> Ensure you have [Node.js](https://nodejs.org/) >= 22.13.0 installed before proceeding.
+> Ensure you have [Node.js](https://nodejs.org/) >= 24 installed before proceeding.
 
 ### 1. Clone the repository
 
