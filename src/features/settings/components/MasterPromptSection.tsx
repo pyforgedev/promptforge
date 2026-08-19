@@ -84,7 +84,7 @@ export function MasterPromptSection() {
             value={masterPromptText}
             onChange={(e) => setMasterPromptText(e.target.value)}
             placeholder={t('settings.masterPromptPlaceholder', { defaultValue: 'The default master prompt will appear here...' })}
-            className="min-h-[300px] font-mono text-sm"
+            className="min-h-[300px] max-h-[480px] resize-y overflow-y-auto font-mono text-sm"
           />
         ) : (
           <Skeleton className="h-[300px] w-full rounded-lg" />
