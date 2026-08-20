@@ -22,6 +22,7 @@ function item(overrides: Partial<PromptHistoryRecord> = {}): PromptHistoryRecord
     adobeScore: { total: 80, breakdown: { commercialViability: 20, technicalQuality: 20, compositionStrength: 20, marketDiversity: 20 }, warnings: [], suggestions: [] },
     variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
     createdAt: new Date(0), isFavorite: false, folderId: null, niche: 'Nature', category: 'travel',
+    aspectRatioKey: null, artStyleKey: null,
     ...overrides,
   }
 }
@@ -71,5 +72,23 @@ describe('HistoryList v11 states', () => {
     useHistoryStore.setState({ filters: { ...defaults, search: 'keyword' } })
     renderList([item({ fullPrompt: 'visible preview', commercialKeywords: ['keyword'] })])
     expect(screen.getByText('Match outside preview')).toBeInTheDocument()
+  })
+
+  it('renders aspect ratio and art style tags above the actions when snapshots exist', () => {
+    renderList([item({ aspectRatioKey: '16:9', artStyleKey: 'photorealistic' })])
+    expect(screen.getByText('16:9')).toBeInTheDocument()
+    expect(screen.getByText('Photorealistic')).toBeInTheDocument()
+  })
+
+  it('localizes the random aspect ratio tag', () => {
+    renderList([item({ aspectRatioKey: 'random' })])
+    expect(screen.getByText('Random')).toBeInTheDocument()
+  })
+
+  it('omits tags for unknown or default (none) art style', () => {
+    renderList([item({ aspectRatioKey: null, artStyleKey: 'none' })])
+    expect(screen.queryByText('Random')).not.toBeInTheDocument()
+    expect(screen.queryByText('Photorealistic')).not.toBeInTheDocument()
+    expect(screen.queryByText('Minimalist')).not.toBeInTheDocument()
   })
 })

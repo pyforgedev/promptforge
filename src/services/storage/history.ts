@@ -81,6 +81,9 @@ export interface PromptHistoryRecord extends Omit<GeneratedPrompt, 'generatorInp
   folderId: string | null
   niche: string
   category: string
+  /** v11 filter snapshots — null when legacy/system-selected (`SENTINEL_UNKNOWN`) or absent. */
+  aspectRatioKey?: AspectRatio | null
+  artStyleKey?: ArtStyleOption | null
 }
 
 // ─── Cursor-based pagination contract ───
@@ -216,6 +219,8 @@ async function hydrateRecords(rows: PromptHistoryV11[]): Promise<PromptHistoryRe
       folderId: record.folderId,
       niche,
       category,
+      aspectRatioKey: record.aspectRatioKey === SENTINEL_UNKNOWN ? null : record.aspectRatioKey,
+      artStyleKey: record.artStyleKey === SENTINEL_UNKNOWN ? null : record.artStyleKey,
     }
     if (record.userNotes !== undefined) dto.userNotes = record.userNotes
     if (record.legacy !== undefined) dto.legacy = record.legacy

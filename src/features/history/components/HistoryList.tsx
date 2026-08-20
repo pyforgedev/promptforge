@@ -204,6 +204,20 @@ export const HistoryList = memo(function HistoryList({
                   {t('history.matchOutsidePreview')}
                 </span>
               )}
+              {item.aspectRatioKey != null || (item.artStyleKey != null && item.artStyleKey !== 'none') ? (
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                  {item.aspectRatioKey != null && (
+                    <span className="rounded-md border border-border-subtle bg-surface-hover px-2 py-0.5 font-mono text-caption-ui text-muted">
+                      {item.aspectRatioKey === 'random' ? t('history.aspectRatioRandom') : item.aspectRatioKey}
+                    </span>
+                  )}
+                  {item.artStyleKey != null && item.artStyleKey !== 'none' && (
+                    <span className="rounded-md border border-border-subtle bg-surface-hover px-2 py-0.5 text-caption-ui text-muted">
+                      {t(`history.artStyles.${item.artStyleKey}`)}
+                    </span>
+                  )}
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="outline"
