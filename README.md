@@ -19,7 +19,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 - **Prompt Quality Rating:** Scores prompts on Commercial Potential, Creativity, Clarity, Marketability, and Uniqueness.
 - **Duplicate Detection:** Similarity analysis against prompt history to prevent repetitive generations.
 - **Templates:** Save, edit, reset, import, and export custom templates.
-- **History:** Local cache using IndexedDB (Dexie), featuring search/filter by aspect ratio, style, rating, date, and TXT export/import.
+- **History:** Local IndexedDB cache with bounded AND-prefix search; folder, aspect-ratio, art-style, minimum-score (0–100), and inclusive local-date filters; newest, oldest, or highest-rating sorting; and TXT export/import.
 - **Theme:** Strict Light/Dark/System theme support via next-themes, utilizing a semantic color system and glassmorphism.
 - **Internationalization (i18n):** Full support for English (en) and Bahasa Indonesia (id).
 - **Toast Notifications:** Standardized user feedback using sonner for all data-modifying actions.
@@ -68,7 +68,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 - **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + React Bits (animated components) + Framer Motion 12
 - **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
 - **State Management:** Zustand 5
-- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — current schema is v9, with a dedicated `cryptoKeys` table that persists the non-extractable AES-GCM master key and a `settings` table holding sensitive config (e.g. `active_ai_config`, `ai_config_presets`) encrypted at rest.
+- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — schema v11 keeps the three v10 date/category indexes for `prompt_history`, adds global and folder-scoped rating indexes, and stores `aspectRatioKey`/`artStyleKey` snapshots for filtering. The v10→v11 migration is atomic and forward-only, with no automatic reset. Prompt History pagination uses filter-bound cursor v2 with adaptive 200-row scan chunks and a 2,000-candidate ceiling per request. A dedicated `cryptoKeys` table persists the non-extractable AES-GCM master key, while sensitive `settings` values (e.g. `active_ai_config`, `ai_config_presets`) remain encrypted at rest.
 - **Form & Validation:** React Hook Form + Zod 4
 - **Routing:** React Router DOM v7
 - **Internationalization:** i18next 26 + `react-i18next` + `i18next-browser-languagedetector`

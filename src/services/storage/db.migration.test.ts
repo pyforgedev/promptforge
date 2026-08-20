@@ -1,7 +1,8 @@
-import { describe, expect, it, beforeAll } from 'vitest'
+import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import Dexie from 'dexie'
-import { migrateLegacyPromptRow, upgradePromptHistoryToV10 } from './db'
+import { migrateLegacyPromptRow, upgradePromptHistoryToV10, upgradePromptHistoryToV11 } from './db'
 import type { PromptHistoryV10, PromptBatchRecord } from './history'
+import { SENTINEL_UNKNOWN } from './historySearch'
 
 /**
  * Integration test for the REAL Dexie v9→v10 upgrade path:
@@ -18,6 +19,7 @@ import type { PromptHistoryV10, PromptBatchRecord } from './history'
  * upgrade can never run against the `promptforge` database inside tests.
  */
 const FIXTURE_DB = 'promptforge-migration-fixture'
+const V11_FIXTURE_DB = 'promptforge-v10-v11-migration-fixture'
 
 const V9_STORES = {
   prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy, category, folderId',
@@ -44,6 +46,11 @@ const V10_STORES = {
   idea_cache: 'cacheKey, lastUpdated',
   formatter_batch: '++id, createdAt',
   formatter_items: '++id, order, status',
+}
+
+const V11_STORES = {
+  ...V10_STORES,
+  prompt_history: 'id, batchId, createdAt, folderId, folderKey, categoryKey, [createdAt+id], [folderKey+createdAt+id], [categoryKey+createdAt+id], [adobeScore.total+createdAt+id], [folderKey+adobeScore.total+createdAt+id]',
 }
 
 interface V9HistoryRow {
@@ -127,6 +134,7 @@ function makeV9Batch(batchId: string, niche: string, category: string): PromptBa
 }
 
 let migrator: Dexie
+let v11Migrator: Dexie
 
 beforeAll(async () => {
   // Phase 1 — create the database at v9 and seed legacy fixtures.
@@ -154,6 +162,50 @@ beforeAll(async () => {
   migrator.version(9).stores(V9_STORES)
   migrator.version(10).stores(V10_STORES).upgrade(upgradePromptHistoryToV10)
   await migrator.open()
+
+  const v10 = new Dexie(V11_FIXTURE_DB)
+  v10.version(10).stores(V10_STORES)
+  await v10.open()
+  const rows = [
+    { id: 'user-mode', batchId: 'batch-user', categoryKey: 'Raw-CATEGORY' },
+    { id: 'system-mode', batchId: 'batch-system', categoryKey: 'system-raw' },
+    { id: 'missing-batch', batchId: 'batch-missing', categoryKey: 'missing-raw' },
+    { id: 'malformed-batch', batchId: 'batch-malformed', categoryKey: 'malformed-raw' },
+  ].map((entry, index) => ({
+    ...entry,
+    variantIndex: 1,
+    segments: { subject: entry.id, composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
+    negativePrompt: '', commercialKeywords: [],
+    adobeScore: { total: 50 + index, breakdown: { commercialViability: 0, technicalQuality: 0, compositionStrength: 0, marketDiversity: 0 }, warnings: [], suggestions: [] },
+    variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
+    createdAt: 100 + index, isFavorite: false, folderId: null, folderKey: '__unfiled__',
+    nicheNormalized: 'fixture', searchTerms: ['fixture'],
+  }))
+  await v10.table('prompt_history').bulkAdd(rows)
+  const texts = rows.flatMap((row) => [
+    { promptId: row.id, platform: 'dalle3', content: `dalle-${row.id}` },
+    { promptId: row.id, platform: 'nano_banana', content: `nano-${row.id}` },
+  ])
+  await v10.table('prompt_texts').bulkAdd(texts)
+  await v10.table('prompt_batches').bulkAdd([
+    { ...makeV9Batch('batch-user', 'User', 'user'), generatorInput: { ...makeV9Batch('batch-user', 'User', 'user').generatorInput, aspectRatio: '16:9', artStyle: { mode: 'user', value: 'minimalist' } } },
+    { ...makeV9Batch('batch-system', 'System', 'system'), generatorInput: { ...makeV9Batch('batch-system', 'System', 'system').generatorInput, aspectRatio: '4:5', artStyle: { mode: 'system', value: 'minimalist' } } },
+    { batchId: 'batch-malformed', generatorInput: { aspectRatio: 'bogus', artStyle: null }, generatedAt: new Date(0) },
+  ])
+  await v10.close()
+
+  v11Migrator = new Dexie(V11_FIXTURE_DB)
+  v11Migrator.version(10).stores(V10_STORES)
+  v11Migrator.version(11).stores(V11_STORES).upgrade(upgradePromptHistoryToV11)
+  await v11Migrator.open()
+})
+
+afterAll(async () => {
+  migrator?.close()
+  v11Migrator?.close()
+  // Delete only the two throwaway fixture databases owned by this test file.
+  await Dexie.delete(FIXTURE_DB)
+  await Dexie.delete(V11_FIXTURE_DB)
 })
 
 describe('v9 → v10 database upgrade (real Dexie transaction)', () => {
@@ -219,6 +271,46 @@ describe('v9 → v10 database upgrade (real Dexie transaction)', () => {
     expect(own?.folderKey).not.toBe('')
     const legacy = await migrator.table('prompt_history').get('row-missing-batch')
     expect(legacy?.legacy).toBe(true)
+  })
+})
+
+describe('v10 → v11 database upgrade (real Dexie transaction)', () => {
+  it('retains all date indexes, adds both rating indexes, and preserves row count', async () => {
+    const indexNames = v11Migrator.table('prompt_history').schema.indexes.map((index) => index.name)
+    expect(indexNames).toEqual(expect.arrayContaining([
+      '[createdAt+id]',
+      '[folderKey+createdAt+id]',
+      '[categoryKey+createdAt+id]',
+      '[adobeScore.total+createdAt+id]',
+      '[folderKey+adobeScore.total+createdAt+id]',
+    ]))
+    expect(await v11Migrator.table('prompt_history').count()).toBe(4)
+  })
+
+  it('populates user snapshots and maps system, missing, and malformed batches to sentinels', async () => {
+    const user = await v11Migrator.table('prompt_history').get('user-mode')
+    expect(user).toMatchObject({ aspectRatioKey: '16:9', artStyleKey: 'minimalist' })
+    const system = await v11Migrator.table('prompt_history').get('system-mode')
+    expect(system).toMatchObject({ aspectRatioKey: '4:5', artStyleKey: SENTINEL_UNKNOWN })
+    for (const id of ['missing-batch', 'malformed-batch']) {
+      expect(await v11Migrator.table('prompt_history').get(id)).toMatchObject({
+        aspectRatioKey: SENTINEL_UNKNOWN,
+        artStyleKey: SENTINEL_UNKNOWN,
+      })
+    }
+  })
+
+  it('leaves raw category snapshots and prompt text rows unchanged', async () => {
+    const categories = Object.fromEntries((await v11Migrator.table('prompt_history').toArray()).map((row) => [row.id, row.categoryKey]))
+    expect(categories).toEqual({
+      'user-mode': 'Raw-CATEGORY',
+      'system-mode': 'system-raw',
+      'missing-batch': 'missing-raw',
+      'malformed-batch': 'malformed-raw',
+    })
+    const texts = await v11Migrator.table('prompt_texts').orderBy('[promptId+platform]').toArray()
+    expect(texts).toHaveLength(8)
+    expect(texts.find((row) => row.promptId === 'user-mode' && row.platform === 'dalle3')?.content).toBe('dalle-user-mode')
   })
 })
 

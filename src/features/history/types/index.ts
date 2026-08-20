@@ -13,9 +13,11 @@ export class FolderLimitError extends Error {}
 
 // Re-export types used by HistoryFilters — defined inline since
 // the prompt-generator v2 types don't include these legacy types.
-export type LegacyAspectRatio = '1:1' | '4:5' | '3:4' | '16:9' | '9:16' | '2:3' | '3:2' | 'random' | string
+export type LegacyAspectRatio = AspectRatio | string
 export type StylePresetKey = string
 export type QualityScore = { overall: number }
+
+export type HistorySort = 'date-desc' | 'date-asc' | 'rating-desc'
 
 export interface HistoryItem {
   id: string
@@ -35,10 +37,12 @@ export interface HistoryItem {
 }
 
 export interface HistoryFilters {
-  aspectRatio: 'all' | LegacyAspectRatio
-  stylePreset: 'all' | StylePresetKey
-  minRating: number
+  aspectRatio: 'all' | AspectRatio
+  artStyleKey: 'all' | ArtStyleOption
+  minScore: number
   dateFrom: string
   dateTo: string
   search: string
+  sort: HistorySort
 }
+import type { ArtStyleOption, AspectRatio } from '@/features/prompt-generator/types'

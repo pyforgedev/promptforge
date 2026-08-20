@@ -13,6 +13,7 @@ import { useHistoryStore } from '@/store/useHistoryStore'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
+import { tokenizeQuery } from '@/services/storage/historySearch'
 
 interface HistoryListProps {
   items: PromptHistoryRecord[]
@@ -49,6 +50,24 @@ function formatDate(date: Date): string {
   }).format(date instanceof Date ? date : new Date(date))
 }
 
+function buildHighlightPattern(search: string): RegExp | null {
+  const tokens = tokenizeQuery(search)
+  if (tokens.length === 0) return null
+  const escaped = tokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  return new RegExp(`(${escaped.join('|')})`, 'iu')
+}
+
+function HighlightedPrompt({ content, pattern }: { content: string; pattern: RegExp | null }) {
+  if (!pattern || !pattern.test(content)) return <>{content}</>
+  return (
+    <>
+      {content.split(pattern).map((part, index) => index % 2 === 1
+        ? <mark key={`${index}-${part}`} className="rounded-sm bg-brand-primary/20 text-primary">{part}</mark>
+        : <span key={`${index}-${part}`}>{part}</span>)}
+    </>
+  )
+}
+
 export const HistoryList = memo(function HistoryList({
   items,
   loading,
@@ -59,8 +78,26 @@ export const HistoryList = memo(function HistoryList({
   validateHistoryListProps({ items, loading, error, onCopy, onDelete })
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { selectedIds, toggleSelect, currentFolderId, searchAllFolders, hasMore, loadMore, hasLoaded } = useHistoryStore()
+  const {
+    selectedIds,
+    toggleSelect,
+    currentFolderId,
+    searchAllFolders,
+    filters,
+    resetFilters,
+    hasMore,
+    loadMore,
+    hasLoaded,
+  } = useHistoryStore()
   const isFolderScoped = currentFolderId !== null && !searchAllFolders
+  const highlightPattern = buildHighlightPattern(filters.search)
+  const hasActiveFilters = filters.search.trim() !== ''
+    || filters.aspectRatio !== 'all'
+    || filters.artStyleKey !== 'all'
+    || filters.minScore > 0
+    || filters.dateFrom !== ''
+    || filters.dateTo !== ''
+    || filters.sort !== 'date-desc'
 
   const handleCopy = async (content: string) => {
     await onCopy(content)
@@ -95,16 +132,24 @@ export const HistoryList = memo(function HistoryList({
   }
 
   if (items.length === 0) {
+    const filtered = hasActiveFilters || searchAllFolders
     return (
       <EmptyState
-        title={t('history.emptyTitle')}
-        description={isFolderScoped ? t('history.emptyFolderDescription', "No prompts found in this folder. Start generating to fill it up!") : t('history.emptyDescription')}
+        title={filtered ? t('history.filteredEmptyTitle') : t('history.emptyTitle')}
+        description={filtered
+          ? t('history.filteredEmptyDescription')
+          : isFolderScoped ? t('history.emptyFolderDescription') : t('history.emptyDescription')}
         action={
-          <Button asChild variant="default" className="mt-2">
-            <Link to={ROUTES.home}>
-              {t('history.goToGenerator', { defaultValue: 'Go to Generator' })}
-            </Link>
-          </Button>
+          filtered ? (
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={resetFilters}>{t('history.resetFilters')}</Button>
+              {hasMore && <Button onClick={loadMore} disabled={loading}>{t('history.loadMore')}</Button>}
+            </div>
+          ) : (
+            <Button asChild variant="default" className="mt-2">
+              <Link to={ROUTES.home}>{t('history.goToGenerator')}</Link>
+            </Button>
+          )
         }
       />
     )
@@ -152,8 +197,13 @@ export const HistoryList = memo(function HistoryList({
             </CardHeader>
             <CardContent className="pl-9 sm:pl-10">
               <p className="text-body-mono text-primary leading-relaxed line-clamp-2 sm:line-clamp-3">
-                {item.fullPrompt}
+                <HighlightedPrompt content={item.fullPrompt} pattern={highlightPattern} />
               </p>
+              {highlightPattern && !highlightPattern.test(item.fullPrompt) && (
+                <span className="mt-2 inline-flex rounded-full border border-border-subtle px-2 py-0.5 text-caption-ui text-muted">
+                  {t('history.matchOutsidePreview')}
+                </span>
+              )}
               <div className="mt-3 flex flex-wrap gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="outline"

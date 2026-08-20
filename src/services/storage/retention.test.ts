@@ -6,14 +6,14 @@ import {
   type RetentionPolicy,
 } from './retention'
 import { saveSetting, deleteSetting } from './settings'
-import type { PromptHistoryV10, PromptTextRecord } from './history'
-import { tokenize, resolveFolderKey } from './historySearch'
+import type { PromptHistoryV11, PromptTextRecord } from './history'
+import { SENTINEL_UNKNOWN, tokenize, resolveFolderKey } from './historySearch'
 
 const POLICY_KEY = 'history_retention_policy'
 const LAST_PRUNED_KEY = 'history_last_pruned'
 const DAY = 86_400_000
 
-function makeRecord(id: string, opts: { createdAt?: number; favorite?: boolean; legacy?: boolean; batchId?: string }): PromptHistoryV10 {
+function makeRecord(id: string, opts: { createdAt?: number; favorite?: boolean; legacy?: boolean; batchId?: string }): PromptHistoryV11 {
   const createdAt = opts.createdAt ?? Date.now()
   return {
     id,
@@ -37,6 +37,8 @@ function makeRecord(id: string, opts: { createdAt?: number; favorite?: boolean; 
     categoryKey: 'other',
     nicheNormalized: 'test',
     searchTerms: tokenize(id),
+    aspectRatioKey: SENTINEL_UNKNOWN,
+    artStyleKey: SENTINEL_UNKNOWN,
   }
 }
 
@@ -47,7 +49,7 @@ function makeTexts(id: string): PromptTextRecord[] {
   ]
 }
 
-async function seed(opts: { records: PromptHistoryV10[]; withTexts?: boolean }) {
+async function seed(opts: { records: PromptHistoryV11[]; withTexts?: boolean }) {
   await db.prompt_history.bulkPut(opts.records)
   if (opts.withTexts) {
     await db.prompt_texts.bulkPut(opts.records.flatMap((r) => makeTexts(r.id)))

@@ -66,16 +66,18 @@ interface HistoryState {
 
 const defaultFilters: HistoryFilters = {
   aspectRatio: 'all',
-  stylePreset: 'all',
-  minRating: 0,
+  artStyleKey: 'all',
+  minScore: 0,
   dateFrom: '',
   dateTo: '',
   search: '',
+  sort: 'date-desc',
 }
 
 const SEARCH_DEBOUNCE_MS = 300
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let activeHistoryController: AbortController | null = null
 
 /**
  * Monotonic request sequence. Every fetchHistory/loadMore call claims the next
@@ -91,6 +93,23 @@ function scheduleSearchFetch(): void {
     searchDebounceTimer = null
     useHistoryStore.getState().fetchHistory()
   }, SEARCH_DEBOUNCE_MS)
+}
+
+function cancelScheduledSearch(): void {
+  if (!searchDebounceTimer) return
+  clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = null
+}
+
+function startHistoryRequest(): AbortController {
+  activeHistoryController?.abort()
+  const controller = new AbortController()
+  activeHistoryController = controller
+  return controller
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError'
 }
 
 async function refreshHistoryCounts(): Promise<void> {
@@ -124,20 +143,33 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   fetchHistory: async () => {
     const seq = ++fetchSeq
+    const controller = startHistoryRequest()
     set({ loading: true, error: null, cursor: null })
     try {
       const { currentFolderId, searchAllFolders, filters } = get()
       const { items, nextCursor, hasMore } = await queryHistoryItems({
         folderId: searchAllFolders ? null : currentFolderId,
-        minRating: filters.minRating,
+        aspectRatio: filters.aspectRatio,
+        artStyleKey: filters.artStyleKey,
+        minScore: filters.minScore,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
         search: filters.search,
+        sort: filters.sort,
         limit: PAGE_SIZE,
         cursor: null,
+        signal: controller.signal,
       })
       if (seq !== fetchSeq) return // superseded by a newer fetch — discard
+      if (activeHistoryController === controller) activeHistoryController = null
       set({ items, cursor: nextCursor, hasMore, loading: false, hasLoaded: true })
     } catch (err) {
       if (seq !== fetchSeq) return
+      if (activeHistoryController === controller) activeHistoryController = null
+      if (isAbortError(err)) {
+        set({ loading: false })
+        return
+      }
       // NOTE: since the v10 migration, schema/version/migration failures surface
       // from the storage layer as typed errors and are NEVER auto-reset here.
       // The DB is only reset via explicit user confirmation.
@@ -149,17 +181,25 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   loadMore: async () => {
     if (get().loading || !get().hasMore) return
     const seq = ++fetchSeq
+    const controller = startHistoryRequest()
     set({ loading: true, error: null })
     try {
       const { currentFolderId, searchAllFolders, filters, cursor, items: existingItems } = get()
       const { items: newItems, nextCursor, hasMore } = await queryHistoryItems({
         folderId: searchAllFolders ? null : currentFolderId,
-        minRating: filters.minRating,
+        aspectRatio: filters.aspectRatio,
+        artStyleKey: filters.artStyleKey,
+        minScore: filters.minScore,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
         search: filters.search,
+        sort: filters.sort,
         limit: PAGE_SIZE,
         cursor,
+        signal: controller.signal,
       })
       if (seq !== fetchSeq) return // superseded (view/filter changed) — discard, do not merge
+      if (activeHistoryController === controller) activeHistoryController = null
       set({
         items: mergeItems(existingItems, newItems),
         cursor: nextCursor,
@@ -168,6 +208,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       })
     } catch (err) {
       if (seq !== fetchSeq) return
+      if (activeHistoryController === controller) activeHistoryController = null
+      if (isAbortError(err)) {
+        set({ loading: false })
+        return
+      }
       if (import.meta.env.DEV) console.warn('[HistoryStore] loadMore failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.loadMoreFailed'), loading: false })
     }
@@ -190,21 +235,25 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     if (key === 'search') {
       scheduleSearchFetch()
     } else {
+      cancelScheduledSearch()
       get().fetchHistory()
     }
   },
 
   resetFilters: () => {
+    cancelScheduledSearch()
     set({ filters: defaultFilters })
     get().fetchHistory()
   },
 
   setCurrentFolder: (id) => {
+    cancelScheduledSearch()
     set({ currentFolderId: id, selectedIds: [], searchAllFolders: false })
     get().fetchHistory()
   },
 
   setSearchAllFolders: (value) => {
+    cancelScheduledSearch()
     set({ searchAllFolders: value })
     get().fetchHistory()
   },

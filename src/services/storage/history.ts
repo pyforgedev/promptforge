@@ -1,7 +1,11 @@
 import db from './db'
 import {
   SENTINEL_UNFILED,
+  SENTINEL_UNKNOWN,
+  ASPECT_RATIO_KEYS,
+  ART_STYLE_OPTIONS,
   MAX_CANDIDATES_PER_REQUEST,
+  MAX_TOTAL_CANDIDATES_PER_REQUEST,
   normalizeText,
   tokenize,
   tokenizeQuery,
@@ -9,9 +13,19 @@ import {
   hashFilters,
   toEpochMillis,
   resolveFolderKey,
+  resolveAspectRatioKey,
+  resolveArtStyleKey,
 } from './historySearch'
 import { withQuotaRetry, scheduleRetentionPrune } from './retention'
-import type { GeneratedPrompt, GeneratedPromptBatch, GeneratorInput, ImagePlatform } from '@/features/prompt-generator/types'
+import type {
+  ArtStyleOption,
+  AspectRatio,
+  GeneratedPrompt,
+  GeneratedPromptBatch,
+  GeneratorInput,
+  ImagePlatform,
+} from '@/features/prompt-generator/types'
+import type { HistorySort } from '@/features/history/types'
 import type { IndexableType } from 'dexie'
 
 // ─── Raw (persisted) types — internal to storage, never consumed by UI directly ───
@@ -53,6 +67,12 @@ export interface PromptHistoryV10 {
   searchTerms: string[]
 }
 
+export interface PromptHistoryV11 extends PromptHistoryV10 {
+  /** Query-only snapshots derived from canonical batch generator input. */
+  aspectRatioKey: AspectRatio | typeof SENTINEL_UNKNOWN
+  artStyleKey: ArtStyleOption | typeof SENTINEL_UNKNOWN
+}
+
 export type PromptBatchRecord = Omit<GeneratedPromptBatch, 'prompts'>
 
 // ─── Public DTO — unchanged shape consumed by HistoryList, RecentPrompts, export, store ───
@@ -65,24 +85,37 @@ export interface PromptHistoryRecord extends Omit<GeneratedPrompt, 'generatorInp
 
 // ─── Cursor-based pagination contract ───
 
-export type HistoryPlan = 'date' | 'folder-date' | 'category-date'
+export type HistoryPlan = 'date-global' | 'folder-date' | 'rating-global' | 'folder-rating'
+export type HistorySortField = 'createdAt' | 'adobeScore.total'
+export type HistoryDirection = 'asc' | 'desc'
 
-/** Compound index key of the last examined row: [folderKey|createdAtMillis, id] or [createdAtMillis, id]. */
-export type HistoryCursorKey = [string, number, string] | [number, string]
+export type HistoryCursorKey =
+  | [number, string]
+  | [string, number, string]
+  | [number, number, string]
+  | [string, number, number, string]
 
 export interface HistoryCursor {
-  v: 1
+  v: 2
   plan: HistoryPlan
+  sortField: HistorySortField
+  direction: HistoryDirection
   filterHash: string
   key: HistoryCursorKey
 }
 
 export interface HistoryQueryParams {
-  folderId: string | null
-  minRating: number
-  search: string
-  limit: number
+  folderId?: string | null
+  aspectRatio?: string | null
+  artStyleKey?: string | null
+  minScore?: number
+  dateFrom?: string | null
+  dateTo?: string | null
+  search?: string
+  sort?: HistorySort
+  limit?: number
   cursor?: HistoryCursor | null
+  signal?: AbortSignal
 }
 
 export interface HistoryQueryResult {
@@ -94,27 +127,47 @@ export interface HistoryQueryResult {
 const DATE_MIN_MILLIS = -8_640_000_000_000_000
 const DATE_MAX_MILLIS = 8_640_000_000_000_000
 const ID_UPPER_BOUND = '\uffff'
+const SCORE_MAX = 100
 
-function parseCursor(raw: HistoryCursor | null | undefined, expectedPlan: HistoryPlan, filterHash: string): HistoryCursor | null {
+function validCursorString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 128
+}
+
+function validCursorNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function parseCursor(
+  raw: HistoryCursor | null | undefined,
+  expectedPlan: HistoryPlan,
+  expectedSortField: HistorySortField,
+  expectedDirection: HistoryDirection,
+  filterHash: string,
+  folderKey: string | null,
+): HistoryCursor | null {
   if (!raw || typeof raw !== 'object') return null
-  if (raw.v !== 1) return null
+  if (raw.v !== 2) return null
   if (raw.plan !== expectedPlan) return null
+  if (raw.sortField !== expectedSortField || raw.direction !== expectedDirection) return null
   if (raw.filterHash !== filterHash) return null
   const key = raw.key
   if (!Array.isArray(key)) return null
-  if (expectedPlan === 'date') {
-    if (key.length !== 1 + 1 || !Number.isFinite(key[0]) || typeof key[1] !== 'string' || key[1].length > 128) return null
-  } else if (expectedPlan === 'folder-date' || expectedPlan === 'category-date') {
-    if (key.length !== 2 + 1 || typeof key[0] !== 'string' || key[0].length > 128 || !Number.isFinite(key[1]) || typeof key[2] !== 'string' || key[2].length > 128) return null
-  } else {
-    return null
+
+  if (expectedPlan === 'date-global') {
+    if (key.length !== 2 || !validCursorNumber(key[0]) || !validCursorString(key[1])) return null
+  } else if (expectedPlan === 'folder-date') {
+    if (key.length !== 3 || !validCursorString(key[0]) || key[0] !== folderKey || !validCursorNumber(key[1]) || !validCursorString(key[2])) return null
+  } else if (expectedPlan === 'rating-global') {
+    if (key.length !== 3 || !validCursorNumber(key[0]) || key[0] < 0 || key[0] > SCORE_MAX || !validCursorNumber(key[1]) || !validCursorString(key[2])) return null
+  } else if (expectedPlan === 'folder-rating') {
+    if (key.length !== 4 || !validCursorString(key[0]) || key[0] !== folderKey || !validCursorNumber(key[1]) || key[1] < 0 || key[1] > SCORE_MAX || !validCursorNumber(key[2]) || !validCursorString(key[3])) return null
   }
   return raw
 }
 
 // ─── Hydration: raw stored rows → public DTO ───
 
-async function hydrateRecords(rows: PromptHistoryV10[]): Promise<PromptHistoryRecord[]> {
+async function hydrateRecords(rows: PromptHistoryV11[]): Promise<PromptHistoryRecord[]> {
   if (rows.length === 0) return []
 
   const batchIds = [...new Set(rows.map((r) => r.batchId).filter(Boolean))]
@@ -174,11 +227,11 @@ async function hydrateRecords(rows: PromptHistoryV10[]): Promise<PromptHistoryRe
 
 // ─── Writes ───
 
-function toV10Metadata(
+function toV11Metadata(
   prompt: GeneratedPrompt,
   batchInput: GeneratorInput,
   base: { folderId?: string | null } = {},
-): PromptHistoryV10 {
+): PromptHistoryV11 {
   const category = typeof batchInput.category === 'string' && batchInput.category !== '' ? batchInput.category : 'other'
   const niche = typeof batchInput.niche === 'string' ? batchInput.niche : ''
   const keywords = Array.isArray(prompt.commercialKeywords)
@@ -186,7 +239,7 @@ function toV10Metadata(
     : []
   const textSource = [prompt.platformVariants?.dalle3 ?? '', prompt.platformVariants?.nano_banana ?? '', niche, category, ...keywords].join(' ')
 
-  const record: PromptHistoryV10 = {
+  const record: PromptHistoryV11 = {
     id: prompt.id,
     batchId: prompt.batchId,
     variantIndex: prompt.variantIndex,
@@ -202,6 +255,8 @@ function toV10Metadata(
     categoryKey: category,
     nicheNormalized: normalizeText(niche),
     searchTerms: tokenize(textSource),
+    aspectRatioKey: resolveAspectRatioKey(batchInput),
+    artStyleKey: resolveArtStyleKey(batchInput),
   }
   if (typeof prompt.userNotes === 'string') record.userNotes = prompt.userNotes
   if (typeof prompt.legacy === 'boolean') record.legacy = prompt.legacy
@@ -215,10 +270,10 @@ export async function saveGeneratedPromptBatch(batch: GeneratedPromptBatch): Pro
   const { batchId, generatorInput, generatedAt, prompts } = batch
   const batchRecord: PromptBatchRecord = { batchId, generatorInput, generatedAt }
   const texts: PromptTextRecord[] = []
-  const historyRecords: PromptHistoryV10[] = []
+  const historyRecords: PromptHistoryV11[] = []
 
   for (const prompt of prompts) {
-    historyRecords.push(toV10Metadata(prompt, generatorInput))
+    historyRecords.push(toV11Metadata(prompt, generatorInput))
     texts.push(
       { promptId: prompt.id, platform: 'dalle3', content: typeof prompt.platformVariants.dalle3 === 'string' ? prompt.platformVariants.dalle3 : '' },
       { promptId: prompt.id, platform: 'nano_banana', content: typeof prompt.platformVariants.nano_banana === 'string' ? prompt.platformVariants.nano_banana : '' },
@@ -243,7 +298,7 @@ export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt
   const { platformVariants, niche, category, ...rest } = item
   const createdAt = toEpochMillis(new Date())
   const categoryKey = typeof category === 'string' && category !== '' ? category : 'other'
-  const record: PromptHistoryV10 = {
+  const record: PromptHistoryV11 = {
     ...rest,
     createdAt,
     folderId: rest.folderId ?? null,
@@ -251,6 +306,8 @@ export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt
     categoryKey,
     nicheNormalized: normalizeText(niche),
     searchTerms: tokenize([platformVariants.dalle3, platformVariants.nano_banana, niche, category].join(' ')),
+    aspectRatioKey: SENTINEL_UNKNOWN,
+    artStyleKey: SENTINEL_UNKNOWN,
   }
   const texts: PromptTextRecord[] = [
     { promptId: record.id, platform: 'dalle3', content: typeof platformVariants.dalle3 === 'string' ? platformVariants.dalle3 : '' },
@@ -322,108 +379,275 @@ export async function getRecentRelevantHistory(category: string, limit: number):
   return hydrateRecords(rows)
 }
 
-// ─── Query planner: date-first source index + bounded residual filter + cursor ───
+// ─── Query planner: one ordered source index + bounded residual filters ───
+
+interface DateBounds {
+  from: number | null
+  to: number | null
+  invalid: boolean
+}
+
+function parseLocalDate(value: string, nextDay: boolean): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const exact = new Date(year, month - 1, day)
+  if (exact.getFullYear() !== year || exact.getMonth() !== month - 1 || exact.getDate() !== day) return null
+  const date = nextDay ? new Date(year, month - 1, day + 1) : exact
+  const millis = date.getTime()
+  return Number.isFinite(millis) && millis >= 0 && millis <= DATE_MAX_MILLIS ? millis : null
+}
+
+function normalizeDateBounds(dateFrom: unknown, dateTo: unknown): DateBounds {
+  const fromText = typeof dateFrom === 'string' ? dateFrom.trim() : ''
+  const toText = typeof dateTo === 'string' ? dateTo.trim() : ''
+  const from = fromText ? parseLocalDate(fromText, false) : null
+  const to = toText ? parseLocalDate(toText, true) : null
+  const invalid = (fromText !== '' && from === null)
+    || (toText !== '' && to === null)
+    || (from !== null && to !== null && from >= to)
+  return { from, to, invalid }
+}
+
+function normalizeAspectRatio(value: unknown): AspectRatio | null {
+  return typeof value === 'string' && ASPECT_RATIO_KEYS.includes(value as AspectRatio)
+    ? value as AspectRatio
+    : null
+}
+
+function normalizeArtStyle(value: unknown): ArtStyleOption | null {
+  return typeof value === 'string' && ART_STYLE_OPTIONS.includes(value as ArtStyleOption)
+    ? value as ArtStyleOption
+    : null
+}
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new DOMException('History query aborted', 'AbortError')
+}
 
 function buildQueryCollection(params: {
   plan: HistoryPlan
   folderId: string | null
   cursor: HistoryCursor | null
+  direction: HistoryDirection
+  dateFrom: number | null
+  dateTo: number | null
+  minScore: number
 }) {
-  const { plan, folderId, cursor } = params
+  const { plan, folderId, cursor, direction, dateFrom, dateTo, minScore } = params
   let collection
 
   if (plan === 'folder-date') {
     const folderKey = folderId! // non-null by construction
-    if (cursor) {
-      const [ck, ms, id] = cursor.key as [string, number, string]
-      collection = db.prompt_history
-        .where('[folderKey+createdAt+id]')
-        .between(
-          [folderKey, DATE_MIN_MILLIS, ''] as IndexableType,
-          [ck, ms, id] as IndexableType,
-          true,
-          false, // exclusive upper: resume strictly below the last examined key
-        )
-    } else {
-      collection = db.prompt_history
-        .where('[folderKey+createdAt+id]')
-        .between(
-          [folderKey, DATE_MIN_MILLIS, ''] as IndexableType,
-          [folderKey, DATE_MAX_MILLIS, ID_UPPER_BOUND] as IndexableType,
-          true,
-          true,
-        )
-    }
-    return collection.reverse()
+    const lower = cursor && direction === 'asc'
+      ? cursor.key as [string, number, string]
+      : [folderKey, dateFrom ?? DATE_MIN_MILLIS, ''] as [string, number, string]
+    const upper = cursor && direction === 'desc'
+      ? cursor.key as [string, number, string]
+      : [folderKey, dateTo ?? DATE_MAX_MILLIS, dateTo === null ? ID_UPPER_BOUND : ''] as [string, number, string]
+    collection = db.prompt_history
+      .where('[folderKey+createdAt+id]')
+      .between(
+        lower as IndexableType,
+        upper as IndexableType,
+        !(cursor && direction === 'asc'),
+        !(cursor && direction === 'desc') && dateTo === null,
+      )
+    return direction === 'desc' ? collection.reverse() : collection
   }
 
-  if (cursor) {
-    const [ms, id] = cursor.key as [number, string]
+  if (plan === 'date-global') {
+    const lower = cursor && direction === 'asc'
+      ? cursor.key as [number, string]
+      : [dateFrom ?? DATE_MIN_MILLIS, ''] as [number, string]
+    const upper = cursor && direction === 'desc'
+      ? cursor.key as [number, string]
+      : [dateTo ?? DATE_MAX_MILLIS, dateTo === null ? ID_UPPER_BOUND : ''] as [number, string]
     collection = db.prompt_history
       .where('[createdAt+id]')
       .between(
-        [DATE_MIN_MILLIS, ''] as IndexableType,
-        [ms, id] as IndexableType,
-        true,
-        false, // exclusive upper: resume strictly below the last examined key
+        lower as IndexableType,
+        upper as IndexableType,
+        !(cursor && direction === 'asc'),
+        !(cursor && direction === 'desc') && dateTo === null,
       )
-  } else {
-    collection = db.prompt_history.orderBy('[createdAt+id]')
+    return direction === 'desc' ? collection.reverse() : collection
   }
+
+  if (plan === 'folder-rating') {
+    const folderKey = folderId!
+    const upper = cursor
+      ? cursor.key as [string, number, number, string]
+      : [folderKey, SCORE_MAX, DATE_MAX_MILLIS, ID_UPPER_BOUND] as [string, number, number, string]
+    collection = db.prompt_history
+      .where('[folderKey+adobeScore.total+createdAt+id]')
+      .between(
+        [folderKey, minScore, DATE_MIN_MILLIS, ''] as IndexableType,
+        upper as IndexableType,
+        true,
+        !cursor,
+      )
+    return collection.reverse()
+  }
+
+  const upper = cursor
+    ? cursor.key as [number, number, string]
+    : [SCORE_MAX, DATE_MAX_MILLIS, ID_UPPER_BOUND] as [number, number, string]
+  collection = db.prompt_history
+    .where('[adobeScore.total+createdAt+id]')
+    .between(
+      [minScore, DATE_MIN_MILLIS, ''] as IndexableType,
+      upper as IndexableType,
+      true,
+      !cursor,
+    )
   return collection.reverse()
 }
 
-/**
- * Query history with a date-first index source, a hard candidate budget for
- * residual rating/search filters, and an opaque, filter-bound cursor.
- *
- * - Since IndexedDB does not intersect indexes, the planner picks exactly one
- *   date-ordered source index and applies `minRating`/`search` as residual
- *   checks over a bounded number of candidates (`MAX_CANDIDATES_PER_REQUEST`).
- * - Pages may be partially filled when the budget is exhausted; continuation
- *   is provided via `nextCursor` and the UI keeps loading more.
- */
+function makeCursor(params: {
+  plan: HistoryPlan
+  sortField: HistorySortField
+  direction: HistoryDirection
+  filterHash: string
+  key: IndexableType
+}): HistoryCursor {
+  return {
+    v: 2,
+    plan: params.plan,
+    sortField: params.sortField,
+    direction: params.direction,
+    filterHash: params.filterHash,
+    key: params.key as HistoryCursorKey,
+  }
+}
+
+/** Query history using one allowlisted ordered source and bounded adaptive scanning. */
 export async function queryHistoryItems(params: HistoryQueryParams): Promise<HistoryQueryResult> {
-  const limit = Math.max(1, Math.min(Number.isFinite(params.limit) ? Math.floor(params.limit) : 20, 100))
-  const minRating = Number.isFinite(params.minRating) ? Math.max(0, params.minRating) : 0
-  const folderId = params.folderId
+  const limit = Math.max(1, Math.min(Number.isFinite(params.limit) ? Math.floor(params.limit!) : 20, 100))
+  const minScore = Number.isFinite(params.minScore)
+    ? Math.max(0, Math.min(SCORE_MAX, Math.floor(params.minScore!)))
+    : 0
+  const rawFolderId = params.folderId
+  const folderId = typeof rawFolderId === 'string'
+    && rawFolderId.length > 0
+    && rawFolderId.length <= 128
+    && rawFolderId !== SENTINEL_UNFILED
+    ? rawFolderId
+    : null
+  const aspectRatio = normalizeAspectRatio(params.aspectRatio)
+  const artStyleKey = normalizeArtStyle(params.artStyleKey)
+  const dateBounds = normalizeDateBounds(params.dateFrom, params.dateTo)
+  if (dateBounds.invalid) return { items: [], nextCursor: null, hasMore: false }
+
   const searchTokens = tokenizeQuery(params.search)
+  const sort: HistorySort = params.sort === 'date-asc' || params.sort === 'rating-desc'
+    ? params.sort
+    : 'date-desc'
+  const ratingSort = sort === 'rating-desc'
+  const plan: HistoryPlan = ratingSort
+    ? folderId === null ? 'rating-global' : 'folder-rating'
+    : folderId === null ? 'date-global' : 'folder-date'
+  const sortField: HistorySortField = ratingSort ? 'adobeScore.total' : 'createdAt'
+  const direction: HistoryDirection = sort === 'date-asc' ? 'asc' : 'desc'
+  const filterHash = hashFilters({
+    folderId,
+    aspectRatio,
+    artStyleKey,
+    minScore,
+    dateFrom: dateBounds.from,
+    dateTo: dateBounds.to,
+    searchTokens,
+    sort,
+  })
+  const cursor = parseCursor(
+    params.cursor,
+    plan,
+    sortField,
+    direction,
+    filterHash,
+    folderId,
+  )
 
-  const plan: HistoryPlan = folderId !== null ? 'folder-date' : 'date'
-  const filterHash = hashFilters({ folderId, minRating, searchTokens })
-
-  const cursor = params.cursor ? parseCursor(params.cursor, plan, filterHash) : null
-
-  const collection = buildQueryCollection({ plan, folderId, cursor })
-
-  const outputRows: PromptHistoryV10[] = []
-  let examined = 0
+  const outputRows: PromptHistoryV11[] = []
+  let examinedTotal = 0
+  let resumeCursor = cursor
   let lastExaminedKey: IndexableType | null = null
-  let stoppedEarly = false
+  let sourceExhausted = false
 
-  await collection
-    .until(() => {
-      // Stop before processing the next row once the page is full or the
-      // candidate budget is exhausted. `stoppedEarly` therefore guarantees an
-      // unprocessed row exists below, so hasMore is exact without a lookahead.
-      const shouldStop = examined >= MAX_CANDIDATES_PER_REQUEST || outputRows.length >= limit
-      if (shouldStop) stoppedEarly = true
-      return shouldStop
+  while (examinedTotal < MAX_TOTAL_CANDIDATES_PER_REQUEST && outputRows.length < limit) {
+    throwIfAborted(params.signal)
+    const collection = buildQueryCollection({
+      plan,
+      folderId,
+      cursor: resumeCursor,
+      direction,
+      dateFrom: dateBounds.from,
+      dateTo: dateBounds.to,
+      minScore,
     })
-    .each((record, c) => {
-      lastExaminedKey = c.key
-      examined++
-      if (minRating > 0 && (record.adobeScore?.total ?? 0) < minRating) return
-      if (!matchesSearch(record, searchTokens)) return
-      outputRows.push(record)
-    })
+    let examinedChunk = 0
+    let stoppedEarly = false
 
-  const hasMore = stoppedEarly
-  const nextCursor: HistoryCursor | null =
-    hasMore && lastExaminedKey !== null
-      ? { v: 1, plan, filterHash, key: lastExaminedKey as HistoryCursorKey }
-      : null
+    await collection
+      .until(() => {
+        const shouldStop = examinedChunk >= MAX_CANDIDATES_PER_REQUEST
+          || outputRows.length >= limit
+          || params.signal?.aborted === true
+        if (shouldStop) stoppedEarly = true
+        return shouldStop
+      })
+      .each((record, context) => {
+        lastExaminedKey = context.key
+        examinedChunk++
+        examinedTotal++
+        const score = Number.isFinite(record.adobeScore?.total) ? record.adobeScore.total : 0
+        if (!ratingSort && minScore > 0 && score < minScore) return
+        if (ratingSort && dateBounds.from !== null && record.createdAt < dateBounds.from) return
+        if (ratingSort && dateBounds.to !== null && record.createdAt >= dateBounds.to) return
+        if (aspectRatio !== null && record.aspectRatioKey !== aspectRatio) return
+        if (artStyleKey !== null && record.artStyleKey !== artStyleKey) return
+        if (!matchesSearch(record, searchTokens)) return
+        outputRows.push(record)
+      })
 
+    throwIfAborted(params.signal)
+    if (!stoppedEarly) {
+      sourceExhausted = true
+      break
+    }
+    if (lastExaminedKey === null) break
+    resumeCursor = makeCursor({ plan, sortField, direction, filterHash, key: lastExaminedKey })
+    if (examinedTotal >= MAX_TOTAL_CANDIDATES_PER_REQUEST || outputRows.length >= limit) break
+    await yieldToBrowser()
+  }
+
+  let hasMore = false
+  if (!sourceExhausted && lastExaminedKey !== null) {
+    throwIfAborted(params.signal)
+    const probeCursor = makeCursor({ plan, sortField, direction, filterHash, key: lastExaminedKey })
+    const probe = await buildQueryCollection({
+      plan,
+      folderId,
+      cursor: probeCursor,
+      direction,
+      dateFrom: dateBounds.from,
+      dateTo: dateBounds.to,
+      minScore,
+    }).limit(1).toArray()
+    hasMore = probe.length > 0
+  }
+
+  const nextCursor = hasMore && lastExaminedKey !== null
+    ? makeCursor({ plan, sortField, direction, filterHash, key: lastExaminedKey })
+    : null
+
+  throwIfAborted(params.signal)
   return {
     items: await hydrateRecords(outputRows),
     nextCursor,

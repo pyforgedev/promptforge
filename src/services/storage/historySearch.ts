@@ -15,8 +15,27 @@
  *  This exact string is rejected as a real folder id at write time. */
 export const SENTINEL_UNFILED = '__unfiled__'
 
+/** Reserved snapshot value for legacy/system-selected metadata. */
+export const SENTINEL_UNKNOWN = '__unknown__'
+
+export const ASPECT_RATIO_KEYS = [
+  'random',
+  '1:1',
+  '4:5',
+  '2:3',
+  '9:16',
+  '3:2',
+  '4:3',
+  '16:9',
+] as const satisfies readonly AspectRatio[]
+
+export { ART_STYLE_OPTIONS }
+
 /** Hard cap on rows examined by a single query request (residual filter budget). */
 export const MAX_CANDIDATES_PER_REQUEST = 200
+
+/** Maximum candidates examined across all chunks in one service request. */
+export const MAX_TOTAL_CANDIDATES_PER_REQUEST = 2_000
 
 /** Maximum number of tokens a user search query may contribute. */
 export const MAX_QUERY_TOKENS = 20
@@ -78,13 +97,62 @@ export function matchesSearch(row: { searchTerms: string[] }, queryTokens: strin
  * filter combination it was created under, so a stale cursor from a previous
  * folder/search/rating is rejected instead of misapplied.
  */
-export function hashFilters(filters: { folderId: string | null; minRating: number; searchTokens: string[] }): string {
-  const canonical = JSON.stringify([filters.folderId, filters.minRating, filters.searchTokens])
-  let hash = 5381
+export interface CanonicalHistoryFilters {
+  folderId: string | null
+  aspectRatio: AspectRatio | null
+  artStyleKey: ArtStyleOption | null
+  minScore: number
+  dateFrom: number | null
+  dateTo: number | null
+  searchTokens: string[]
+  sort: 'date-desc' | 'date-asc' | 'rating-desc'
+}
+
+export function hashFilters(filters: CanonicalHistoryFilters): string {
+  const canonical = JSON.stringify([
+    filters.folderId,
+    filters.aspectRatio,
+    filters.artStyleKey,
+    filters.minScore,
+    filters.dateFrom,
+    filters.dateTo,
+    filters.searchTokens,
+    filters.sort,
+  ])
+  let h1 = 5381
+  let h2 = 0
   for (let i = 0; i < canonical.length; i++) {
-    hash = ((hash << 5) + hash + canonical.charCodeAt(i)) | 0
+    const char = canonical.charCodeAt(i)
+    h1 = ((h1 << 5) + h1 + char) | 0
+    h2 = (char + (h2 << 6) + (h2 << 16) - h2) | 0
   }
-  return (hash >>> 0).toString(36)
+  return `${(h1 >>> 0).toString(36)}-${(h2 >>> 0).toString(36)}`
+}
+
+function ownValue(record: Record<string, unknown>, key: string): unknown {
+  return Object.prototype.hasOwnProperty.call(record, key) ? record[key] : undefined
+}
+
+/** Resolve a bounded v11 aspect-ratio snapshot from untrusted generator input. */
+export function resolveAspectRatioKey(input: unknown): AspectRatio | typeof SENTINEL_UNKNOWN {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return SENTINEL_UNKNOWN
+  const value = ownValue(input as Record<string, unknown>, 'aspectRatio')
+  return typeof value === 'string' && ASPECT_RATIO_KEYS.includes(value as AspectRatio)
+    ? value as AspectRatio
+    : SENTINEL_UNKNOWN
+}
+
+/** Resolve a bounded v11 art-style snapshot from untrusted generator input. */
+export function resolveArtStyleKey(input: unknown): ArtStyleOption | typeof SENTINEL_UNKNOWN {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return SENTINEL_UNKNOWN
+  const artStyle = ownValue(input as Record<string, unknown>, 'artStyle')
+  if (!artStyle || typeof artStyle !== 'object' || Array.isArray(artStyle)) return SENTINEL_UNKNOWN
+  const styleRecord = artStyle as Record<string, unknown>
+  const mode = ownValue(styleRecord, 'mode')
+  const value = ownValue(styleRecord, 'value')
+  return mode === 'user' && typeof value === 'string' && ART_STYLE_OPTIONS.includes(value as ArtStyleOption)
+    ? value as ArtStyleOption
+    : SENTINEL_UNKNOWN
 }
 
 /** Coerce an unknown value into a non-negative finite number (epoch millis). */
@@ -133,3 +201,8 @@ export function resolveFolderKey(folderId: string | null | undefined): string {
     ? folderId
     : SENTINEL_UNFILED
 }
+import {
+  ART_STYLE_OPTIONS,
+  type ArtStyleOption,
+  type AspectRatio,
+} from '@/features/prompt-generator/types'

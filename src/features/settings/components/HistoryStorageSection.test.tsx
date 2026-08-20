@@ -5,8 +5,8 @@ import { renderWithProviders } from '@/test/utils'
 import db from '@/services/storage/indexeddb'
 import { saveSetting } from '@/services/storage/settings'
 import { HistoryStorageSection } from './HistoryStorageSection'
-import type { PromptHistoryV10, PromptTextRecord } from '@/services/storage/history'
-import { tokenize, resolveFolderKey } from '@/services/storage/historySearch'
+import type { PromptHistoryV11, PromptTextRecord } from '@/services/storage/history'
+import { SENTINEL_UNKNOWN, tokenize, resolveFolderKey } from '@/services/storage/historySearch'
 
 const { showToast } = vi.hoisted(() => ({ showToast: vi.fn() }))
 
@@ -17,7 +17,7 @@ vi.mock('@/hooks/useToast', () => ({
 const POLICY_KEY = 'history_retention_policy'
 const DAY = 86_400_000
 
-function makeRecord(id: string, createdAt: number): PromptHistoryV10 {
+function makeRecord(id: string, createdAt: number): PromptHistoryV11 {
   return {
     id,
     batchId: `batch-${id}`,
@@ -39,6 +39,8 @@ function makeRecord(id: string, createdAt: number): PromptHistoryV10 {
     categoryKey: 'other',
     nicheNormalized: 'test',
     searchTerms: tokenize(id),
+    aspectRatioKey: SENTINEL_UNKNOWN,
+    artStyleKey: SENTINEL_UNKNOWN,
   }
 }
 

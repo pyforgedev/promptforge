@@ -48,7 +48,7 @@ export default function HistoryPage() {
   const handleDeleteAll = async () => {
     await removeAll()
     setDeleteAllOpen(false)
-    showToast('success', 'History cleared')
+    showToast('success', t('toast.deleteAllSuccess'))
   }
 
   const handleCopy = async (content: string) => {

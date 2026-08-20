@@ -4,7 +4,7 @@ import type { Prompt } from '@/types'
 import type { Folder } from '@/features/history/types'
 import type { GeneratorInput, PromptSegments, AdobeStockScore, VariationAnchors } from '@/features/prompt-generator/types'
 import type { IdeaCacheEntry } from './ideaCache'
-import type { PromptHistoryRecord, PromptBatchRecord, PromptHistoryV10, PromptTextRecord, PlatformId } from './history'
+import type { PromptHistoryRecord, PromptBatchRecord, PromptHistoryV10, PromptHistoryV11, PromptTextRecord, PlatformId } from './history'
 import type { FormatterBatch, FormatterItem } from './formatter'
 import {
   normalizeText,
@@ -14,6 +14,8 @@ import {
   boundedStringArray,
   boundedInt,
   resolveFolderKey,
+  resolveAspectRatioKey,
+  resolveArtStyleKey,
 } from './historySearch'
 
 const DB_NAME = 'promptforge'
@@ -258,11 +260,48 @@ export function migrateLegacyPromptRow(legacy: unknown, fallbackNiche?: string, 
   return { batchId, metadata, texts, fallbackBatch: null }
 }
 
+/** Atomic v10→v11 backfill of canonical aspect-ratio and art-style snapshots. */
+export async function upgradePromptHistoryToV11(trans: Transaction): Promise<void> {
+  const historyTable = trans.table('prompt_history')
+  const batchesTable = trans.table('prompt_batches')
+  const beforeCount = await historyTable.count()
+  const batches = (await batchesTable.toArray()) as PromptBatchRecord[]
+  const batchById = new Map(
+    batches
+      .filter((batch) => batch && typeof batch.batchId === 'string')
+      .map((batch) => [batch.batchId, batch]),
+  )
+  const upgraded: PromptHistoryV11[] = []
+
+  await historyTable.toCollection().each((value) => {
+    const row = (value && typeof value === 'object' ? value : {}) as PromptHistoryV10
+    const batch = typeof row.batchId === 'string' ? batchById.get(row.batchId) : undefined
+    upgraded.push({
+      ...row,
+      aspectRatioKey: resolveAspectRatioKey(batch?.generatorInput),
+      artStyleKey: resolveArtStyleKey(batch?.generatorInput),
+    })
+  })
+
+  if (upgraded.length !== beforeCount) {
+    throw new Error(`[PromptForge] Migration invariant failed: v11 history count mismatch (${beforeCount} vs ${upgraded.length})`)
+  }
+  await bulkPutChunked(historyTable, upgraded)
+  const afterCount = await historyTable.count()
+  if (afterCount !== beforeCount) {
+    throw new Error(`[PromptForge] Migration invariant failed: v11 persisted count mismatch (${beforeCount} vs ${afterCount})`)
+  }
+
+  if (import.meta.env.DEV) {
+    console.log(`[PromptForge] Migration to version 11 complete (${afterCount} rows).`)
+  }
+}
+
 class PromptForgeDB extends Dexie {
   prompts!: EntityTable<Prompt, 'id'>
   /** @deprecated legacy flat table (v5) — dropped as of v6. */
   history!: EntityTable<Record<string, unknown>, 'id'>
-  prompt_history!: EntityTable<PromptHistoryV10, 'id'>
+  prompt_history!: EntityTable<PromptHistoryV11, 'id'>
   prompt_texts!: Table<PromptTextRecord, [string, PlatformId]>
   prompt_batches!: EntityTable<PromptBatchRecord, 'batchId'>
   folders!: EntityTable<Folder, 'id'>
@@ -440,6 +479,22 @@ class PromptForgeDB extends Dexie {
       formatter_batch: '++id, createdAt',
       formatter_items: '++id, order, status',
     }).upgrade(upgradePromptHistoryToV10)
+
+    // Version 11: canonical filter snapshots plus deterministic rating ordering.
+    // All v10 indexes are retained; upgrade failure aborts without resetting data.
+    this.version(11).stores({
+      prompt_history: 'id, batchId, createdAt, folderId, folderKey, categoryKey, [createdAt+id], [folderKey+createdAt+id], [categoryKey+createdAt+id], [adobeScore.total+createdAt+id], [folderKey+adobeScore.total+createdAt+id]',
+      prompt_texts: '[promptId+platform], promptId',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+      prompts: 'id, name, category, createdAt',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      cryptoKeys: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+      formatter_batch: '++id, createdAt',
+      formatter_items: '++id, order, status',
+    }).upgrade(upgradePromptHistoryToV11)
   }
 }
 
