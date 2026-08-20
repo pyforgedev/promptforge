@@ -24,7 +24,8 @@ Thanks for your interest in contributing! This guide covers the essentials for w
 | `npm run build` | TypeScript validation + production build |
 | `npm run lint` | ESLint checks |
 | `npm run test` | Vitest in watch mode |
-| `npm run test:run` | Vitest, single run (used by CI) |
+| `npm run test:run` | Vitest, single run of the FULL suite (slow; CI only) |
+| `npx vitest run <file>` | Scoped tests for one/many files — the default way to verify changes |
 | `npm run preview` | Preview the production build locally |
 | `npm run release*` | Versioned releases (maintainers only) |
 
@@ -52,7 +53,7 @@ Thanks for your interest in contributing! This guide covers the essentials for w
 - **i18n:** every user-facing string goes through `useTranslation()` (components) or the `i18n` instance (stores/services). Add strings to **both** `public/locales/en/translation.json` and `public/locales/id/translation.json` with identical key sets.
 - **Storage access** goes through `src/services/storage/` — stores/components must not touch Dexie directly.
 - **Route paths** come from the centralized constants (see `src/app/`) — never hardcode `'/generator'`-style literals outside them.
-- **Tests** live next to the code they cover (`*.test.ts`). Run `npm run test:run` before opening a PR.
+- **Tests** live next to the code they cover (`*.test.ts`). Run only the tests that cover your change — `npx vitest run <file-or-files>` — before opening a PR. The full suite (`npm run test:run`) is slow; it runs in CI, so don't run it locally as a routine check.
 
 ## Commit Messages
 
@@ -88,7 +89,7 @@ Examples: `fix(generator): abort stale requests on unmount`, `feat(formatter): a
 
 1. Create a branch from `main` (`git checkout -b feat/my-feature`).
 2. Make your changes; keep PRs small and focused.
-3. Run the full quality gate locally: `npm run lint && npm run test:run && npm run build`.
+3. Run the quality gate locally: `npm run lint` + scoped tests for your change (`npx vitest run <file-or-files>`). The full `npm run test:run` runs in CI.
 4. Fill out the PR template (there is one — it is required).
 5. CI must pass before merge. A maintainer will review and merge.
 

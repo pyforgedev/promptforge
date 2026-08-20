@@ -12,11 +12,39 @@ Core commands:
 npm run dev       # start the development server
 npm run build     # TypeScript check + production build
 npm run lint      # run ESLint
-npm run test:run  # run the Vitest suite once
+npm run test:run  # run the Vitest suite once — FULL suite, slow; avoid as routine check
 ```
 
 > [!IMPORTANT]
-> **Never run `npm run build` (or any build/typecheck command: `npx tsc *`, `npx vite build *`, etc.) without asking the user first.** Builds are slow, so do not run them as routine verification on every small change. Ask for explicit approval before each build; only run it when the user requests it or a build is strictly required for the current task. `npm run lint` and `npm run test:run` may run freely as routine checks.
+> **Never run `npm run build` (or any build/typecheck command: `npx tsc *`, `npx vite build *`, etc.) without asking the user first.** Builds are slow, so do not run them as routine verification on every small change. Ask for explicit approval before each build; only run it when the user requests it or a build is strictly required for the current task. `npm run lint` may run freely as a routine check.
+
+## Testing — Always Scoped, Never the Full Suite
+
+> [!IMPORTANT]
+> **Run only the tests that cover the change — never `npm run test:run` (full suite) as a routine check.** The full suite is slow (~2 minutes) and wasteful; it may only be run when the user explicitly requests it.
+
+- Run scoped tests with `npx vitest run <file-or-files>` — never `npm run test:run`.
+- Pick the test files that cover the touched code, colocated next to it (`*.test.ts`):
+
+  ```bash
+  # UI change → its component test(s)
+  npx vitest run src/features/history/components/HistoryFilters.test.tsx
+
+  # Storage/query change → the storage tests + any store/UI test that consumes it
+  npx vitest run src/services/storage/history.test.ts src/services/storage/db.migration.test.ts
+
+  # Store change → the store test and its consuming component tests
+  npx vitest run src/store/useHistoryStore.test.ts src/features/history/components/HistoryFilters.test.tsx
+
+  # Shared util/component change → the util/component test + direct consumers
+  npx vitest run src/components/ui/combobox.test.tsx src/features/history/components/HistoryFilters.test.tsx
+
+  # Multiple related files — pass them all in one command
+  npx vitest run src/services/storage/retention.test.ts src/services/storage/retention.ts
+  ```
+
+- When in doubt about which files are affected, grep for the touched symbol or file name inside `*.test.*` and add all matches to the same command.
+- Run lint (`npm run lint`) freely alongside scoped tests as the routine verification loop.
 
 ## Internationalization
 

@@ -145,10 +145,12 @@ PromptForge implements a strict design system detailed in [`DESIGN.md`](./DESIGN
 - `npm run lint`: Performs lint checks via ESLint.
 - `npm run preview`: Previews the local production build.
 - `npm run test`: Runs the Vitest test suite in watch mode.
-- `npm run test:run`: Runs the Vitest test suite once.
+- `npm run test:run`: Runs the full Vitest test suite once (slow, ~2 minutes); reserved for CI or explicit requests.
+- `npx vitest run <file-or-files>`: Runs only the tests covering the current change — the default way to verify changes.
 
 > [!TIP]
 > The testing setup utilizes Vitest 4, `@testing-library/react`, `@testing-library/jest-dom`, and `fake-indexeddb` to execute tests under a simulated IndexedDB environment.
+> Routine local verification uses scoped tests; CI runs the full suite.
 
 ## Security
 

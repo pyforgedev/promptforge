@@ -13,7 +13,7 @@
 ## Checklist
 
 - [ ] `npm run lint` passes
-- [ ] `npm run test:run` passes (existing tests updated if behavior/strings changed)
+- [ ] Scoped tests for changed files pass (`npx vitest run <changed test files>`); full `npm run test:run` runs in CI
 - [ ] `npm run build` passes
 - [ ] i18n: new user-facing strings added to **both** `public/locales/en/translation.json` and `public/locales/id/translation.json`
 - [ ] UI changes follow the design system in `DESIGN.md`
