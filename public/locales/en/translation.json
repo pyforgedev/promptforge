@@ -257,7 +257,6 @@
     "filteredEmptyDescription": "Adjust the filters or reset them to see more history.",
     "matchOutsidePreview": "Match outside preview",
     "artStyles": {
-      "none": "AI selected",
       "photorealistic": "Photorealistic",
       "cinematic_photography": "Cinematic photography",
       "editorial_photography": "Editorial photography",

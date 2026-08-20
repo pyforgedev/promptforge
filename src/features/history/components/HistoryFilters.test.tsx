@@ -37,11 +37,38 @@ describe('HistoryFiltersBar', () => {
     expect(onFilterChange).toHaveBeenCalledWith('dateTo', expect.any(String))
   })
 
+  it('lets users search aspect ratio options and wires selection', async () => {
+    const user = userEvent.setup()
+    const { onFilterChange } = renderFilters()
+    await user.click(screen.getByLabelText('Aspect Ratio'))
+    const listbox = screen.getByRole('listbox')
+    for (const ratio of ['All', 'Random', '1:1', '4:5', '2:3', '9:16', '3:2', '4:3', '16:9']) {
+      expect(within(listbox).getByText(ratio)).toBeInTheDocument()
+    }
+    await user.type(screen.getByPlaceholderText('Search...'), '16')
+    expect(within(listbox).queryByText('1:1')).not.toBeInTheDocument()
+    expect(within(listbox).getByText('16:9')).toBeInTheDocument()
+    await user.click(within(listbox).getByText('16:9'))
+    expect(onFilterChange).toHaveBeenCalledWith('aspectRatio', '16:9')
+  })
+
+  it('lets users search art style options without the redundant "AI selected" entry', async () => {
+    const user = userEvent.setup()
+    const { onFilterChange } = renderFilters()
+    await user.click(screen.getByLabelText('Art style'))
+    const listbox = screen.getByRole('listbox')
+    expect(within(listbox).queryByText('AI selected')).not.toBeInTheDocument()
+    await user.type(screen.getByPlaceholderText('Search...'), 'min')
+    expect(within(listbox).queryByText('Cinematic photography')).not.toBeInTheDocument()
+    expect(within(listbox).getByText('Minimalist')).toBeInTheDocument()
+    await user.click(within(listbox).getByText('Minimalist'))
+    expect(onFilterChange).toHaveBeenCalledWith('artStyleKey', 'minimalist')
+  })
+
   it('offers score thresholds 50–90 rather than single-digit values and wires selection', async () => {
     const user = userEvent.setup()
     const { onFilterChange } = renderFilters()
-    const selects = screen.getAllByRole('combobox')
-    await user.click(selects[2])
+    await user.click(screen.getByLabelText('Minimum score'))
     const listbox = screen.getByRole('listbox')
     for (const score of ['50+', '60+', '70+', '80+', '90+']) expect(within(listbox).getByText(score)).toBeInTheDocument()
     expect(within(listbox).queryByText('5+')).not.toBeInTheDocument()
@@ -50,19 +77,10 @@ describe('HistoryFiltersBar', () => {
     expect(onFilterChange).toHaveBeenCalledWith('minScore', 80)
   })
 
-  it('wires aspect ratio, art style, and sort selections', async () => {
+  it('wires sort selection', async () => {
     const user = userEvent.setup()
     const { onFilterChange } = renderFilters()
-    let selects = screen.getAllByRole('combobox')
-    await user.click(selects[0])
-    await user.click(within(screen.getByRole('listbox')).getByText('16:9'))
-    expect(onFilterChange).toHaveBeenCalledWith('aspectRatio', '16:9')
-    selects = screen.getAllByRole('combobox')
-    await user.click(selects[1])
-    await user.click(within(screen.getByRole('listbox')).getByText('Minimalist'))
-    expect(onFilterChange).toHaveBeenCalledWith('artStyleKey', 'minimalist')
-    selects = screen.getAllByRole('combobox')
-    await user.click(selects[3])
+    await user.click(screen.getByLabelText('Sort by'))
     await user.click(within(screen.getByRole('listbox')).getByText('Highest score'))
     expect(onFilterChange).toHaveBeenCalledWith('sort', 'rating-desc')
   })
