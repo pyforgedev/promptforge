@@ -14,7 +14,10 @@
       "model": "9router/gemini-frontend"
     },
     "test-writer": {
-      "model": "9router/gemini-frontend"
+      "model": "openai/gpt-5.6-sol#high"
+    },
+    "docs-writer": {
+      "model": "openai/gpt-5.6-sol#high"
     }
   },
   "permissions": [
