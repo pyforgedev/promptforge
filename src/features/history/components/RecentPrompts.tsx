@@ -1,7 +1,7 @@
 import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLiveQuery } from 'dexie-react-hooks'
-import db from '@/services/storage/indexeddb'
+import db, { hydrateRecords } from '@/services/storage/indexeddb'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Copy, Check, Wand2 } from 'lucide-react'
@@ -17,7 +17,14 @@ export const RecentPrompts = memo(function RecentPrompts() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const recentItems = useLiveQuery(
-    () => db.prompt_history.orderBy('createdAt').reverse().limit(3).toArray(),
+    async () => {
+      const rows = await db.prompt_history
+        .orderBy('[createdAt+id]')
+        .reverse()
+        .limit(3)
+        .toArray()
+      return rows.length > 0 ? hydrateRecords(rows) : []
+    },
     []
   )
 

@@ -269,6 +269,6 @@ beforeEach(async () => {
     loading: false,
     error: null,
     hasMore: false,
-    offset: 0,
+    cursor: null,
   })
 })

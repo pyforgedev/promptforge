@@ -9,15 +9,16 @@ import {
   deleteFolderAndUnassign,
   bulkUpdateHistoryFolder,
   queryHistoryItems,
-  resetDatabase,
   updateFolder,
 } from '@/services/storage/indexeddb'
 import { emit } from '@/lib/eventBus'
 import { sanitizeError } from '@/lib/sanitizeError'
 import i18n from '@/i18n'
-import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
+import type { HistoryCursor, PromptHistoryRecord } from '@/services/storage/indexeddb'
 import type { HistoryFilters, Folder } from '@/features/history/types'
 import { MAX_FOLDERS, FolderLimitError } from '@/features/history/types'
+
+const PAGE_SIZE = 20
 
 interface HistoryState {
   items: PromptHistoryRecord[]
@@ -31,7 +32,8 @@ interface HistoryState {
   loading: boolean
   error: string | null
   hasMore: boolean
-  offset: number
+  /** Opaque cursor for the next page; reset whenever filters/folder/search change. */
+  cursor: HistoryCursor | null
   hasLoaded: boolean
 
   // Actions
@@ -42,38 +44,24 @@ interface HistoryState {
   resetFilters: () => void
   setCurrentFolder: (id: string | null) => void
   setSearchAllFolders: (value: boolean) => void
-  
+
   // Multi-select
   toggleSelect: (id: string) => void
   selectAll: (ids: string[]) => void
   deselectAll: () => void
-  
+
   // Bulk Actions
   bulkDelete: () => Promise<void>
   bulkMove: (folderId: string | null) => Promise<void>
   removeAll: () => Promise<void>
-  
+
   // Single Actions
   removeItem: (id: string) => Promise<void>
-  
+
   // Folder Actions
   createFolder: (name: string, parentId?: string | null) => Promise<string>
   renameFolder: (id: string, name: string) => Promise<void>
   removeFolder: (id: string) => Promise<void>
-}
-
-function _isSchemaError(err: unknown): boolean {
-  const msg = (err as Error)?.message?.toLowerCase() ?? ''
-  const name = (err as DOMException)?.name ?? ''
-  return (
-    msg.includes('schema') ||
-    msg.includes('version') ||
-    msg.includes('upgrade') ||
-    msg.includes('migration') ||
-    msg.includes('corruption') ||
-    name === 'VersionError' ||
-    name === 'InvalidStateError'
-  )
 }
 
 const defaultFilters: HistoryFilters = {
@@ -88,6 +76,14 @@ const defaultFilters: HistoryFilters = {
 const SEARCH_DEBOUNCE_MS = 300
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * Monotonic request sequence. Every fetchHistory/loadMore call claims the next
+ * ID; responses are applied only if their claim is still current. This discards
+ * stale results from superseded requests (rapid folder/filter/search changes,
+ * or a loadMore that was in flight when the user changed the current view).
+ */
+let fetchSeq = 0
 
 function scheduleSearchFetch(): void {
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
@@ -106,6 +102,11 @@ async function refreshHistoryCounts(): Promise<void> {
   }
 }
 
+function mergeItems(existing: PromptHistoryRecord[], incoming: PromptHistoryRecord[]): PromptHistoryRecord[] {
+  const seen = new Set(existing.map((item) => item.id))
+  return [...existing, ...incoming.filter((item) => !seen.has(item.id))]
+}
+
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   items: [],
   folders: [],
@@ -118,43 +119,28 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   loading: false,
   error: null,
   hasMore: false,
-  offset: 0,
+  cursor: null,
   hasLoaded: false,
 
   fetchHistory: async () => {
-    set({ loading: true, error: null, offset: 0 })
+    const seq = ++fetchSeq
+    set({ loading: true, error: null, cursor: null })
     try {
       const { currentFolderId, searchAllFolders, filters } = get()
-      const { items, hasMore } = await queryHistoryItems({
+      const { items, nextCursor, hasMore } = await queryHistoryItems({
         folderId: searchAllFolders ? null : currentFolderId,
         minRating: filters.minRating,
         search: filters.search,
-        offset: 0,
-        limit: 20
+        limit: PAGE_SIZE,
+        cursor: null,
       })
-      set({ items, hasMore, offset: items.length, loading: false, hasLoaded: true })
+      if (seq !== fetchSeq) return // superseded by a newer fetch — discard
+      set({ items, cursor: nextCursor, hasMore, loading: false, hasLoaded: true })
     } catch (err) {
-      if (_isSchemaError(err)) {
-        console.warn('[HistoryStore] fetchHistory failed with schema error, resetting DB...', err)
-        try {
-          await resetDatabase()
-          const { currentFolderId, searchAllFolders, filters } = get()
-          const { items, hasMore } = await queryHistoryItems({
-            folderId: searchAllFolders ? null : currentFolderId,
-            minRating: filters.minRating,
-            search: filters.search,
-            offset: 0,
-            limit: 20
-          })
-          set({ items, hasMore, offset: items.length, loading: false, hasLoaded: true })
-          return
-        } catch (retryErr) {
-          console.error('[HistoryStore] fetchHistory failed after DB reset:', retryErr)
-          if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory DB reset failed:', sanitizeError(retryErr))
-          set({ error: i18n.t('errors.history.loadFailedAfterReset'), loading: false })
-          return
-        }
-      }
+      if (seq !== fetchSeq) return
+      // NOTE: since the v10 migration, schema/version/migration failures surface
+      // from the storage layer as typed errors and are NEVER auto-reset here.
+      // The DB is only reset via explicit user confirmation.
       if (import.meta.env.DEV) console.warn('[HistoryStore] fetchHistory failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.loadFailed'), loading: false })
     }
@@ -162,23 +148,26 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   loadMore: async () => {
     if (get().loading || !get().hasMore) return
+    const seq = ++fetchSeq
     set({ loading: true, error: null })
     try {
-      const { currentFolderId, searchAllFolders, filters, offset, items: existingItems } = get()
-      const { items: newItems, hasMore } = await queryHistoryItems({
+      const { currentFolderId, searchAllFolders, filters, cursor, items: existingItems } = get()
+      const { items: newItems, nextCursor, hasMore } = await queryHistoryItems({
         folderId: searchAllFolders ? null : currentFolderId,
         minRating: filters.minRating,
         search: filters.search,
-        offset,
-        limit: 20
+        limit: PAGE_SIZE,
+        cursor,
       })
+      if (seq !== fetchSeq) return // superseded (view/filter changed) — discard, do not merge
       set({
-        items: [...existingItems, ...newItems],
+        items: mergeItems(existingItems, newItems),
+        cursor: nextCursor,
         hasMore,
-        offset: offset + newItems.length,
-        loading: false
+        loading: false,
       })
     } catch (err) {
+      if (seq !== fetchSeq) return
       if (import.meta.env.DEV) console.warn('[HistoryStore] loadMore failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.loadMoreFailed'), loading: false })
     }
@@ -190,19 +179,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       const [folders, counts] = await Promise.all([getFolders(), getHistoryCounts()])
       set({ folders, folderCounts: counts.byFolder, totalPromptCount: counts.total })
     } catch (err) {
-      if (_isSchemaError(err)) {
-        console.warn('[HistoryStore] fetchFolders failed with schema error, resetting DB...', err)
-        try {
-          await resetDatabase()
-          const [folders, counts] = await Promise.all([getFolders(), getHistoryCounts()])
-          set({ folders, folderCounts: counts.byFolder, totalPromptCount: counts.total })
-          return
-        } catch (retryErr) {
-          if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders DB reset failed:', sanitizeError(retryErr))
-          set({ error: i18n.t('errors.history.loadFoldersFailedAfterReset') })
-          return
-        }
-      }
+      // See note in fetchHistory — no automatic DB reset for schema/version errors.
       if (import.meta.env.DEV) console.warn('[HistoryStore] fetchFolders failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.loadFoldersFailed') })
     }
@@ -265,7 +242,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     try {
       await bulkUpdateHistoryFolder(selectedIds, folderId)
       set((state) => ({
-        items: state.items.map(item => 
+        items: state.items.map(item =>
           selectedIds.includes(item.id) ? { ...item, folderId } : item
         ),
         selectedIds: [],
@@ -288,7 +265,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     try {
       await deleteAllHistory()
       emit('history:all-deleted')
-      set({ items: [], selectedIds: [], totalPromptCount: 0, folderCounts: {} })
+      set({ items: [], selectedIds: [], totalPromptCount: 0, folderCounts: {}, cursor: null, hasMore: false })
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[HistoryStore] removeAll failed:', sanitizeError(err))
       set({ error: i18n.t('errors.history.clearFailed') })

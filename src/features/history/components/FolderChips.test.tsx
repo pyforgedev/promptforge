@@ -36,7 +36,7 @@ function setHistoryState(overrides: Partial<ReturnType<typeof useHistoryStore.ge
     loading: false,
     error: null,
     hasMore: false,
-    offset: 0,
+    cursor: null,
     ...overrides,
   })
 }

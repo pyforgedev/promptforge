@@ -178,18 +178,31 @@ export const HistoryList = memo(function HistoryList({
           </Card>
         )
       })}
-      {hasMore && (
-        <div className="flex justify-center mt-4 w-full">
-          <Button 
-            variant="outline" 
-            onClick={loadMore} 
-            disabled={loading}
-            className="w-full hover:bg-surface-hover"
-          >
-            {loading ? t('common.loading') : t('history.loadMore')}
-          </Button>
+      {hasMore ? (
+        <div className="mt-4 flex w-full flex-col gap-3">
+          {loading ? (
+            // Append skeleton (§6.17) — existing items stay visible below the new cards.
+            <>
+              <HistoryCardSkeleton />
+              <HistoryCardSkeleton />
+            </>
+          ) : (
+            <div className="flex justify-center w-full">
+              <Button
+                variant="outline"
+                onClick={loadMore}
+                className="w-full hover:bg-surface-hover"
+              >
+                {t('history.loadMore')}
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      ) : hasLoaded && !loading ? (
+        <p className="mt-4 w-full text-center text-caption-ui text-muted">
+          {t('history.endOfList')}
+        </p>
+      ) : null}
     </div>
   )
 })

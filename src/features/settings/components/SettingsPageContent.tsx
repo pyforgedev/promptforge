@@ -24,6 +24,7 @@ import { AIProviderSection } from './AIProviderSection'
 import { ModelSection } from './ModelSection'
 import { PresetsSection } from './PresetsSection'
 import { MasterPromptSection } from './MasterPromptSection'
+import { HistoryStorageSection } from './HistoryStorageSection'
 import { SectionDivider } from './Section'
 
 export function SettingsPageContent() {
@@ -284,6 +285,8 @@ export function SettingsPageContent() {
           </Card>
 
           <MasterPromptSection />
+
+          <HistoryStorageSection />
         </>
       )}
     </div>
