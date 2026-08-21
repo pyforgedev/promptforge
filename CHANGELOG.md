@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.1](https://github.com/pyforgedev/promptforge/compare/v0.7.0...v0.7.1) (2026-08-21)
+
+### Bug Fixes
+
+* **build:** Resolve production TypeScript errors ([d6f4e27](https://github.com/pyforgedev/promptforge/commit/d6f4e2770a71dec13977b0f14f1bef0f0f227dc3))
+
 ## [0.7.0](https://github.com/pyforgedev/promptforge/compare/v0.6.0...v0.7.0) (2026-08-21)
 
 ### Features
