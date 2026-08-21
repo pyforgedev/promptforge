@@ -1275,27 +1275,34 @@ and title all agree).
 ### 6.19 Page Header Action Toolbar
 
 `PageHeader`'s `action` slot (Templates page: Import / Export / Reset Default /
-Create Template) must never force a single row — it wraps.
+Create Template) progressively reveals labels as space becomes available while
+keeping one control per action.
 
-- **Toolbar container:** `grid grid-cols-2 gap-2 sm:flex sm:flex-wrap`. Below
-  `sm` the four buttons sit in a deterministic 2×2 grid (equal-width cells,
-  no reliance on wrap behavior); at `sm+` they become a wrapping flex row —
-  buttons keep their natural width (`whitespace-nowrap` from the Button base)
-  and flow to a second line when the viewport can't fit them. No `shrink-0`,
-  no fixed widths.
+- **Toolbar container:** `flex flex-wrap items-center gap-2` at every
+  breakpoint. Retain `flex-wrap`: the resizable sidebar reduces content width,
+  and both EN and ID labels can require another line.
+- **Progressive labels:** all four actions are icon-only below `sm`; reveal
+  Create at `sm+`, Import at `md+`, Export at `lg+`, and Reset Default at
+  `xl+`. At `xl+`, all four buttons show their full labels.
+- **One responsive control:** render one `Button` per action. Use CSS breakpoint
+  variants on that button and label; never duplicate mobile/desktop controls or
+  use JavaScript `matchMedia`.
+- **Sizing:** each button starts with `size="icon"` (`h-10 w-10`, 40×40px).
+  At its label breakpoint, switch to `w-auto px-4`; keep the label
+  `hidden` until the matching breakpoint's `inline` variant. Icons remain
+  `h-4 w-4` through the Button base.
+- **Icon-only accessibility:** every icon-only state has both an `aria-label`
+  and a Radix/shadcn `Tooltip`. The accessible name, tooltip text, and visible
+  label use the same i18n value. Hide each `TooltipContent` at the inverse label
+  breakpoint (`sm:hidden`, `md:hidden`, `lg:hidden`, or `xl:hidden`). Keep the
+  single `TooltipProvider` at the application root; do not add one per action.
 - **Action wrapper (`PageHeader`):** `min-w-0 max-w-full` — never
   `shrink-0`. The wrapper must be allowed to shrink so the inner `flex-wrap`
-  can engage; with `shrink-0` the 4-button row overflows the viewport instead
+  can engage; with `shrink-0` the action row overflows the viewport instead
   of wrapping.
-- **Sizing:** default `size` (`h-10 px-4 py-2`) — 40px height satisfies the
-  ≥40px touch-target rule up to `lg` (§1.5); icons `h-4 w-4` via the Button
-  base `[&_svg]:size-4`.
-- **Layout:** below `sm` the header stacks (title above, toolbar below,
-  full-width); at `sm+` title and toolbar sit side by side and the toolbar
-  wraps to two lines until there's room for one (≈840px with EN labels).
-- **Hidden file input:** the Import input (`type="file"`, `className="hidden"`)
-  is triggered via a ref — keep it inside the toolbar container so the
-  Import button stays its trigger.
+- **Hidden file input:** keep exactly one Import input (`type="file"`,
+  `className="hidden"`) inside the toolbar. The Import button triggers it via
+  a ref.
 
 ---
 
@@ -1413,3 +1420,4 @@ Create Template) must never force a single row — it wraps.
 | v1.9 | Mobile drawer animation: slide state moved to `max-lg:` variants with `translate` in the custom transition list (Tailwind v4 maps `translate-x-*` to the CSS `translate` property — `transition-[width,transform,...]` never animated it, so the mobile drawer popped instead of sliding); closed drawer now `max-lg:invisible` (unfocusable, a11y parity with desktop); backdrops (app + folder drawer) always mounted with 200ms `opacity` fade and `pointer-events-none` when closed instead of instant mount/unmount |
 | v1.10 | Page header action toolbar (Templates: Import/Export/Reset/Create) made responsive: toolbar is a deterministic 2×2 grid below `sm` (`grid grid-cols-2 gap-2`) and a wrapping flex row at `sm+` (`sm:flex sm:flex-wrap`); the `PageHeader` action wrapper may shrink (`min-w-0 max-w-full`, was `shrink-0`) — the 4-button row can no longer stay one line and break the viewport edge; new §6.19 documents the pattern |
 | v1.11 | History folder nav moved out of the page-level sidebar/drawer into a toolbar row: `FolderSwitcher` (Combobox with footer-action pattern + per-option count badges) + `FolderChips` (rounded-full pills, kebab menu, count badges via `getHistoryCounts()`); `FolderSidebar.tsx` and the drawer (backdrop, `top-(--height-header)` offset) removed; History page is now a plain column in `<main>` (no `md:-m-6` compensation, no `calc(100dvh - …)` shell); combobox gained optional `badge` + `footer` props; folder creation capped at `MAX_FOLDERS = 10` (`FolderLimitError` + warning toast); scrollbar fix: dropdown-menu scroll-lock restore extended from Select to `DropdownMenu` (§6.11 `:has` rule) + `.chips-scrollbar` (styled thin nested scrollbar so it no longer hides while the kebab menu is open) |
+| v1.12 | Page header action toolbar now uses progressive icon collapse (§6.19): all actions are icon-only below `sm`, then Create, Import, Export, and Reset Default reveal labels at `sm`, `md`, `lg`, and `xl`; one wrapping flex toolbar and one accessible, tooltip-backed Button per action replace the historical base 2×2 grid |

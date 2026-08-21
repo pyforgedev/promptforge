@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { CardSkeleton, Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
 import {
   Dialog,
@@ -41,6 +42,10 @@ import { TemplateError } from '@/features/templates/services/templateService'
 export default function TemplatesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const importLabel = t('templates.import')
+  const exportLabel = t('templates.export')
+  const resetLabel = t('templates.resetDefault')
+  const createLabel = t('templates.create')
   const {
     templates,
     loading,
@@ -203,7 +208,7 @@ export default function TemplatesPage() {
         title={t('templates.pageTitle')}
         description={t('templates.pageDescription')}
         action={
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               ref={importFileRef}
               type="file"
@@ -211,22 +216,76 @@ export default function TemplatesPage() {
               className="hidden"
               onChange={handleImportFile}
             />
-            <Button variant="outline" onClick={() => importFileRef.current?.click()} disabled={pendingAction === 'import'}>
-              <Upload className="mr-2 h-4 w-4" />
-              {t('templates.import')}
-            </Button>
-            <Button variant="outline" onClick={handleExport} disabled={templates.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              {t('templates.export')}
-            </Button>
-            <Button variant="outline" onClick={handleResetDefault} disabled={pendingAction === 'reset'}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              {t('templates.resetDefault')}
-            </Button>
-            <Button onClick={() => { clearActionError(); setCreateOpen(true) }}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('templates.create')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="md:w-auto md:px-4"
+                    onClick={() => importFileRef.current?.click()}
+                    disabled={pendingAction === 'import'}
+                    aria-label={importLabel}
+                  >
+                    <Upload data-icon="inline-start" aria-hidden="true" />
+                    <span className="hidden md:inline">{importLabel}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="md:hidden">{importLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="lg:w-auto lg:px-4"
+                    onClick={handleExport}
+                    disabled={templates.length === 0}
+                    aria-label={exportLabel}
+                  >
+                    <Download data-icon="inline-start" aria-hidden="true" />
+                    <span className="hidden lg:inline">{exportLabel}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="lg:hidden">{exportLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="xl:w-auto xl:px-4"
+                    onClick={handleResetDefault}
+                    disabled={pendingAction === 'reset'}
+                    aria-label={resetLabel}
+                  >
+                    <RotateCcw data-icon="inline-start" aria-hidden="true" />
+                    <span className="hidden xl:inline">{resetLabel}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="xl:hidden">{resetLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    size="icon"
+                    className="sm:w-auto sm:px-4"
+                    onClick={() => { clearActionError(); setCreateOpen(true) }}
+                    aria-label={createLabel}
+                  >
+                    <Plus data-icon="inline-start" aria-hidden="true" />
+                    <span className="hidden sm:inline">{createLabel}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">{createLabel}</TooltipContent>
+            </Tooltip>
           </div>
         }
       />

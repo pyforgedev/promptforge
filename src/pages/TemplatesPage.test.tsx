@@ -1,30 +1,112 @@
-import { describe, it, expect } from 'vitest'
-import { renderWithProviders, screen, userEvent, within } from '@/test/utils'
+import { describe, it, expect, vi } from 'vitest'
+import { renderWithProviders, screen, userEvent, waitFor, within } from '@/test/utils'
 import TemplatesPage from '@/pages/TemplatesPage'
 
 function renderPage() {
   return renderWithProviders(<TemplatesPage />, { route: '/templates', routePath: '/templates' })
 }
 
+const toolbarActions = [
+  {
+    label: 'Import',
+    buttonClasses: ['md:w-auto', 'md:px-4'],
+    labelClasses: ['hidden', 'md:inline'],
+    tooltipClass: 'md:hidden',
+  },
+  {
+    label: 'Export',
+    buttonClasses: ['lg:w-auto', 'lg:px-4'],
+    labelClasses: ['hidden', 'lg:inline'],
+    tooltipClass: 'lg:hidden',
+  },
+  {
+    label: 'Reset Default',
+    buttonClasses: ['xl:w-auto', 'xl:px-4'],
+    labelClasses: ['hidden', 'xl:inline'],
+    tooltipClass: 'xl:hidden',
+  },
+  {
+    label: 'Create Template',
+    buttonClasses: ['sm:w-auto', 'sm:px-4'],
+    labelClasses: ['hidden', 'sm:inline'],
+    tooltipClass: 'sm:hidden',
+  },
+] as const
+
 describe('TemplatesPage toolbar responsiveness', () => {
-  it('renders import/export/reset/create actions in a wrapping toolbar', () => {
+  it('uses a wrapping flex toolbar inside a shrinkable PageHeader action wrapper', () => {
+    const { container } = renderPage()
+
+    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]')
+    expect(fileInput).not.toBeNull()
+
+    const toolbar = fileInput!.parentElement!
+    expect(toolbar).toHaveClass('flex', 'flex-wrap', 'items-center', 'gap-2')
+
+    const wrapper = toolbar.parentElement!
+    expect(wrapper).toHaveClass('min-w-0')
+    expect(wrapper).not.toHaveClass('shrink-0')
+  })
+
+  it.each(toolbarActions)(
+    'renders exactly one $label icon button with reciprocal responsive label classes',
+    ({ label, buttonClasses, labelClasses }) => {
+      renderPage()
+
+      const buttons = screen.getAllByRole('button', { name: label, exact: true })
+      expect(buttons).toHaveLength(1)
+
+      const button = buttons[0]
+      expect(button).toHaveAttribute('aria-label', label)
+      expect(button).toHaveClass('h-10', 'w-10', ...buttonClasses)
+
+      const translatedLabels = button.querySelectorAll('span')
+      expect(translatedLabels).toHaveLength(1)
+      expect(translatedLabels[0].textContent).toBe(label)
+      expect(translatedLabels[0]).toHaveClass(...labelClasses)
+    },
+  )
+
+  it('shows the exact tooltip contract for every action, including disabled triggers', async () => {
+    const user = userEvent.setup()
     renderPage()
 
-    // The action toolbar lives in the page header, outside the loading state
-    const importBtn = screen.getByRole('button', { name: 'Import' })
-    expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Reset Default' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create Template' })).toBeInTheDocument()
+    for (const { label, tooltipClass } of toolbarActions) {
+      const button = screen.getByRole('button', { name: label, exact: true })
+      const trigger = button.parentElement!
+      expect(trigger.tagName).toBe('SPAN')
+      expect(trigger).toHaveClass('inline-flex')
+      expect(within(trigger).getAllByRole('button', { name: label, exact: true })).toHaveLength(1)
 
-    // Toolbar container: deterministic 2×2 grid on mobile, wraps at sm+
-    const toolbar = importBtn.parentElement!
-    expect(toolbar.className).toContain('grid-cols-2')
-    expect(toolbar.className).toContain('sm:flex-wrap')
+      await user.hover(trigger)
 
-    // PageHeader action wrapper may shrink with the viewport (no shrink-0)
-    const wrapper = toolbar.parentElement!
-    expect(wrapper.className).toContain('min-w-0')
-    expect(wrapper.className).not.toContain('shrink-0')
+      const tooltip = await screen.findByRole('tooltip')
+      expect(tooltip.textContent).toBe(label)
+      expect(tooltip.parentElement).toHaveClass(tooltipClass)
+
+      await user.keyboard('{Escape}')
+      await user.unhover(trigger)
+      await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument())
+    }
+  })
+
+  it('keeps one hidden .txt input, delegates Import once, and initially disables Export', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage()
+
+    const fileInputs = container.querySelectorAll<HTMLInputElement>('input[type="file"]')
+    expect(fileInputs).toHaveLength(1)
+
+    const fileInput = fileInputs[0]
+    expect(fileInput).toHaveAttribute('accept', '.txt')
+    expect(fileInput).toHaveClass('hidden')
+
+    const exportButton = screen.getByRole('button', { name: 'Export', exact: true })
+    expect(exportButton).toBeDisabled()
+
+    const inputClick = vi.spyOn(fileInput, 'click').mockImplementation(() => {})
+    await user.click(screen.getByRole('button', { name: 'Import', exact: true }))
+    expect(inputClick).toHaveBeenCalledTimes(1)
   })
 })
 
