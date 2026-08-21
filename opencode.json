@@ -7,17 +7,20 @@
     "architect": {
       "model": "openai/gpt-5.6-sol#max"
     },
+    "test-writer": {
+      "model": "openai/gpt-5.6-sol#high"
+    },
+    "docs-writer": {
+      "model": "openai/gpt-5.6-sol#high"
+    },
     "code-reviewer": {
       "model": "9router/gemini-frontend"
     },
     "security-reviewer": {
       "model": "9router/gemini-frontend"
     },
-    "test-writer": {
-      "model": "openai/gpt-5.6-sol#high"
-    },
-    "docs-writer": {
-      "model": "openai/gpt-5.6-sol#high"
+    "debugger": {
+      "model": "9router/gemini-frontend"
     }
   },
   "permissions": [
