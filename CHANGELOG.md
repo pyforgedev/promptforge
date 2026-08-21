@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.2](https://github.com/pyforgedev/promptforge/compare/v0.7.1...v0.7.2) (2026-08-21)
+
+### Bug Fixes
+
+* **release:** Enforce verified release-it workflow ([420318b](https://github.com/pyforgedev/promptforge/commit/420318b2bb66c99a642cd020577dfde7db34ec16))
+
 ## [0.7.1](https://github.com/pyforgedev/promptforge/compare/v0.7.0...v0.7.1) (2026-08-21)
 
 ### Bug Fixes
