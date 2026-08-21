@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderWithProviders, screen, waitFor, userEvent, fireEvent } from '@/test/utils'
+import { renderWithProviders, screen, waitFor, userEvent, fireEvent, within } from '@/test/utils'
 import FormatterPage from '@/pages/FormatterPage'
 import { Toaster } from '@/components/ui/sonner'
 import {
   createFormatterBatch,
   getActiveBatch,
   markCopiedAndAdvance,
+  type CreateFormatterBatchCommand,
 } from '@/services/formatter/formatterService'
+import db, { type FormatterBatch } from '@/services/storage/indexeddb'
 
 vi.mock('@/services/formatter/formatterService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/formatter/formatterService')>()
@@ -18,6 +20,19 @@ vi.mock('@/services/formatter/formatterService', async (importOriginal) => {
 })
 
 const COPY_BUTTON_NAME = 'Copy'
+
+function createTestBatch(
+  prompts: string[],
+  overrides: Partial<Omit<CreateFormatterBatchCommand, 'prompts'>> = {},
+) {
+  return createFormatterBatch({
+    prompts,
+    aspectRatios: null,
+    skippedBlankCount: 0,
+    sourceType: 'paste',
+    ...overrides,
+  })
+}
 
 function renderPage() {
   return renderWithProviders(
@@ -36,7 +51,7 @@ describe('FormatterPage optimistic copy flow', () => {
     Element.prototype.scrollIntoView = vi.fn()
     writeTextMock = vi.fn().mockResolvedValue(undefined)
 
-    await createFormatterBatch(['prompt one', 'prompt two', 'prompt three'], 'paste')
+    await createTestBatch(['prompt one', 'prompt two', 'prompt three'])
   })
 
   afterEach(() => {
@@ -199,7 +214,7 @@ describe('FormatterPage optimistic copy flow', () => {
     await user.click(screen.getByRole('button', { name: COPY_BUTTON_NAME }))
     await waitFor(() => expect(screen.getByText('Prompt #2')).toBeInTheDocument())
 
-    await createFormatterBatch(['alpha', 'beta'], 'paste')
+    await createTestBatch(['alpha', 'beta'])
 
     await waitFor(async () => {
       const batch = await getActiveBatch()
@@ -225,10 +240,11 @@ describe('FormatterPage queue filters and Next navigation', () => {
     Element.prototype.scrollIntoView = vi.fn()
     writeTextMock = vi.fn().mockResolvedValue(undefined)
 
-    await createFormatterBatch(
-      ['first --ar 16:9', 'second --ar 1:1', 'third --ar 16:9 --video'],
-      'paste',
-    )
+    await createTestBatch([
+      'first --ar 16:9',
+      'second --ar 1:1',
+      'third --ar 16:9 --video',
+    ])
   })
 
   afterEach(() => {
@@ -254,8 +270,10 @@ describe('FormatterPage queue filters and Next navigation', () => {
 
     expect(screen.getByRole('button', { name: /Next/i })).toBeDisabled()
 
-    const batch = await getActiveBatch()
-    expect(batch?.batch.currentIndex).toBe(2)
+    await waitFor(async () => {
+      const batch = await getActiveBatch()
+      expect(batch?.batch.currentIndex).toBe(2)
+    })
   })
 
   it('filters by scope Completed and clamps the active item into the filtered view', async () => {
@@ -493,6 +511,180 @@ describe('FormatterPage section format paste', () => {
       expect(batch!.items.map((item) => item.promptText)).toEqual(['--- prompt 1', 'plain line two'])
     })
   })
+
+  it('does not fall back to plain parsing when a recognized section grammar accepts no prompts', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    const textarea = await screen.findByPlaceholderText('Paste one prompt per line...')
+    const allEmptySections = [
+      '--- Prompt 1 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'metadata without a Prompt field',
+    ].join('\n')
+
+    fireEvent.change(textarea, { target: { value: allEmptySections } })
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+
+    expect(await getActiveBatch()).toBeNull()
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toHaveValue(allEmptySections)
+    expect(screen.queryByRole('region', { name: 'Processing complete' })).not.toBeInTheDocument()
+  })
+})
+
+describe('FormatterPage process summary', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+  })
+
+  afterEach(() => {
+    delete (navigator as { clipboard?: unknown }).clipboard
+  })
+
+  it('persists and renders accurate counts for pasted blank rows', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    const textarea = await screen.findByPlaceholderText('Paste one prompt per line...')
+
+    fireEvent.change(textarea, { target: { value: 'first prompt\n\nsecond prompt\n' } })
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+
+    const summary = await screen.findByRole('region', { name: 'Processing complete' })
+    expect(within(summary).getByText('Prompts obtained').nextElementSibling).toHaveTextContent('2')
+    expect(within(summary).getByText('Skipped blanks').nextElementSibling).toHaveTextContent('1')
+    expect(within(summary).getByText('Potential duplicates').nextElementSibling).toHaveTextContent('0')
+
+    const stored = await getActiveBatch()
+    expect(stored?.batch.processSummary).toEqual({
+      skippedBlankCount: 1,
+      duplicatePromptCount: 0,
+    })
+  })
+
+  it('carries parsed blank counts and aspect ratios through replacement confirmation', async () => {
+    await createTestBatch(['old first', 'old second'])
+    const oldBatch = await getActiveBatch()
+    await markCopiedAndAdvance(oldBatch!.items[0].id!, 1)
+
+    renderPage()
+    const user = userEvent.setup()
+    await screen.findByText('Prompt #2')
+    await user.click(screen.getByRole('button', { name: 'Show input' }))
+
+    const replacement = [
+      '--- Prompt 1 ---',
+      'Aspect Ratio: 9:16',
+      'Prompt:',
+      'replacement prompt',
+      '--- Prompt 2 ---',
+      'Prompt:',
+      '',
+    ].join('\n')
+    fireEvent.change(screen.getByPlaceholderText('Paste one prompt per line...'), {
+      target: { value: replacement },
+    })
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+    await user.click(await screen.findByRole('button', { name: 'Replace & continue' }))
+
+    await waitFor(async () => {
+      const stored = await getActiveBatch()
+      expect(stored?.items).toHaveLength(1)
+      expect(stored?.items[0].promptText).toBe('replacement prompt')
+      expect(stored?.items[0].detectedAspectRatio).toBe('9:16')
+      expect(stored?.batch.processSummary).toEqual({
+        skippedBlankCount: 1,
+        duplicatePromptCount: 0,
+      })
+    })
+  })
+
+  it('keeps summary values stable when copy progress changes', async () => {
+    const repeatedPrompt = 'same restored prompt'
+    await createTestBatch(
+      [repeatedPrompt, repeatedPrompt, repeatedPrompt],
+      { skippedBlankCount: 2 },
+    )
+    const writeTextMock = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    })
+
+    renderPage()
+    const user = userEvent.setup()
+    const summary = await screen.findByRole('region', { name: 'Processing complete' })
+    expect(within(summary).getByText('Skipped blanks').nextElementSibling).toHaveTextContent('2')
+    expect(within(summary).getByText('Potential duplicates').nextElementSibling).toHaveTextContent('2')
+
+    await user.click(screen.getByRole('button', { name: COPY_BUTTON_NAME }))
+    await screen.findByText('Prompt #2')
+
+    expect(within(summary).getByText('Prompts obtained').nextElementSibling).toHaveTextContent('3')
+    expect(within(summary).getByText('Skipped blanks').nextElementSibling).toHaveTextContent('2')
+    expect(within(summary).getByText('Potential duplicates').nextElementSibling).toHaveTextContent('2')
+    await waitFor(async () => {
+      expect((await getActiveBatch())?.batch.processSummary).toEqual({
+        skippedBlankCount: 2,
+        duplicatePromptCount: 2,
+      })
+    })
+  })
+
+  it('restores a complete persisted snapshot without changing it during render', async () => {
+    await createTestBatch(
+      ['restored duplicate', 'restored duplicate', 'distinct prompt'],
+      { skippedBlankCount: 5 },
+    )
+    const before = await db.formatter_batch.toCollection().first()
+    vi.mocked(createFormatterBatch).mockClear()
+
+    renderPage()
+
+    const summary = await screen.findByRole('region', { name: 'Processing complete' })
+    expect(within(summary).getByText('Prompts obtained').nextElementSibling).toHaveTextContent('3')
+    expect(within(summary).getByText('Skipped blanks').nextElementSibling).toHaveTextContent('5')
+    expect(within(summary).getByText('Potential duplicates').nextElementSibling).toHaveTextContent('1')
+    expect(vi.mocked(createFormatterBatch)).not.toHaveBeenCalled()
+    expect(await db.formatter_batch.toCollection().first()).toEqual(before)
+  })
+
+  it.each([
+    ['missing', undefined],
+    ['null', null],
+    ['partial', { skippedBlankCount: 2 }],
+    ['malformed', { skippedBlankCount: '2', duplicatePromptCount: 0 }],
+    ['inconsistent', { skippedBlankCount: 2, duplicatePromptCount: 3 }],
+  ])('shows unavailable derived values for a %s raw snapshot without backfilling storage', async (_case, snapshot) => {
+    const rawBatch = {
+      sourceType: 'paste',
+      originalFileName: null,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      totalCount: 3,
+      currentIndex: 0,
+      ...(snapshot === undefined ? {} : { processSummary: snapshot }),
+    } as unknown as FormatterBatch
+    const batchId = await db.formatter_batch.add(rawBatch)
+    await db.formatter_items.bulkAdd(
+      ['legacy one', 'legacy two', 'legacy three'].map((promptText, order) => ({
+        order,
+        promptText,
+        status: 'pending' as const,
+        copiedAt: null,
+        detectedAspectRatio: null,
+      })),
+    )
+    const before = await db.formatter_batch.get(batchId)
+    vi.mocked(createFormatterBatch).mockClear()
+
+    renderPage()
+
+    const summary = await screen.findByRole('region', { name: 'Processing complete' })
+    expect(within(summary).getByText('Prompts obtained').nextElementSibling).toHaveTextContent('3')
+    expect(within(summary).getAllByText('Not available for batches created earlier')).toHaveLength(2)
+    expect(vi.mocked(createFormatterBatch)).not.toHaveBeenCalled()
+    expect(await db.formatter_batch.get(batchId)).toEqual(before)
+  })
 })
 
 describe('FormatterPage input section lifecycle', () => {
@@ -524,7 +716,7 @@ describe('FormatterPage input section lifecycle', () => {
   })
 
   it('restores an active batch collapsed and allows the user to reopen it', async () => {
-    await createFormatterBatch(['restored prompt'], 'paste')
+    await createTestBatch(['restored prompt'])
     renderPage()
     const user = userEvent.setup()
 
@@ -562,7 +754,7 @@ describe('FormatterPage input section lifecycle', () => {
   })
 
   it('reopens the no-batch form after Clear queue is confirmed', async () => {
-    await createFormatterBatch(['queued prompt'], 'paste')
+    await createTestBatch(['queued prompt'])
     renderPage()
     const user = userEvent.setup()
 

@@ -6,7 +6,10 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
 import { FormatterSkeleton } from '@/components/ui/skeleton'
 import { InputSection } from '@/features/formatter/components/InputSection'
-import { ProcessSummary } from '@/features/formatter/components/ProcessSummary'
+import {
+  ProcessSummary,
+  type ProcessSummaryViewModel,
+} from '@/features/formatter/components/ProcessSummary'
 import { QueueView } from '@/features/formatter/components/QueueView'
 import { DownloadSection } from '@/features/formatter/components/DownloadSection'
 import { ReplaceConfirmDialog } from '@/features/formatter/components/ReplaceConfirmDialog'
@@ -25,11 +28,12 @@ import {
   SECTION_HEADER_REGEX,
   parseCsvPreview,
   parseCsvWithColumn,
-  detectDuplicates,
   getUniqueAspectRatios,
   applyQueueView,
   detectPromptType,
 } from '@/services/formatter/formatterService'
+import type { ParsedFormatterInput } from '@/services/formatter/formatterService'
+import type { FormatterBatch, FormatterProcessSummary } from '@/services/storage/indexeddb'
 import { Sparkles } from 'lucide-react'
 import { downloadFile } from '@/lib/download'
 import type {
@@ -53,6 +57,24 @@ function enqueueWrite<T>(write: () => Promise<T>): Promise<T> {
   return result
 }
 
+function getProcessSummary(batch: FormatterBatch): ProcessSummaryViewModel {
+  const snapshot = batch.processSummary as Partial<FormatterProcessSummary> | null | undefined
+  const duplicateLimit = Math.max(batch.totalCount - 1, 0)
+  const hasValidSnapshot = snapshot !== undefined
+    && snapshot !== null
+    && Number.isInteger(snapshot.skippedBlankCount)
+    && snapshot.skippedBlankCount >= 0
+    && Number.isInteger(snapshot.duplicatePromptCount)
+    && snapshot.duplicatePromptCount >= 0
+    && snapshot.duplicatePromptCount <= duplicateLimit
+
+  return {
+    promptCount: batch.totalCount,
+    skippedBlankCount: hasValidSnapshot ? snapshot.skippedBlankCount : null,
+    duplicatePromptCount: hasValidSnapshot ? snapshot.duplicatePromptCount : null,
+  }
+}
+
 export default function FormatterPage() {
   const { t } = useTranslation()
   const { showCopySuccess, showToast } = useToast()
@@ -73,10 +95,7 @@ export default function FormatterPage() {
   const [showReset, setShowReset] = useState(false)
   const [showClearQueue, setShowClearQueue] = useState(false)
   const [inputOpenOverride, setInputOpenOverride] = useState<boolean | null>(null)
-  const [pendingPrompts, setPendingPrompts] = useState<{
-    prompts: string[]
-    aspectRatios: (string | null)[] | null
-  } | null>(null)
+  const [pendingInput, setPendingInput] = useState<ParsedFormatterInput | null>(null)
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null)
   const [copySuccess, setCopySuccess] = useState(false)
   const optimisticActionRef = useRef(0)
@@ -153,55 +172,44 @@ export default function FormatterPage() {
   const inputOpen = inputOpenOverride ?? !hasBatch
   const copiedCount = items.filter((i) => i.status === 'copied').length
 
-  const processSummary = useMemo(() => {
-    if (!batch) return null
+  const processSummary = batch ? getProcessSummary(batch) : null
 
-    const cleanCount = items.length
-    const skippedBlanks = 0
-    const duplicateCount = detectDuplicates(items.map(i => i.promptText)).length
-
-    return { cleanCount, skippedBlanks, duplicateCount }
-  }, [batch, items])
-
-  const extractFromText = (text: string): { prompts: string[]; aspectRatios: (string | null)[] | null } => {
+  const extractFromText = (text: string): ParsedFormatterInput => {
     if (SECTION_HEADER_REGEX.test(text)) {
-      const sections = parsePromptSections(text)
-      if (sections.length > 0) {
-        return {
-          prompts: sections.map((section) => section.prompt),
-          aspectRatios: sections.map((section) => section.aspectRatio),
-        }
-      }
+      return parsePromptSections(text)
     }
 
-    return { prompts: parseRawText(text), aspectRatios: null }
+    return parseRawText(text)
   }
 
-  const getPromptsFromInput = (): { prompts: string[]; aspectRatios: (string | null)[] | null } => {
+  const getPromptsFromInput = (): ParsedFormatterInput => {
     if (inputMode === 'paste') {
       return extractFromText(pasteText)
     }
 
-    if (!uploadedFileContent) return { prompts: [], aspectRatios: null }
+    if (!uploadedFileContent) {
+      return { prompts: [], aspectRatios: null, skippedBlankCount: 0 }
+    }
 
     if (csvPreview !== null) {
       const column = selectedCsvColumn ?? csvPreview.detectedColumn ?? null
-      if (!column) return { prompts: [], aspectRatios: null }
-      return { prompts: parseCsvWithColumn(uploadedFileContent, column), aspectRatios: null }
+      if (!column) return { prompts: [], aspectRatios: null, skippedBlankCount: 0 }
+      return parseCsvWithColumn(uploadedFileContent, column)
     }
 
     return extractFromText(uploadedFileContent)
   }
 
-  const executeCreateBatch = async (
-    prompts: string[],
-    aspectRatios?: (string | null)[] | null,
-  ) => {
+  const executeCreateBatch = async (parsedInput: ParsedFormatterInput) => {
     const sourceType = inputMode === 'paste' ? 'paste' : 'file'
     const fileName = inputMode === 'upload' ? uploadedFileName ?? undefined : undefined
 
     try {
-      await createFormatterBatch(prompts, sourceType, fileName, aspectRatios ?? undefined)
+      await createFormatterBatch({
+        ...parsedInput,
+        sourceType,
+        originalFileName: fileName,
+      })
       setInputOpenOverride(false)
       showToast('success', t('formatter.batchCreated'))
     } catch (error) {
@@ -227,23 +235,23 @@ export default function FormatterPage() {
   }
 
   const handleProcess = () => {
-    const { prompts, aspectRatios } = getPromptsFromInput()
-    if (prompts.length === 0) return
+    const parsedInput = getPromptsFromInput()
+    if (parsedInput.prompts.length === 0) return
 
     if (hasBatch && copiedCount > 0) {
-      setPendingPrompts({ prompts, aspectRatios })
+      setPendingInput(parsedInput)
       setShowReplace(true)
     } else {
-      executeCreateBatch(prompts, aspectRatios)
+      executeCreateBatch(parsedInput)
     }
   }
 
   const handleConfirmReplace = () => {
-    if (pendingPrompts) {
-      executeCreateBatch(pendingPrompts.prompts, pendingPrompts.aspectRatios)
+    if (pendingInput) {
+      executeCreateBatch(pendingInput)
     }
     setShowReplace(false)
-    setPendingPrompts(null)
+    setPendingInput(null)
   }
 
   const handleCopy = async () => {
@@ -404,11 +412,7 @@ export default function FormatterPage() {
       />
 
       {processSummary && (
-        <ProcessSummary
-          cleanCount={processSummary.cleanCount}
-          skippedBlanks={processSummary.skippedBlanks}
-          duplicateCount={processSummary.duplicateCount}
-        />
+        <ProcessSummary summary={processSummary} />
       )}
 
       {hasBatch && !isLoading && (

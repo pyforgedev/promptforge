@@ -1,6 +1,11 @@
 export type FormatterSourceType = 'paste' | 'file'
 export type FormatterItemStatus = 'pending' | 'copied'
 
+export interface FormatterProcessSummary {
+  skippedBlankCount: number
+  duplicatePromptCount: number
+}
+
 export interface FormatterBatch {
   id?: number
   sourceType: FormatterSourceType
@@ -8,6 +13,7 @@ export interface FormatterBatch {
   createdAt: Date
   totalCount: number
   currentIndex: number
+  processSummary?: FormatterProcessSummary
 }
 
 export interface FormatterItem {

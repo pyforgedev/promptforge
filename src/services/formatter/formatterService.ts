@@ -12,6 +12,17 @@ export interface CsvPreviewResult {
   previewRows: string[][]
 }
 
+export interface ParsedFormatterInput {
+  prompts: string[]
+  aspectRatios: (string | null)[] | null
+  skippedBlankCount: number
+}
+
+export interface CreateFormatterBatchCommand extends ParsedFormatterInput {
+  sourceType: FormatterSourceType
+  originalFileName?: string
+}
+
 export interface DuplicateMatch {
   index: number
   similarToIndex: number
@@ -129,28 +140,36 @@ export function applyQueueView(items: FormatterItem[], options: QueueViewOptions
   return visible
 }
 
-export interface ParsedPromptSection {
-  prompt: string
-  aspectRatio: string | null
-}
-
 export const SECTION_HEADER_REGEX = /^---\s*prompt(?:\s+\d+)?\s*---$/im
 
-export function parsePromptSections(input: string): ParsedPromptSection[] {
+export function parsePromptSections(input: string): ParsedFormatterInput {
   const lines = input.replace(/\r\n/g, '\n').split('\n')
-  const sections: ParsedPromptSection[] = []
+  const prompts: string[] = []
+  const aspectRatios: (string | null)[] = []
   let aspectRatio: string | null = null
   let body: string[] = []
   let inBody = false
+  let inSection = false
+  let hasPromptField = false
+  let skippedBlankCount = 0
 
   const closeSection = () => {
+    if (!inSection) return
+
     const prompt = body.join(' ').trim()
-    if (prompt.length > 0) {
-      sections.push({ prompt, aspectRatio })
+    if (hasPromptField) {
+      if (prompt.length > 0) {
+        prompts.push(prompt)
+        aspectRatios.push(aspectRatio)
+      } else {
+        skippedBlankCount += 1
+      }
     }
+
     aspectRatio = null
     body = []
     inBody = false
+    hasPromptField = false
   }
 
   for (const rawLine of lines) {
@@ -158,8 +177,11 @@ export function parsePromptSections(input: string): ParsedPromptSection[] {
 
     if (SECTION_HEADER_REGEX.test(line)) {
       closeSection()
+      inSection = true
       continue
     }
+
+    if (!inSection) continue
 
     if (aspectRatio === null) {
       const arMatch = line.match(/^aspect\s+ratio\s*:\s*(\d{1,3}:\d{1,3})$/i)
@@ -171,6 +193,7 @@ export function parsePromptSections(input: string): ParsedPromptSection[] {
 
     if (!inBody) {
       if (/^prompt\s*:/i.test(line)) {
+        hasPromptField = true
         inBody = true
         const inlineValue = line.replace(/^prompt\s*:\s*/i, '').trim()
         if (inlineValue) {
@@ -187,31 +210,46 @@ export function parsePromptSections(input: string): ParsedPromptSection[] {
 
   closeSection()
 
-  return sections
+  return { prompts, aspectRatios, skippedBlankCount }
 }
 
-export function parseRawText(input: string): string[] {
-  const normalized = input
-    .replace(/\r\n/g, '\n')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
+export function parseRawText(input: string): ParsedFormatterInput {
+  const normalizedInput = input.replace(/\r\n/g, '\n')
+  const lines = normalizedInput.split('\n').map((line) => line.trim())
+  const promptLines = lines.filter((line) => /^prompt\s*:/i.test(line))
 
-  if (normalized.length === 0) {
-    return []
-  }
-
-  const promptLines = normalized.filter((line) => /^prompt\s*:/i.test(line))
   if (promptLines.length > 0) {
-    return promptLines.map((line) => line.replace(/^prompt\s*:\s*/i, '').trim())
+    const values = promptLines.map((line) => line.replace(/^prompt\s*:\s*/i, '').trim())
+    return {
+      prompts: values.filter(Boolean),
+      aspectRatios: null,
+      skippedBlankCount: values.filter((value) => value.length === 0).length,
+    }
   }
 
-  const mdPromptLines = normalized.filter((line) => /^-\s*\*\*prompt\s*:\*\*/i.test(line))
+  const mdPromptLines = lines.filter((line) => /^-\s*\*\*prompt\s*:\*\*/i.test(line))
   if (mdPromptLines.length > 0) {
-    return mdPromptLines.map((line) => line.replace(/^-\s*\*\*prompt\s*:\*\*\s*/i, '').trim())
+    const values = mdPromptLines.map((line) => line.replace(/^-\s*\*\*prompt\s*:\*\*\s*/i, '').trim())
+    return {
+      prompts: values.filter(Boolean),
+      aspectRatios: null,
+      skippedBlankCount: values.filter((value) => value.length === 0).length,
+    }
   }
 
-  return normalized
+  if (normalizedInput.length === 0) {
+    return { prompts: [], aspectRatios: null, skippedBlankCount: 0 }
+  }
+
+  if (normalizedInput.endsWith('\n')) {
+    lines.pop()
+  }
+
+  return {
+    prompts: lines.filter(Boolean),
+    aspectRatios: null,
+    skippedBlankCount: lines.filter((line) => line.length === 0).length,
+  }
 }
 
 export function parseCsvPreview(fileContent: string): CsvPreviewResult {
@@ -229,14 +267,20 @@ export function parseCsvPreview(fileContent: string): CsvPreviewResult {
   }
 }
 
-export function parseCsvWithColumn(fileContent: string, column: string): string[] {
+export function parseCsvWithColumn(fileContent: string, column: string): ParsedFormatterInput {
   const result = Papa.parse<Record<string, string>>(fileContent, {
     header: true,
     skipEmptyLines: true,
   })
   const selectedValues = result.data.map((row) => row[column] ?? '')
+  const skippedBlankCount = selectedValues.filter((value) => value.trim().length === 0).length
+  const parsed = parseRawText(selectedValues.filter((value) => value.trim().length > 0).join('\n'))
 
-  return parseRawText(selectedValues.join('\n'))
+  return {
+    prompts: parsed.prompts,
+    aspectRatios: null,
+    skippedBlankCount,
+  }
 }
 
 export function detectDuplicates(prompts: string[]): DuplicateMatch[] {
@@ -257,6 +301,23 @@ export function detectDuplicates(prompts: string[]): DuplicateMatch[] {
   }
 
   return matches
+}
+
+function countDuplicatePromptRows(prompts: string[]): number {
+  let duplicatePromptCount = 0
+
+  for (let index = 1; index < prompts.length; index += 1) {
+    for (let priorIndex = 0; priorIndex < index; priorIndex += 1) {
+      const result = calculateSimilarity(prompts[index], [prompts[priorIndex]])
+
+      if (result.score >= HIGH_THRESHOLD) {
+        duplicatePromptCount += 1
+        break
+      }
+    }
+  }
+
+  return duplicatePromptCount
 }
 
 export function detectAspectRatio(promptText: string): string | null {
@@ -280,17 +341,24 @@ export function checkSanityLimit(count: number): SanityLevel {
   return 'ok'
 }
 
-export async function createFormatterBatch(
-  prompts: string[],
-  sourceType: FormatterSourceType,
-  originalFileName?: string,
-  aspectRatios?: (string | null)[],
-): Promise<void> {
+export async function createFormatterBatch({
+  prompts,
+  sourceType,
+  originalFileName,
+  aspectRatios,
+  skippedBlankCount,
+}: CreateFormatterBatchCommand): Promise<void> {
   const sanityLevel = checkSanityLimit(prompts.length)
 
   if (sanityLevel === 'blocked') {
     throw new Error(`Batch terlalu besar (${prompts.length} prompt, maksimal 500), pecah jadi beberapa file lebih kecil.`)
   }
+
+  if (!Number.isInteger(skippedBlankCount) || skippedBlankCount < 0) {
+    throw new TypeError('skippedBlankCount must be a non-negative integer')
+  }
+
+  const duplicatePromptCount = countDuplicatePromptRows(prompts)
 
   const batch: FormatterBatch = {
     sourceType,
@@ -298,6 +366,10 @@ export async function createFormatterBatch(
     createdAt: new Date(),
     totalCount: prompts.length,
     currentIndex: 0,
+    processSummary: {
+      skippedBlankCount,
+      duplicatePromptCount,
+    },
   }
 
   const items: FormatterItem[] = prompts.map((promptText, order) => ({

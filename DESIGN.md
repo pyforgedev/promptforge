@@ -1330,6 +1330,47 @@ primitive, not hand-written disclosure ARIA, owns `aria-expanded`,
   the content while focus remains inside it, restore focus to the persistent
   trigger without stealing focus from controls elsewhere on the page.
 
+## 6.21 Formatter Process Summary
+
+After processing succeeds, place a compact, static **Processing complete**
+strip between the collapsed input disclosure and the prompt queue. It is one
+thin bordered surface with tight padding and dividers — never an outer card
+containing nested metric cards.
+
+- **Content and layout:** use one heading followed by a semantic `dl` for
+  **Prompts obtained**, **Skipped blanks**, and **Potential duplicates**. Keep
+  the heading and metrics on one row on desktop; on mobile, place the heading
+  first and retain three columns whose labels wrap naturally. Do not truncate
+  content or introduce horizontal scrolling.
+- **Typography and status:** values use `text-metric-score` and
+  `tabular-nums`. Only a duplicate count greater than zero receives the warning
+  accent; the label and numeric value must communicate the same meaning without
+  relying on color. A success check may accompany the heading, but it is
+  decorative and hidden from assistive technology.
+- **Static behavior:** do not add a spotlight, entrance or count animation,
+  hover treatment, live region, interactive primitive, or new component
+  dependency. The summary reports a completed operation; it is not a control or
+  a changing status announcement.
+- **Snapshot contract:** metrics are immutable batch-creation snapshots.
+  `totalCount` is the canonical prompts-obtained value. Skipped blanks count
+  parser-aware blank candidates. Potential duplicates count each later row at
+  most once when it matches an earlier row, so three identical prompts produce
+  `2`; duplicates remain in the queue. Never recalculate duplicate counts from
+  queue status, filters, or other reactive item state.
+- **Storage compatibility:** `processSummary` is optional batch metadata and
+  remains non-indexed. Do not add a Dexie schema version, migration, or
+  backfill. For a legacy batch with a missing or malformed snapshot, show an
+  em dash for unavailable snapshot metrics plus localized screen-reader text;
+  never substitute zero. `totalCount` remains available independently.
+- **Localization and semantics:** EN copy is **Processing complete** /
+  **Prompts obtained** / **Skipped blanks** / **Potential duplicates**; ID copy
+  is **Pemrosesan selesai** / **Prompt diperoleh** / **Input kosong dilewati** /
+  **Potensi duplikat**. Label the section from its heading, preserve `dt`/`dd`
+  associations, hide the visual em dash from assistive technology, and expose
+  the localized legacy-unavailable message instead: EN **Not available for
+  batches created earlier**; ID **Tidak tersedia untuk batch yang dibuat
+  sebelumnya**.
+
 ---
 
 ## 7. Layout & Spacing
@@ -1448,3 +1489,4 @@ primitive, not hand-written disclosure ARIA, owns `aria-expanded`,
 | v1.11 | History folder nav moved out of the page-level sidebar/drawer into a toolbar row: `FolderSwitcher` (Combobox with footer-action pattern + per-option count badges) + `FolderChips` (rounded-full pills, kebab menu, count badges via `getHistoryCounts()`); `FolderSidebar.tsx` and the drawer (backdrop, `top-(--height-header)` offset) removed; History page is now a plain column in `<main>` (no `md:-m-6` compensation, no `calc(100dvh - …)` shell); combobox gained optional `badge` + `footer` props; folder creation capped at `MAX_FOLDERS = 10` (`FolderLimitError` + warning toast); scrollbar fix: dropdown-menu scroll-lock restore extended from Select to `DropdownMenu` (§6.11 `:has` rule) + `.chips-scrollbar` (styled thin nested scrollbar so it no longer hides while the kebab menu is open) |
 | v1.12 | Page header action toolbar now uses progressive icon collapse (§6.19): all actions are icon-only below `sm`, then Create, Import, Export, and Reset Default reveal labels at `sm`, `md`, `lg`, and `xl`; one wrapping flex toolbar and one accessible, tooltip-backed Button per action replace the historical base 2×2 grid |
 | v1.13 | Added Formatter input disclosure contract (§6.20): controlled Radix semantics, queue-aware open defaults and transitions, parent-owned input persistence, single upload input, measured-height motion, and programmatic-collapse focus restoration |
+| v1.14 | Added Formatter process summary contract (§6.21): compact static strip, semantic localized metrics, immutable batch snapshots, duplicate-row counting, and migration-free legacy fallback behavior |

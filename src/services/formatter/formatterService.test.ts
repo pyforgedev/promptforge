@@ -18,36 +18,70 @@ import {
   resetAllProgress,
   setCurrentIndex,
   getUniqueAspectRatios,
+  type CreateFormatterBatchCommand,
 } from './formatterService'
+
+function createTestBatch(
+  prompts: string[],
+  overrides: Partial<Omit<CreateFormatterBatchCommand, 'prompts'>> = {},
+) {
+  return createFormatterBatch({
+    prompts,
+    aspectRatios: null,
+    skippedBlankCount: 0,
+    sourceType: 'paste',
+    ...overrides,
+  })
+}
 
 describe('parseRawText', () => {
   it('normalizes CRLF to LF', () => {
     const input = 'line1\r\nline2\r\nline3'
     const result = parseRawText(input)
-    expect(result).toEqual(['line1', 'line2', 'line3'])
+    expect(result).toEqual({
+      prompts: ['line1', 'line2', 'line3'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('trims whitespace from each line', () => {
     const input = '  prompt1  \n  prompt2  \n  prompt3  '
     const result = parseRawText(input)
-    expect(result).toEqual(['prompt1', 'prompt2', 'prompt3'])
+    expect(result).toEqual({
+      prompts: ['prompt1', 'prompt2', 'prompt3'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('removes empty lines', () => {
     const input = 'prompt1\n\n\nprompt2\n\nprompt3'
     const result = parseRawText(input)
-    expect(result).toEqual(['prompt1', 'prompt2', 'prompt3'])
+    expect(result).toEqual({
+      prompts: ['prompt1', 'prompt2', 'prompt3'],
+      aspectRatios: null,
+      skippedBlankCount: 3,
+    })
   })
 
   it('handles mixed CRLF, empty lines, and whitespace', () => {
     const input = '  prompt1  \r\n  \r\n  prompt2  \r\n\r\n\r\n  prompt3  '
     const result = parseRawText(input)
-    expect(result).toEqual(['prompt1', 'prompt2', 'prompt3'])
+    expect(result).toEqual({
+      prompts: ['prompt1', 'prompt2', 'prompt3'],
+      aspectRatios: null,
+      skippedBlankCount: 3,
+    })
   })
 
-  it('returns empty array for empty input', () => {
-    expect(parseRawText('')).toEqual([])
-    expect(parseRawText('   \n   \n   ')).toEqual([])
+  it('returns no prompts and counts whitespace rows for blank input', () => {
+    expect(parseRawText('')).toEqual({ prompts: [], aspectRatios: null, skippedBlankCount: 0 })
+    expect(parseRawText('   \n   \n   ')).toEqual({
+      prompts: [],
+      aspectRatios: null,
+      skippedBlankCount: 3,
+    })
   })
 
   it('extracts only Prompt: lines from structured journal format', () => {
@@ -65,23 +99,35 @@ describe('parseRawText', () => {
       'Prompt: A cute bamboo instrument icon',
     ].join('\n')
     const result = parseRawText(input)
-    expect(result).toEqual([
-      'A cute chibi-style obelisk icon',
-      'Seamless looping confetti animation',
-      'A cute bamboo instrument icon',
-    ])
+    expect(result).toEqual({
+      prompts: [
+        'A cute chibi-style obelisk icon',
+        'Seamless looping confetti animation',
+        'A cute bamboo instrument icon',
+      ],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('extracts prompt values with extra whitespace', () => {
     const input = 'Prompt:    leading spaces here   \n\n\nPrompt:   another one   '
     const result = parseRawText(input)
-    expect(result).toEqual(['leading spaces here', 'another one'])
+    expect(result).toEqual({
+      prompts: ['leading spaces here', 'another one'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('falls back to line-based split when no Prompt: label found', () => {
     const input = 'command one\ncommand two\ncommand three'
     const result = parseRawText(input)
-    expect(result).toEqual(['command one', 'command two', 'command three'])
+    expect(result).toEqual({
+      prompts: ['command one', 'command two', 'command three'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('extracts Prompt: from markdown bold list format', () => {
@@ -92,9 +138,11 @@ describe('parseRawText', () => {
       '- **Prompt:** A sleek modern promotional hero banner with abstract curved red panels',
     ].join('\n')
     const result = parseRawText(input)
-    expect(result).toEqual([
-      'A sleek modern promotional hero banner with abstract curved red panels',
-    ])
+    expect(result).toEqual({
+      prompts: ['A sleek modern promotional hero banner with abstract curved red panels'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('extracts Prompt: from mixed markdown list (multiple prompts)', () => {
@@ -104,13 +152,58 @@ describe('parseRawText', () => {
       '- **Prompt:** Second prompt here',
     ].join('\n')
     const result = parseRawText(input)
-    expect(result).toEqual(['First prompt here', 'Second prompt here'])
+    expect(result).toEqual({
+      prompts: ['First prompt here', 'Second prompt here'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('falls back to line-based split when no markdown Prompt found either', () => {
     const input = '- **Judul:** something\n- **Type:** image'
     const result = parseRawText(input)
-    expect(result).toEqual(['- **Judul:** something', '- **Type:** image'])
+    expect(result).toEqual({
+      prompts: ['- **Judul:** something', '- **Type:** image'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
+  })
+
+  it('treats one final newline as a terminator and counts additional final blank rows', () => {
+    expect(parseRawText('a\n')).toEqual({
+      prompts: ['a'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
+    expect(parseRawText('a\n\n')).toEqual({
+      prompts: ['a'],
+      aspectRatios: null,
+      skippedBlankCount: 1,
+    })
+  })
+
+  it('counts intermediate whitespace rows while preserving accepted prompts', () => {
+    expect(parseRawText('first\n \t \nsecond\n')).toEqual({
+      prompts: ['first', 'second'],
+      aspectRatios: null,
+      skippedBlankCount: 1,
+    })
+  })
+
+  it('uses standard Prompt labels before markdown labels and counts recognized empty values', () => {
+    expect(parseRawText('- **Prompt:** markdown value\nPrompt:   \nfallback text')).toEqual({
+      prompts: [],
+      aspectRatios: null,
+      skippedBlankCount: 1,
+    })
+  })
+
+  it('does not fall back when a markdown Prompt label is recognized but empty', () => {
+    expect(parseRawText('- **Prompt:**   \nplain fallback text')).toEqual({
+      prompts: [],
+      aspectRatios: null,
+      skippedBlankCount: 1,
+    })
   })
 })
 
@@ -135,10 +228,11 @@ describe('parsePromptSections', () => {
       'Prompt: A single red squirrel.',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([
-      { prompt: raccoonPrompt, aspectRatio: '16:9' },
-      { prompt: 'A single red squirrel.', aspectRatio: '9:16' },
-    ])
+    expect(result).toEqual({
+      prompts: [raccoonPrompt, 'A single red squirrel.'],
+      aspectRatios: ['16:9', '9:16'],
+      skippedBlankCount: 0,
+    })
   })
 
   it('extracts multi-line prompt body until next section header', () => {
@@ -153,16 +247,21 @@ describe('parsePromptSections', () => {
       'Short body.',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([
-      { prompt: 'First line of the prompt. Second line continues the prompt.', aspectRatio: '1:1' },
-      { prompt: 'Short body.', aspectRatio: null },
-    ])
+    expect(result).toEqual({
+      prompts: ['First line of the prompt. Second line continues the prompt.', 'Short body.'],
+      aspectRatios: ['1:1', null],
+      skippedBlankCount: 0,
+    })
   })
 
   it('returns aspect ratio null when section has no Aspect Ratio label', () => {
     const input = ['--- Prompt 1 ---', '', 'Prompt:', 'Just a prompt body.'].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([{ prompt: 'Just a prompt body.', aspectRatio: null }])
+    expect(result).toEqual({
+      prompts: ['Just a prompt body.'],
+      aspectRatios: [null],
+      skippedBlankCount: 0,
+    })
   })
 
   it('ignores sections without a Prompt: label or empty body', () => {
@@ -185,16 +284,21 @@ describe('parsePromptSections', () => {
       'Prompt: Another valid one.',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([
-      { prompt: 'Valid prompt body.', aspectRatio: '16:9' },
-      { prompt: 'Another valid one.', aspectRatio: null },
-    ])
+    expect(result).toEqual({
+      prompts: ['Valid prompt body.', 'Another valid one.'],
+      aspectRatios: ['16:9', null],
+      skippedBlankCount: 1,
+    })
   })
 
   it('normalizes CRLF line endings', () => {
     const input = '--- Prompt 1 ---\r\n\r\nAspect Ratio: 4:3\r\n\r\nPrompt:\r\nBody text here.\r\n'
     const result = parsePromptSections(input)
-    expect(result).toEqual([{ prompt: 'Body text here.', aspectRatio: '4:3' }])
+    expect(result).toEqual({
+      prompts: ['Body text here.'],
+      aspectRatios: ['4:3'],
+      skippedBlankCount: 0,
+    })
   })
 
   it('accepts header variations (no number, lowercase, no surrounding spaces)', () => {
@@ -209,7 +313,7 @@ describe('parsePromptSections', () => {
       'Prompt: Third one.',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result.map((section) => section.prompt)).toEqual([
+    expect(result.prompts).toEqual([
       'First one.',
       'Second one.',
       'Third one.',
@@ -224,9 +328,11 @@ describe('parsePromptSections', () => {
       'Aspect Ratio: 16:9',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([
-      { prompt: 'A long prompt body that ends with metadata.', aspectRatio: '16:9' },
-    ])
+    expect(result).toEqual({
+      prompts: ['A long prompt body that ends with metadata.'],
+      aspectRatios: ['16:9'],
+      skippedBlankCount: 0,
+    })
   })
 
   it('keeps a second Prompt: line inside the body as content', () => {
@@ -237,15 +343,42 @@ describe('parsePromptSections', () => {
       'Prompt: The literal output label.',
     ].join('\n')
     const result = parsePromptSections(input)
-    expect(result).toEqual([
-      { prompt: 'Body that instructs an output format: Prompt: The literal output label.', aspectRatio: null },
-    ])
+    expect(result).toEqual({
+      prompts: ['Body that instructs an output format: Prompt: The literal output label.'],
+      aspectRatios: [null],
+      skippedBlankCount: 0,
+    })
   })
 
-  it('returns empty array when no sections detected', () => {
-    expect(parsePromptSections('')).toEqual([])
-    expect(parsePromptSections('just a plain line\nanother line')).toEqual([])
-    expect(parsePromptSections('---\njust a markdown rule')).toEqual([])
+  it('returns an empty aligned result when no sections are detected', () => {
+    const emptyResult = { prompts: [], aspectRatios: [], skippedBlankCount: 0 }
+    expect(parsePromptSections('')).toEqual(emptyResult)
+    expect(parsePromptSections('just a plain line\nanother line')).toEqual(emptyResult)
+    expect(parsePromptSections('---\njust a markdown rule')).toEqual(emptyResult)
+  })
+
+  it('counts an empty Prompt field but not structural blanks or a section without the field', () => {
+    const input = [
+      '--- Prompt 1 ---',
+      '',
+      'Aspect Ratio: 16:9',
+      '',
+      'Prompt:',
+      '   ',
+      '--- Prompt 2 ---',
+      '',
+      'Aspect Ratio: 1:1',
+      '',
+      'metadata only',
+      '--- Prompt 3 ---',
+      'Prompt: accepted body',
+    ].join('\n')
+
+    expect(parsePromptSections(input)).toEqual({
+      prompts: ['accepted body'],
+      aspectRatios: [null],
+      skippedBlankCount: 1,
+    })
   })
 })
 
@@ -304,13 +437,39 @@ describe('parseCsvWithColumn', () => {
   it('parses CSV and extracts specified column', () => {
     const csv = 'prompt,desc\np1,d1\np2,d2'
     const result = parseCsvWithColumn(csv, 'prompt')
-    expect(result).toEqual(['p1', 'p2'])
+    expect(result).toEqual({
+      prompts: ['p1', 'p2'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
   })
 
   it('applies parseRawText cleaning to column values', () => {
     const csv = 'prompt,desc\n  p1  ,d1\np2  ,d2\n'
     const result = parseCsvWithColumn(csv, 'prompt')
-    expect(result).toEqual(['p1', 'p2'])
+    expect(result).toEqual({
+      prompts: ['p1', 'p2'],
+      aspectRatios: null,
+      skippedBlankCount: 0,
+    })
+  })
+
+  it('counts missing and whitespace selected cells but ignores physical empty rows', () => {
+    const csv = [
+      'prompt,desc',
+      'accepted,first',
+      ',missing',
+      '   ,whitespace',
+      '',
+      'second,last',
+      '',
+    ].join('\n')
+
+    expect(parseCsvWithColumn(csv, 'prompt')).toEqual({
+      prompts: ['accepted', 'second'],
+      aspectRatios: null,
+      skippedBlankCount: 2,
+    })
   })
 })
 
@@ -420,7 +579,7 @@ describe('checkSanityLimit', () => {
 describe('createFormatterBatch', () => {
   it('creates batch and items successfully', async () => {
     const prompts = ['prompt1', 'prompt2', 'prompt3']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
 
     const batchData = await getActiveBatch()
     expect(batchData).not.toBeNull()
@@ -432,10 +591,10 @@ describe('createFormatterBatch', () => {
 
   it('clears previous batch when called again', async () => {
     const prompts1 = ['old1', 'old2']
-    await createFormatterBatch(prompts1, 'paste')
+    await createTestBatch(prompts1)
 
     const prompts2 = ['new1', 'new2', 'new3']
-    await createFormatterBatch(prompts2, 'file', 'test.csv')
+    await createTestBatch(prompts2, { sourceType: 'file', originalFileName: 'test.csv' })
 
     const batchData = await getActiveBatch()
     expect(batchData).not.toBeNull()
@@ -450,7 +609,7 @@ describe('createFormatterBatch', () => {
 
   it('throws and does not insert when count >= 500', async () => {
     const prompts = Array(500).fill('prompt')
-    await expect(createFormatterBatch(prompts, 'paste')).rejects.toThrow(
+    await expect(createTestBatch(prompts)).rejects.toThrow(
       'Batch terlalu besar (500 prompt, maksimal 500)'
     )
 
@@ -460,9 +619,65 @@ describe('createFormatterBatch', () => {
     expect(await db.formatter_items.count()).toBe(0)
   })
 
+  it('persists skipped blanks and counts each later duplicate row once while retaining all items', async () => {
+    const repeatedPrompt = 'clean white studio portrait with soft light'
+
+    await createTestBatch(
+      [repeatedPrompt, repeatedPrompt, repeatedPrompt],
+      { skippedBlankCount: 4 },
+    )
+
+    const batchData = await getActiveBatch()
+    expect(batchData!.batch.processSummary).toEqual({
+      skippedBlankCount: 4,
+      duplicatePromptCount: 2,
+    })
+    expect(batchData!.items.map((item) => item.promptText)).toEqual([
+      repeatedPrompt,
+      repeatedPrompt,
+      repeatedPrompt,
+    ])
+  })
+
+  it.each([-1, 1.5, Number.NaN])(
+    'rejects invalid skippedBlankCount %s without replacing storage',
+    async (skippedBlankCount) => {
+      await expect(
+        createTestBatch(['prompt'], { skippedBlankCount }),
+      ).rejects.toThrow('skippedBlankCount must be a non-negative integer')
+
+      expect(await getActiveBatch()).toBeNull()
+      expect(await db.formatter_items.count()).toBe(0)
+    },
+  )
+
+  it('keeps the process snapshot unchanged through copy, index, reset, and read operations', async () => {
+    const repeatedPrompt = 'identical prompt used to persist duplicate summary'
+    const expectedSummary = { skippedBlankCount: 3, duplicatePromptCount: 2 }
+    await createTestBatch(
+      [repeatedPrompt, repeatedPrompt, repeatedPrompt],
+      { skippedBlankCount: 3 },
+    )
+
+    let batchData = await getActiveBatch()
+    expect(batchData!.batch.processSummary).toEqual(expectedSummary)
+
+    await markCopiedAndAdvance(batchData!.items[0].id!, 1)
+    batchData = await getActiveBatch()
+    expect(batchData!.batch.processSummary).toEqual(expectedSummary)
+
+    await setCurrentIndex(2)
+    batchData = await getActiveBatch()
+    expect(batchData!.batch.processSummary).toEqual(expectedSummary)
+
+    await resetAllProgress()
+    batchData = await getActiveBatch()
+    expect(batchData!.batch.processSummary).toEqual(expectedSummary)
+  })
+
   it('detects aspect ratio for each item', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
 
     const batchData = await getActiveBatch()
     expect(batchData!.items[0].detectedAspectRatio).toBe('16:9')
@@ -472,7 +687,7 @@ describe('createFormatterBatch', () => {
 
   it('uses provided aspect ratios, falling back to inline detection', async () => {
     const prompts = ['prompt one', 'prompt two', 'prompt three --ar 21:9']
-    await createFormatterBatch(prompts, 'paste', undefined, ['16:9', null, null])
+    await createTestBatch(prompts, { aspectRatios: ['16:9', null, null] })
 
     const batchData = await getActiveBatch()
     expect(batchData!.items[0].detectedAspectRatio).toBe('16:9')
@@ -482,7 +697,7 @@ describe('createFormatterBatch', () => {
 
   it('getUniqueAspectRatios returns unique sorted ratios', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1', 'another --ar 16:9']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
     const batchData = await getActiveBatch()
     
     const ratios = getUniqueAspectRatios(batchData!.items)
@@ -493,7 +708,7 @@ describe('createFormatterBatch', () => {
 
   it('getUniqueAspectRatios returns empty array when no ratios detected', async () => {
     const prompts = ['plain prompt', 'another plain prompt']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
     const batchData = await getActiveBatch()
     
     const ratios = getUniqueAspectRatios(batchData!.items)
@@ -502,7 +717,7 @@ describe('createFormatterBatch', () => {
 
   it('preserves order field correctly', async () => {
     const prompts = ['first', 'second', 'third']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
 
     const batchData = await getActiveBatch()
     expect(batchData!.items[0].order).toBe(0)
@@ -518,18 +733,43 @@ describe('getActiveBatch', () => {
   })
 
   it('returns batch with items', async () => {
-    await createFormatterBatch(['p1', 'p2'], 'paste')
+    await createTestBatch(['p1', 'p2'])
     const result = await getActiveBatch()
 
     expect(result).not.toBeNull()
     expect(result!.batch).toBeDefined()
     expect(result!.items.length).toBe(2)
   })
+
+  it('reads a legacy raw batch without adding a process snapshot', async () => {
+    const batchId = await db.formatter_batch.add({
+      sourceType: 'paste',
+      originalFileName: null,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      totalCount: 1,
+      currentIndex: 0,
+    })
+    await db.formatter_items.add({
+      order: 0,
+      promptText: 'legacy prompt',
+      status: 'pending',
+      copiedAt: null,
+      detectedAspectRatio: null,
+    })
+
+    const result = await getActiveBatch()
+    expect(result?.batch.id).toBe(batchId)
+    expect(result?.batch.processSummary).toBeUndefined()
+    expect(result?.items.map((item) => item.promptText)).toEqual(['legacy prompt'])
+
+    const stored = await db.formatter_batch.get(batchId)
+    expect(stored).not.toHaveProperty('processSummary')
+  })
 })
 
 describe('markItemCopied', () => {
   it('marks item status as copied', async () => {
-    await createFormatterBatch(['p1', 'p2'], 'paste')
+    await createTestBatch(['p1', 'p2'])
     const batchData = await getActiveBatch()
     const itemId = batchData!.items[0].id!
 
@@ -544,7 +784,7 @@ describe('markItemCopied', () => {
 
 describe('markCopiedAndAdvance', () => {
   it('marks item as copied and advances currentIndex atomically', async () => {
-    await createFormatterBatch(['p1', 'p2', 'p3'], 'paste')
+    await createTestBatch(['p1', 'p2', 'p3'])
     const batchData = await getActiveBatch()
     const itemId = batchData!.items[0].id!
 
@@ -563,7 +803,7 @@ describe('markCopiedAndAdvance', () => {
   })
 
   it('keeps currentIndex when advanced beyond last item', async () => {
-    await createFormatterBatch(['p1', 'p2'], 'paste')
+    await createTestBatch(['p1', 'p2'])
     const batchData = await getActiveBatch()
     const itemId = batchData!.items[1].id!
 
@@ -575,11 +815,11 @@ describe('markCopiedAndAdvance', () => {
   })
 
   it('does not advance currentIndex when the item no longer exists', async () => {
-    await createFormatterBatch(['p1', 'p2'], 'paste')
+    await createTestBatch(['p1', 'p2'])
     const batchData = await getActiveBatch()
     const itemId = batchData!.items[0].id!
 
-    await createFormatterBatch(['replacement'], 'paste')
+    await createTestBatch(['replacement'])
 
     await markCopiedAndAdvance(itemId, 1)
 
@@ -592,7 +832,7 @@ describe('markCopiedAndAdvance', () => {
 
 describe('resetAllProgress', () => {
   it('resets all items to pending and currentIndex to 0', async () => {
-    await createFormatterBatch(['p1', 'p2'], 'paste')
+    await createTestBatch(['p1', 'p2'])
     const batchData = await getActiveBatch()
     const itemId = batchData!.items[0].id!
 
@@ -612,7 +852,7 @@ describe('resetAllProgress', () => {
 
 describe('setCurrentIndex', () => {
   it('updates currentIndex on the active batch', async () => {
-    await createFormatterBatch(['p1', 'p2', 'p3'], 'paste')
+    await createTestBatch(['p1', 'p2', 'p3'])
 
     await setCurrentIndex(2)
 
@@ -757,7 +997,7 @@ describe('applyQueueView', () => {
 
 describe('exportBatch', () => {
   beforeEach(async () => {
-    await createFormatterBatch(['prompt1', 'comma, prompt', 'pending item'], 'paste')
+    await createTestBatch(['prompt1', 'comma, prompt', 'pending item'])
     const batchData = await getActiveBatch()
     if (batchData?.items[1]?.id) {
       await markItemCopied(batchData.items[1].id)
@@ -773,7 +1013,7 @@ describe('exportBatch', () => {
 
   it('exports the exact items it receives (filters applied by caller)', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
     const batchData = await getActiveBatch()
 
     const filtered169 = applyQueueView(batchData!.items, {
@@ -797,7 +1037,7 @@ describe('exportBatch', () => {
 
   it('exportBatch receives combined scope and aspect ratio filtering from caller', async () => {
     const prompts = ['prompt --ar 16:9', 'plain prompt', 'aspect ratio 1:1']
-    await createFormatterBatch(prompts, 'paste')
+    await createTestBatch(prompts)
     const batchData = await getActiveBatch()
 
     const itemId = batchData!.items[0].id!
