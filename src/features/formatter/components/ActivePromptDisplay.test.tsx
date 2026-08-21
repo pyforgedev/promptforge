@@ -46,12 +46,12 @@ function item(overrides: Partial<FormatterItem> = {}): FormatterItem {
 function mockGeometry(scrollHeight: number, clientHeight: number): Geometry {
   const geometry = { scrollHeight, clientHeight, reads: 0 }
 
-  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function () {
+  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
     if (this.tagName !== 'P') return 0
     geometry.reads += 1
     return geometry.scrollHeight
   })
-  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function () {
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
     if (this.tagName !== 'P') return 0
     geometry.reads += 1
     return geometry.clientHeight

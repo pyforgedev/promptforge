@@ -19,11 +19,14 @@ import {
 import { withQuotaRetry, scheduleRetentionPrune } from './retention'
 import type {
   ArtStyleOption,
+  AdobeStockScore,
   AspectRatio,
   GeneratedPrompt,
   GeneratedPromptBatch,
   GeneratorInput,
   ImagePlatform,
+  PromptSegments,
+  VariationAnchors,
 } from '@/features/prompt-generator/types'
 import type { HistorySort } from '@/features/history/types'
 import type { IndexableType } from 'dexie'
@@ -206,7 +209,7 @@ async function hydrateRecords(rows: PromptHistoryV11[]): Promise<PromptHistoryRe
     const isNanoTarget = input?.targetPlatform === 'nano_banana'
     const fullPrompt = isNanoTarget ? nano || dalle : dalle || nano
     const niche = input?.niche && input.niche !== '' ? input.niche : record.nicheNormalized
-    const category = input?.category && input.category !== '' ? input.category : record.categoryKey
+    const category = input?.category ?? record.categoryKey
 
     const dto: PromptHistoryRecord = {
       id: record.id,
@@ -242,7 +245,7 @@ function toV11Metadata(
   batchInput: GeneratorInput,
   base: { folderId?: string | null } = {},
 ): PromptHistoryV11 {
-  const category = typeof batchInput.category === 'string' && batchInput.category !== '' ? batchInput.category : 'other'
+  const category = batchInput.category ?? 'other'
   const niche = typeof batchInput.niche === 'string' ? batchInput.niche : ''
   const keywords = Array.isArray(prompt.commercialKeywords)
     ? prompt.commercialKeywords.filter((k): k is string => typeof k === 'string' && k !== '').slice(0, 60)

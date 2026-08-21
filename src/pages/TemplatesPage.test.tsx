@@ -53,7 +53,7 @@ describe('TemplatesPage toolbar responsiveness', () => {
     ({ label, buttonClasses, labelClasses }) => {
       renderPage()
 
-      const buttons = screen.getAllByRole('button', { name: label, exact: true })
+      const buttons = screen.getAllByRole('button', { name: label })
       expect(buttons).toHaveLength(1)
 
       const button = buttons[0]
@@ -72,11 +72,11 @@ describe('TemplatesPage toolbar responsiveness', () => {
     renderPage()
 
     for (const { label, tooltipClass } of toolbarActions) {
-      const button = screen.getByRole('button', { name: label, exact: true })
+      const button = screen.getByRole('button', { name: label })
       const trigger = button.parentElement!
       expect(trigger.tagName).toBe('SPAN')
       expect(trigger).toHaveClass('inline-flex')
-      expect(within(trigger).getAllByRole('button', { name: label, exact: true })).toHaveLength(1)
+      expect(within(trigger).getAllByRole('button', { name: label })).toHaveLength(1)
 
       await user.hover(trigger)
 
@@ -101,11 +101,11 @@ describe('TemplatesPage toolbar responsiveness', () => {
     expect(fileInput).toHaveAttribute('accept', '.txt')
     expect(fileInput).toHaveClass('hidden')
 
-    const exportButton = screen.getByRole('button', { name: 'Export', exact: true })
+    const exportButton = screen.getByRole('button', { name: 'Export' })
     expect(exportButton).toBeDisabled()
 
     const inputClick = vi.spyOn(fileInput, 'click').mockImplementation(() => {})
-    await user.click(screen.getByRole('button', { name: 'Import', exact: true }))
+    await user.click(screen.getByRole('button', { name: 'Import' }))
     expect(inputClick).toHaveBeenCalledTimes(1)
   })
 })

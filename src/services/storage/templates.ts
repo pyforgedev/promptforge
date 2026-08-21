@@ -29,8 +29,11 @@ export type TemplateErrorCode =
   | 'STORAGE_FAILED'
 
 export class TemplateError extends Error {
-  constructor(public readonly code: TemplateErrorCode) {
+  readonly code: TemplateErrorCode
+
+  constructor(code: TemplateErrorCode) {
     super(code)
+    this.code = code
     this.name = 'TemplateError'
   }
 }

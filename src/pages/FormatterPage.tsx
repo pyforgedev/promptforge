@@ -60,18 +60,29 @@ function enqueueWrite<T>(write: () => Promise<T>): Promise<T> {
 function getProcessSummary(batch: FormatterBatch): ProcessSummaryViewModel {
   const snapshot = batch.processSummary as Partial<FormatterProcessSummary> | null | undefined
   const duplicateLimit = Math.max(batch.totalCount - 1, 0)
-  const hasValidSnapshot = snapshot !== undefined
-    && snapshot !== null
-    && Number.isInteger(snapshot.skippedBlankCount)
-    && snapshot.skippedBlankCount >= 0
-    && Number.isInteger(snapshot.duplicatePromptCount)
-    && snapshot.duplicatePromptCount >= 0
-    && snapshot.duplicatePromptCount <= duplicateLimit
+
+  if (
+    snapshot === undefined
+    || snapshot === null
+    || typeof snapshot.skippedBlankCount !== 'number'
+    || !Number.isInteger(snapshot.skippedBlankCount)
+    || snapshot.skippedBlankCount < 0
+    || typeof snapshot.duplicatePromptCount !== 'number'
+    || !Number.isInteger(snapshot.duplicatePromptCount)
+    || snapshot.duplicatePromptCount < 0
+    || snapshot.duplicatePromptCount > duplicateLimit
+  ) {
+    return {
+      promptCount: batch.totalCount,
+      skippedBlankCount: null,
+      duplicatePromptCount: null,
+    }
+  }
 
   return {
     promptCount: batch.totalCount,
-    skippedBlankCount: hasValidSnapshot ? snapshot.skippedBlankCount : null,
-    duplicatePromptCount: hasValidSnapshot ? snapshot.duplicatePromptCount : null,
+    skippedBlankCount: snapshot.skippedBlankCount,
+    duplicatePromptCount: snapshot.duplicatePromptCount,
   }
 }
 

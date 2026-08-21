@@ -34,6 +34,7 @@ import type {
   GeneratedPrompt,
   GeneratedPromptBatch,
   GeneratorInput,
+  NicheCategory,
   PromptSegments,
   AdobeStockScore,
   VariationAnchors,
@@ -63,7 +64,7 @@ function makeAnchors(primary = 'lighting'): VariationAnchors {
   return { primaryVariation: primary, compositionStyle: '', lightingType: '', directionHint: '' }
 }
 
-function makeGeneratorInput(opts: { niche: string; category: string; targetPlatform: Platform }): GeneratorInput {
+function makeGeneratorInput(opts: { niche: string; category: NicheCategory; targetPlatform: Platform }): GeneratorInput {
   return {
     niche: opts.niche,
     category: opts.category,
@@ -94,7 +95,7 @@ interface SeedOptions {
   batchId: string
   count?: number
   niche?: string
-  category?: string
+  category?: NicheCategory
   targetPlatform?: Platform
   score?: number
   text?: string
@@ -144,7 +145,7 @@ function v10Meta(
     text?: string
     categoryKey?: string
     niche?: string
-  } = {},
+  },
 ): PromptHistoryV11 {
   const folderId = opts.folderId ?? null
   const text = opts.text ?? `text for ${id}`
@@ -204,7 +205,7 @@ describe('historySearch utils', () => {
   })
 
   it('query tokens respect the stricter query budget', () => {
-    expect(tokenizeQuery('cat dog bird fish wolf fox lynx bear deer', 20).length).toBeLessThanOrEqual(20)
+    expect(tokenizeQuery('cat dog bird fish wolf fox lynx bear deer').length).toBeLessThanOrEqual(20)
   })
 
   it('matches by exact token or prefix with AND semantics', () => {
@@ -303,14 +304,14 @@ describe('prompt history storage (v11 schema)', () => {
     expect(items[0].fullPrompt).toContain('dalle')
     expect(items[0].platformVariants.dalle3).toContain('dalle')
     expect(items[0].platformVariants.nano_banana).toContain('nano')
-    expect(items[0].generatorInput).toBeUndefined()
+    expect(items[0]).not.toHaveProperty('generatorInput')
 
     // Raw records never carry the duplicated payload
     const raw = await db.prompt_history.get(items[0].id)
-    expect(raw?.fullPrompt).toBeUndefined()
-    expect(raw?.platformVariants).toBeUndefined()
-    expect(raw?.niche).toBeUndefined()
-    expect(raw?.category).toBeUndefined()
+    expect(raw).not.toHaveProperty('fullPrompt')
+    expect(raw).not.toHaveProperty('platformVariants')
+    expect(raw).not.toHaveProperty('niche')
+    expect(raw).not.toHaveProperty('category')
   })
 
   it('derives fullPrompt from the active target platform (nano_banana)', async () => {
@@ -364,7 +365,7 @@ describe('prompt history storage (v11 schema)', () => {
       q2: { folderId: 'folder-travel', time: 3000, score: 50, text: 'blue mountains', categoryKey: 'travel' },
       q3: { folderId: null as string | null, time: 2000, score: 75, text: 'golden retriever dog', categoryKey: 'lifestyle' },
       q4: { folderId: 'folder-food', time: 1000, score: 95, text: 'spicy noodle bowl', categoryKey: 'travel' },
-    }
+    } as const
     await db.prompt_batches.bulkPut(
       (Object.keys(seed) as (keyof typeof seed)[]).map((key) => ({
         batchId: `bq-${key}`,

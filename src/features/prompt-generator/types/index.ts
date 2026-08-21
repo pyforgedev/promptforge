@@ -1,5 +1,7 @@
 // ─── Input Types ────────────────────────────────────────────────────────────
 
+import type { NicheCategory } from '../constants/categories'
+
 export type Language = 'en' | 'id'
 
 export type UsageContext = 'commercial' | 'editorial' | 'conceptual' | 'abstract'

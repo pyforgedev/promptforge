@@ -78,7 +78,7 @@ describe('template mappers', () => {
 
   it('drops an invalid legacy category without discarding other settings', () => {
     const input = generatorInput()
-    ;(input as GeneratorInput & { category: string }).category = 'legacy-category'
+    Reflect.set(input, 'category', 'legacy-category')
 
     const settings = mapGeneratorSettings(input)
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderWithProviders, screen, waitFor } from '@/test/utils'
 import { QuickStats } from './QuickStats'
-import db from '@/services/storage/indexeddb'
+import db, { SENTINEL_UNFILED } from '@/services/storage/indexeddb'
 
 vi.mock('@/components/animations/CountUp', () => ({
   default: ({ to, className }: { to: number; className?: string }) => (
@@ -28,16 +28,18 @@ describe('QuickStats Component', () => {
         batchId: 'b1',
         segments: { subject: 'tree', composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
         negativePrompt: '',
-        platformVariants: { dalle3: 'beautiful green tree', nano_banana: 'beautiful green tree' },
-        fullPrompt: 'beautiful green tree',
         commercialKeywords: ['nature', 'tree'],
         adobeScore: { total: 80, breakdown: { commercialViability: 20, technicalQuality: 20, compositionStrength: 20, marketDiversity: 20 }, warnings: [], suggestions: [] },
         variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
-        createdAt: new Date(),
+        createdAt: Date.now(),
         isFavorite: false,
-        niche: 'Nature',
-        category: 'landscape',
-        folderId: null
+        folderId: null,
+        folderKey: SENTINEL_UNFILED,
+        categoryKey: 'landscape',
+        nicheNormalized: 'nature',
+        searchTerms: ['nature', 'tree'],
+        aspectRatioKey: 'random',
+        artStyleKey: 'none',
       },
       {
         id: 'h2',
@@ -45,16 +47,18 @@ describe('QuickStats Component', () => {
         batchId: 'b1',
         segments: { subject: 'ocean', composition: '', lighting: '', mood: '', style: '', technical: '', colorPalette: '', environment: '' },
         negativePrompt: '',
-        platformVariants: { dalle3: 'beautiful ocean view', nano_banana: 'beautiful ocean view' },
-        fullPrompt: 'beautiful ocean view',
         commercialKeywords: ['nature', 'water'],
         adobeScore: { total: 90, breakdown: { commercialViability: 20, technicalQuality: 20, compositionStrength: 25, marketDiversity: 25 }, warnings: [], suggestions: [] },
         variationAnchors: { primaryVariation: '', compositionStyle: '', lightingType: '', directionHint: '' },
-        createdAt: new Date(),
+        createdAt: Date.now(),
         isFavorite: false,
-        niche: 'Nature',
-        category: 'landscape',
-        folderId: null
+        folderId: null,
+        folderKey: SENTINEL_UNFILED,
+        categoryKey: 'landscape',
+        nicheNormalized: 'nature',
+        searchTerms: ['nature', 'water'],
+        aspectRatioKey: 'random',
+        artStyleKey: 'none',
       }
     ])
 

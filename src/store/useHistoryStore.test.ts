@@ -62,8 +62,14 @@ describe('useHistoryStore', () => {
     const second = deferred<{ items: Array<{ id: string }>; nextCursor: null; hasMore: boolean }>()
     const signals: AbortSignal[] = []
     queryHistoryItems
-      .mockImplementationOnce((params) => { signals.push(params.signal); return first.promise })
-      .mockImplementationOnce((params) => { signals.push(params.signal); return second.promise })
+      .mockImplementationOnce((params: Parameters<typeof indexeddb.queryHistoryItems>[0]) => {
+        signals.push(params.signal!)
+        return first.promise
+      })
+      .mockImplementationOnce((params: Parameters<typeof indexeddb.queryHistoryItems>[0]) => {
+        signals.push(params.signal!)
+        return second.promise
+      })
 
     const firstFetch = useHistoryStore.getState().fetchHistory()
     const secondFetch = useHistoryStore.getState().fetchHistory()
