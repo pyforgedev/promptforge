@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/pyforgedev/promptforge/compare/v0.6.0...v0.7.0) (2026-08-21)
+
+### Features
+
+* **formatter:** Add active prompt disclosure ([eb89715](https://github.com/pyforgedev/promptforge/commit/eb89715c62c7c27e39beeac6b7dbf54d56e6fe8d))
+* **formatter:** Add collapsible prompt input panel ([161cd22](https://github.com/pyforgedev/promptforge/commit/161cd2208740f72b97c4785e6d1a4e5357b984db))
+* **formatter:** Add compact batch process summary ([1d570cd](https://github.com/pyforgedev/promptforge/commit/1d570cd45c2bb233a15afa63361c1b6a6ae8e13b))
+* **history:** Add scalable filters and sorting ([1c5a516](https://github.com/pyforgedev/promptforge/commit/1c5a516dc5348bf05e18c8b86d8a83f0b13203e2))
+* **history:** Migrate prompt history to normalized v10 storage ([6936d14](https://github.com/pyforgedev/promptforge/commit/6936d14672264091ee17e15fa3b185a66a29e1a6))
+* **history:** Replace folder sidebar with switcher + chips toolbar ([5a9fbe1](https://github.com/pyforgedev/promptforge/commit/5a9fbe16b427cb05b6512b4fd16022a77092c115))
+* **history:** Show aspect ratio and art style tags on history cards ([95f01b1](https://github.com/pyforgedev/promptforge/commit/95f01b18ad68e302b4985462ed313fe151dca18e))
+* **history:** Use searchable combobox for aspect and art style filters ([1db33fa](https://github.com/pyforgedev/promptforge/commit/1db33fad0987bc490121decf767c8716256ef3a2))
+* **templates:** Integrate reusable prompt template workflow ([98bfed3](https://github.com/pyforgedev/promptforge/commit/98bfed3d89b26d38fef320f2459951362130284f))
+* **templates:** Make header actions progressively responsive ([64c4a0d](https://github.com/pyforgedev/promptforge/commit/64c4a0d9cc4623f407e97aa8403b2ecaadd91beb))
+
+### Bug Fixes
+
+* **ci:** Align Node engine floor with ESLint requirements ([7362ea9](https://github.com/pyforgedev/promptforge/commit/7362ea973cb55193234eea39c4079c8e1d3814fb))
+* **ci:** Raise Node floor to 24 for engine requirement ([2acdbdf](https://github.com/pyforgedev/promptforge/commit/2acdbdf9cb6408b7a30e8f7422b848ac847aaddb))
+* **settings:** Cap master prompt textarea height ([1e5ddc9](https://github.com/pyforgedev/promptforge/commit/1e5ddc98aa5dceb4345cd6a3196c43681507e93d))
+
 ## [0.6.0](https://github.com/pyforgedev/promptforge/compare/v0.5.0...v0.6.0) (2026-08-17)
 
 ### Features
