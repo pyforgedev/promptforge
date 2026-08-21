@@ -16,12 +16,12 @@ npm run test:run  # run the Vitest suite once — FULL suite, slow; avoid as rou
 ```
 
 > [!IMPORTANT]
-> **Never run `npm run build` (or any build/typecheck command: `npx tsc *`, `npx vite build *`, etc.) without asking the user first.** Builds are slow, so do not run them as routine verification on every small change. Ask for explicit approval before each build; only run it when the user requests it or a build is strictly required for the current task. `npm run lint` may run freely as a routine check.
+> **Never run `npm run build` (or any build/typecheck command: `npx tsc *`, `npx vite build *`, etc.) without asking the user first.** Builds are slow, so do not run them as routine verification on every small change. Ask for explicit approval before each build; only run it when the user requests it or a build is strictly required for the current task. `npm run lint` may run freely as a routine check. The sole exception is an already authorized release command: its release-it `before:init` build is pre-authorized and must run without another prompt (see [Release Process](#release-process)).
 
 ## Testing — Always Scoped, Never the Full Suite
 
 > [!IMPORTANT]
-> **Run only the tests that cover the change — never `npm run test:run` (full suite) as a routine check.** The full suite is slow (~2 minutes) and wasteful; it may only be run when the user explicitly requests it.
+> **Run only the tests that cover the change — never `npm run test:run` (full suite) as a routine check.** The full suite is slow (~2 minutes) and wasteful; it may only be run when the user explicitly requests it. The sole exception is an already authorized release command: its release-it `before:init` full suite is pre-authorized and must run without another prompt (see [Release Process](#release-process)).
 
 - Run scoped tests with `npx vitest run <file-or-files>` — never `npm run test:run`.
 - Pick the test files that cover the touched code, colocated next to it (`*.test.ts`):
@@ -66,31 +66,37 @@ All user-facing text — including UI labels and error messages — must be adde
 
 ## Release Process
 
-This project uses [`release-it`](https://github.com/release-it/release-it) with conventional changelog for versioning and releases.
+[`docs/RELEASE.md`](./docs/RELEASE.md) is the canonical release runbook. Follow it exactly; do not improvise a manual release or deployment.
 
-### Commands
+### Authorization and version choice
+
+- A release requires explicit user authorization and a selected SemVer increment. Use `fix` changes for patch, `feat` changes for minor, and breaking changes for major.
+- If the user has not selected an increment, inspect the commits, recommend one, and ask one concise patch/minor/major question. After the answer, execute the matching command without exploring manual alternatives.
+- **RELEASE EXCEPTION:** normal development still requires scoped tests, and separate approval for the full suite or a build. Once the user explicitly authorizes a release and selects its increment, that authorization includes release-it's mandatory full-suite and build hooks for that release command. Do not ask again for individual hooks, and never skip or bypass them.
+
+### Only permitted commands
+
+Release-it through the local non-interactive npm scripts is the **only** permitted release and production deployment path:
 
 ```bash
-npm run release          # interactive release
-npm run release:patch    # patch bump (0.x.x)
-npm run release:minor    # minor bump (x.0.x)
-npm run release:major    # major bump (x.x.0)
+npm run release:patch -- --ci
+npm run release:minor -- --ci
+npm run release:major -- --ci
 ```
 
-Or directly: `npx release-it <increment> --ci`
+Agents MUST NOT use the interactive `npm run release`. They MUST NOT manually edit the package version, run `npm version`, generate the changelog, create or amend the release commit, create or push a tag, run `gh release create`, or run a standalone `vercel deploy`. Never bypass hooks with release-it flags or configuration overrides. `VERCEL_TOKEN` is read from the environment; never print credentials or pass tokens in CLI arguments.
 
-### Release-it Config (`.release-it.json`)
+### Required workflow
 
-- Commits: `chore: release v${version}`
-- Tags: `v${version}`
-- GitHub releases: auto-generated
-- npm publish: disabled (private project)
-- Changelog: auto-updated via `@release-it/conventional-changelog`
-- Post-release hook: `vercel deploy --prod --yes`
+1. Confirm the worktree is clean and all release-relevant changes are committed. Check the branch and remote state, and confirm required credentials are available without printing secrets. Never stash, revert, or commit another user's unrelated changes; use a clean temporary clone or worktree if necessary.
+2. Run exactly one authorized command above. Release-it runs `npm run lint` → `npm run test:run` → `npm run build` sequentially and aborts before creating release artifacts if any gate fails. It then performs the version bump, changelog update, `chore: release v${version}` commit, tag, push, GitHub Release, and Vercel production deployment.
+3. Do not treat a successful hook exit as sufficient. Confirm release-it succeeded, the tag exists locally and remotely, the GitHub Release exists, and the Vercel production deployment status is `Ready`. Read-only `gh release view`, `vercel ls --prod`, and `vercel inspect` are allowed for verification only.
 
-### Vercel Deploy
+### Failure recovery
 
-The `vercel` CLI reads the `VERCEL_TOKEN` environment variable natively — **do not** pass it via `--token` flag (exposes secret in process args). The `--yes` flag skips interactive prompts in CI.
+- If lint, tests, or build fails, fix and verify the error, commit the fix, then rerun the same release-it command. No tag or GitHub Release should exist yet.
+- If failure occurs after the tag or GitHub Release is published, never delete or rewrite the tag, amend published history, or reuse the version. Fix on `main` and publish the next patch through release-it.
+- Never fall back to manual deployment. Diagnose and fix the release configuration, then deploy through release-it as part of the next patch release.
 
 ## graphify
 

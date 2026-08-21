@@ -14,7 +14,12 @@
     "publish": false
   },
   "hooks": {
-    "after:release": "vercel deploy --prod --yes"
+    "before:init": [
+      "npm run lint",
+      "npm run test:run",
+      "npm run build"
+    ],
+    "after:release": "vercel deploy --prod --yes --force --with-cache"
   },
   "plugins": {
     "@release-it/conventional-changelog": {
