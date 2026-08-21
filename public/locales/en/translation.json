@@ -59,6 +59,9 @@
       "paste": "Paste",
       "upload": "Upload"
     },
+    "inputTitle": "Paste or upload prompts",
+    "showInput": "Show input",
+    "hideInput": "Hide input",
     "pastePlaceholder": "Paste one prompt per line...",
     "pasteHelpTitle": "Supported paste formats",
     "pasteHelpDescription": "Each line becomes one prompt; blank lines are ignored. Lines starting with \"Prompt:\" (or \"- **Prompt:**\" in markdown lists) are extracted as prompts — if none match, all lines are used.",

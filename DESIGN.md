@@ -1304,6 +1304,32 @@ keeping one control per action.
   `className="hidden"`) inside the toolbar. The Import button triggers it via
   a ref.
 
+## 6.20 Formatter Input Disclosure
+
+The Formatter input card uses the controlled shadcn/Radix `Collapsible` so the
+primitive, not hand-written disclosure ARIA, owns `aria-expanded`,
+`aria-controls`, and Enter/Space activation.
+
+- **Persistent header:** keep the compact input title visible in both states.
+  The trigger shows the translated **Show input** / **Hide input** label and a
+  rotating chevron. Do not add a tooltip: the trigger already has visible text.
+- **Open-state contract:** no active batch defaults open; a restored active
+  queue defaults collapsed. A successful batch creation collapses the input,
+  while a failed or no-op creation leaves it open. A successful queue clear
+  and the EmptyState action reopen it. Manual overrides last only for the
+  current mounted session; never persist disclosure state in `localStorage` or
+  `sessionStorage`.
+- **Content lifetime:** all current form controls live in `CollapsibleContent`
+  and leave the DOM and tab order when closed. Paste text, uploaded content,
+  and CSV selection remain parent-owned so they survive close/reopen cycles.
+- **Upload invariant:** render exactly one file input only while the disclosure
+  is open in Upload mode. Keep `accept=".txt,.csv"` and the existing
+  `FileReader.readAsText` path unchanged.
+- **Motion and focus:** animate measured Radix content height and opacity over
+  200ms; suppress the animation for reduced-motion users. When code collapses
+  the content while focus remains inside it, restore focus to the persistent
+  trigger without stealing focus from controls elsewhere on the page.
+
 ---
 
 ## 7. Layout & Spacing
@@ -1421,3 +1447,4 @@ keeping one control per action.
 | v1.10 | Page header action toolbar (Templates: Import/Export/Reset/Create) made responsive: toolbar is a deterministic 2×2 grid below `sm` (`grid grid-cols-2 gap-2`) and a wrapping flex row at `sm+` (`sm:flex sm:flex-wrap`); the `PageHeader` action wrapper may shrink (`min-w-0 max-w-full`, was `shrink-0`) — the 4-button row can no longer stay one line and break the viewport edge; new §6.19 documents the pattern |
 | v1.11 | History folder nav moved out of the page-level sidebar/drawer into a toolbar row: `FolderSwitcher` (Combobox with footer-action pattern + per-option count badges) + `FolderChips` (rounded-full pills, kebab menu, count badges via `getHistoryCounts()`); `FolderSidebar.tsx` and the drawer (backdrop, `top-(--height-header)` offset) removed; History page is now a plain column in `<main>` (no `md:-m-6` compensation, no `calc(100dvh - …)` shell); combobox gained optional `badge` + `footer` props; folder creation capped at `MAX_FOLDERS = 10` (`FolderLimitError` + warning toast); scrollbar fix: dropdown-menu scroll-lock restore extended from Select to `DropdownMenu` (§6.11 `:has` rule) + `.chips-scrollbar` (styled thin nested scrollbar so it no longer hides while the kebab menu is open) |
 | v1.12 | Page header action toolbar now uses progressive icon collapse (§6.19): all actions are icon-only below `sm`, then Create, Import, Export, and Reset Default reveal labels at `sm`, `md`, `lg`, and `xl`; one wrapping flex toolbar and one accessible, tooltip-backed Button per action replace the historical base 2×2 grid |
+| v1.13 | Added Formatter input disclosure contract (§6.20): controlled Radix semantics, queue-aware open defaults and transitions, parent-owned input persistence, single upload input, measured-height motion, and programmatic-collapse focus restoration |

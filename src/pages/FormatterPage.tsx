@@ -72,6 +72,7 @@ export default function FormatterPage() {
   const [showReplace, setShowReplace] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [showClearQueue, setShowClearQueue] = useState(false)
+  const [inputOpenOverride, setInputOpenOverride] = useState<boolean | null>(null)
   const [pendingPrompts, setPendingPrompts] = useState<{
     prompts: string[]
     aspectRatios: (string | null)[] | null
@@ -149,6 +150,7 @@ export default function FormatterPage() {
   }
 
   const hasBatch = batch !== null
+  const inputOpen = inputOpenOverride ?? !hasBatch
   const copiedCount = items.filter((i) => i.status === 'copied').length
 
   const processSummary = useMemo(() => {
@@ -200,6 +202,7 @@ export default function FormatterPage() {
 
     try {
       await createFormatterBatch(prompts, sourceType, fileName, aspectRatios ?? undefined)
+      setInputOpenOverride(false)
       showToast('success', t('formatter.batchCreated'))
     } catch (error) {
       showToast('error', t('formatter.batchError'), String(error))
@@ -318,8 +321,14 @@ export default function FormatterPage() {
 
   const handleClearQueue = async () => {
     await clearQueue()
+    setInputOpenOverride(null)
     setShowClearQueue(false)
     showToast('success', t('toast.queueCleared'))
+  }
+
+  const handleStartFormatting = () => {
+    setInputMode('paste')
+    setInputOpenOverride(true)
   }
 
   const handleResetConfirm = () => {
@@ -355,7 +364,7 @@ export default function FormatterPage() {
               <Button
                 variant="default"
                 className="btn-press gap-2"
-                onClick={() => setInputMode('paste')}
+                onClick={handleStartFormatting}
               >
                 <Sparkles className="h-4 w-4" />
                 {t('formatter.emptyAction')}
@@ -367,11 +376,13 @@ export default function FormatterPage() {
 
       {!isLoading && (
         <InputSection
+          open={inputOpen}
           inputMode={inputMode}
           pasteText={pasteText}
           uploadedFileName={uploadedFileName}
           csvPreview={csvPreview}
           selectedCsvColumn={selectedCsvColumn}
+          onOpenChange={setInputOpenOverride}
           onInputModeChange={setInputMode}
           onPasteTextChange={setPasteText}
           onClear={() => setPasteText('')}

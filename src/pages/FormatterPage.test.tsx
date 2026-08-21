@@ -12,6 +12,7 @@ vi.mock('@/services/formatter/formatterService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/formatter/formatterService')>()
   return {
     ...actual,
+    createFormatterBatch: vi.fn(actual.createFormatterBatch),
     markCopiedAndAdvance: vi.fn(actual.markCopiedAndAdvance),
   }
 })
@@ -420,6 +421,7 @@ describe('FormatterPage queue filters and Next navigation', () => {
     const user = userEvent.setup()
 
     await waitFor(() => expect(screen.getByText('Prompt #1')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Show input' }))
 
     await user.click(screen.getByRole('button', { name: 'Supported paste formats' }))
 
@@ -468,6 +470,13 @@ describe('FormatterPage section format paste', () => {
       expect(batch!.items[1].promptText).toBe('A squirrel prompt body.')
       expect(batch!.items[1].detectedAspectRatio).toBeNull()
     })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Show input' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      )
+    })
+    expect(screen.queryByPlaceholderText('Paste one prompt per line...')).not.toBeInTheDocument()
   })
 
   it('falls back to plain line parsing when a prompt header has no closing dashes', async () => {
@@ -483,5 +492,98 @@ describe('FormatterPage section format paste', () => {
       expect(batch).not.toBeNull()
       expect(batch!.items.map((item) => item.promptText)).toEqual(['--- prompt 1', 'plain line two'])
     })
+  })
+})
+
+describe('FormatterPage input section lifecycle', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+  })
+
+  it('starts expanded without a batch and can restore Paste through the empty-state action', async () => {
+    renderPage()
+    const user = userEvent.setup()
+
+    const initialTrigger = await screen.findByRole('button', { name: 'Hide input' })
+    expect(initialTrigger).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Upload' }))
+    expect(screen.getByText('Choose a file')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Hide input' }))
+    await waitFor(() => expect(screen.queryByText('Choose a file')).not.toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: 'Start formatting' }))
+
+    expect(screen.getByRole('button', { name: 'Hide input' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Supported paste formats' })).toBeInTheDocument()
+  })
+
+  it('restores an active batch collapsed and allows the user to reopen it', async () => {
+    await createFormatterBatch(['restored prompt'], 'paste')
+    renderPage()
+    const user = userEvent.setup()
+
+    await waitFor(() => expect(screen.getByText('Prompt #1')).toBeInTheDocument())
+    const trigger = screen.getByRole('button', { name: 'Show input' })
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByPlaceholderText('Paste one prompt per line...')).not.toBeInTheDocument()
+
+    await user.click(trigger)
+
+    expect(screen.getByRole('button', { name: 'Hide input' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toBeInTheDocument()
+  })
+
+  it('keeps the form open and retains input when batch creation fails', async () => {
+    vi.mocked(createFormatterBatch).mockRejectedValueOnce(new Error('database unavailable'))
+    renderPage()
+    const user = userEvent.setup()
+
+    const textarea = await screen.findByPlaceholderText('Paste one prompt per line...')
+    await user.type(textarea, 'keep this prompt')
+    await user.click(screen.getByRole('button', { name: 'Process' }))
+
+    await waitFor(() => expect(screen.getByText('Failed to create batch')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Hide input' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toHaveValue(
+      'keep this prompt',
+    )
+  })
+
+  it('reopens the no-batch form after Clear queue is confirmed', async () => {
+    await createFormatterBatch(['queued prompt'], 'paste')
+    renderPage()
+    const user = userEvent.setup()
+
+    await waitFor(() => expect(screen.getByText('Prompt #1')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Show input' }))
+    await user.click(screen.getByRole('button', { name: 'Hide input' }))
+    expect(screen.getByRole('button', { name: 'Show input' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Clear' }))
+    await user.click(await screen.findByRole('button', { name: 'Clear queue' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('No batch loaded')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Hide input' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      )
+    })
+    expect(screen.getByPlaceholderText('Paste one prompt per line...')).toBeInTheDocument()
   })
 })

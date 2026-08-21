@@ -59,6 +59,9 @@
       "paste": "Tempel",
       "upload": "Unggah"
     },
+    "inputTitle": "Tempel atau unggah prompt",
+    "showInput": "Tampilkan input",
+    "hideInput": "Sembunyikan input",
     "pastePlaceholder": "Tempelkan satu prompt per baris...",
     "pasteHelpTitle": "Format tempel yang didukung",
     "pasteHelpDescription": "Setiap baris menjadi satu prompt; baris kosong diabaikan. Baris yang diawali \"Prompt:\" (atau \"- **Prompt:**\" pada daftar markdown) diekstrak sebagai prompt — jika tidak ada yang cocok, semua baris dipakai.",
