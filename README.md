@@ -1,164 +1,141 @@
 <div align="center">
-  <img src="docs/assets/header-banner.png" alt="PromptForge Banner" width="100%" />
-  <h1>PromptForge</h1>
-  <p><strong>A high-performance, IDE-inspired design language and application for AI Prompt Engineering.</strong></p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./public/assets/logos/promptforge-logo-horizontal-dark.svg">
+    <img src="./public/assets/logos/promptforge-logo-horizontal-light.svg" alt="PromptForge prompt engineering workspace" width="420">
+  </picture>
+
+  <p><strong>A browser-first, client-side prompt engineering workspace for producing varied, stock-ready image prompts.</strong></p>
+
+  <p>
+    <a href="https://promptforge.pyforgedev.web.id/"><strong>Live App</strong></a> ·
+    <a href="#quick-start">Quick Start</a> ·
+    <a href="./docs/supported-format-paste.md">Paste Formats</a> ·
+    <a href="./CONTRIBUTING.md">Contributing</a>
+  </p>
+
+  <p>
+    <a href="https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml"><img src="https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status"></a>
+    <a href="https://promptforge.pyforgedev.web.id/"><img src="https://img.shields.io/badge/Deployed_on-Vercel-000000?logo=vercel&amp;logoColor=white" alt="Deployed on Vercel"></a>
+    <a href="https://github.com/pyforgedev/promptforge/releases/latest"><img src="https://img.shields.io/github/v/release/pyforgedev/promptforge?display_name=tag" alt="Latest release"></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
+  </p>
 </div>
 
-PromptForge is a professional-grade prompt engineering tool designed to generate high-quality stock-image prompts with minimum repetition and high variation. It blends the cinematic restraint of professional creative tools with the ultra-fast, precision-driven feel of modern developer environments.
+PromptForge helps creators compose, evaluate, organize, and export image prompts without requiring a PromptForge account or application backend. Connect your own AI provider when generating content; the rest of the workspace runs locally in the browser.
 
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-[![CI](https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pyforgedev/promptforge/actions/workflows/ci.yml)
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://promptforge.pyforgedev.web.id/)
+## Highlights
 
-## Features
+- **Stock-focused generator:** Control niche, style, aspect ratio, negative prompts, keywords, target platform, and batches of 1–10 variants.
+- **Platform-ready variants:** Produce prompts for DALL-E 3 / GPT Image 2, Nano Banana Pro / Nano Banana 2, or both.
+- **Quality and originality checks:** Score commercial potential, creativity, clarity, marketability, and uniqueness, then compare against history for likely duplicates.
+- **Reactive templates:** Create, edit, search, filter, import, export, and reuse a local template library with validated metadata and built-in reset behavior.
+- **Bounded, filterable history:** Search and sort saved generations; filter by folder, aspect ratio, art style, score, or date; import or export TXT records.
+- **Batch formatter:** Process pasted text or CSV uploads through a managed queue, then download TXT, CSV, or JSON. See [supported paste formats](./docs/supported-format-paste.md).
+- **Personalized interface:** Choose light, dark, or system theme and work in English or Indonesian.
+- **Local-first data:** Store workspace data in IndexedDB and encrypt sensitive settings at rest.
 
-- **Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (numeric input, 1–10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, stock keywords toggling, Adobe Stock scoring, and prompt breakdown (per-segment source badges showing User/AI attribution).
-- **Prompt Quality Rating:** Scores prompts on Commercial Potential, Creativity, Clarity, Marketability, and Uniqueness.
-- **Duplicate Detection:** Similarity analysis against prompt history to prevent repetitive generations.
-- **Templates:** A reactive local template library with create, edit, delete, search, canonical category filtering (including the Templates-only `general` category), and stable built-in seed/reset behavior. Generator and History results can be saved with validated, allowlisted metadata; the Generator can load saved settings or use template text as a session-only reference. TXT import is size/record bounded and schema-validated, while TXT export remains text-only (name, category, tags, and content).
-- **History:** Local IndexedDB cache with bounded AND-prefix search; folder, aspect-ratio, art-style, minimum-score (0–100), and inclusive local-date filters; newest, oldest, or highest-rating sorting; and TXT export/import.
-- **Theme:** Strict Light/Dark/System theme support via next-themes, utilizing a semantic color system and glassmorphism.
-- **Internationalization (i18n):** Full support for English (en) and Bahasa Indonesia (id).
-- **Toast Notifications:** Standardized user feedback using sonner for all data-modifying actions.
-- **Formatter:** Batch-format prompts from paste input or CSV upload, with queue management and download in TXT/CSV/JSON. See [Supported Paste Formats](./docs/supported-format-paste.md) for accepted input formats.
+## How it works
+
+1. Configure OpenAI, Google Gemini, OpenRouter, or a custom HTTPS-compatible endpoint in Settings.
+2. Generate prompt variants and review their platform formatting, quality scores, and similarity results.
+3. Save useful results, organize history, and turn successful prompts into reusable templates.
+4. Export individual collections or format batches for downstream stock workflows.
 
 ## Quick Start
 
-> [!NOTE]
-> Ensure you have [Node.js](https://nodejs.org/) >= 24 installed before proceeding.
-
-### 1. Clone the repository
+**Prerequisite:** [Node.js](https://nodejs.org/) 24 or newer.
 
 ```bash
 git clone https://github.com/pyforgedev/promptforge.git
 cd promptforge
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
-```
-
-### 3. Start the development server
-
-```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`.
+Open `http://localhost:5173`. A PromptForge account or separate backend is not required.
 
 ## Architecture and Tech Stack
 
-PromptForge uses a modular, feature-based architecture structured into dedicated layers to enforce separation of concerns, scalability, and maintainability.
+PromptForge is a client-side React application organized by feature. IndexedDB provides durable browser storage, while provider requests are the only normal path for prompt data to leave the browser.
 
-### Architecture Layers
+### Layers
 
-- **Feature-Based Modules (`src/features/`):** Self-contained domains encapsulating components, hooks, schemas, state slices, and assets relevant to specific features. Prompt Templates live in `src/features/templates/` with their components, hooks, service facade, types, validators/mappers, and built-in default definition.
-- **Services Layer (`src/services/`):** External integrations and core application business logic, including AI API clients, a per-domain IndexedDB storage layer (Dexie) behind a barrel re-export, export utilities, and text similarity algorithms.
-- **State Management (`src/store/`):** Zustand-powered stores managing global application state, including AI configuration, generator preferences, and historical logs.
-- **Routing Layer (`src/app/`):** React Router DOM v7 utilizing `createBrowserRouter` for declarative, lazy-loaded routing, error boundaries, and nested layout structures.
+- **Application (`src/app/`, `src/pages/`):** Routing, lazy-loaded pages, providers, layouts, and error boundaries.
+- **Features (`src/features/`):** Generator, formatter, history, settings, and templates, including their UI and domain logic.
+- **Services (`src/services/`):** AI clients, Dexie storage, exports, formatting, and similarity analysis.
+- **Shared foundation (`src/components/`, `src/hooks/`, `src/lib/`, `src/store/`):** Reusable UI, cross-feature utilities, hooks, and Zustand state.
 
-### Core Technologies
+### Core stack
 
-- **Framework:** React 19 + TypeScript + Vite 8
-- **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + React Bits (animated components) + Framer Motion 12
-- **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
-- **State Management:** Zustand 5
-- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — schema v12 keeps the v11 Prompt History indexes and filtering snapshots, and upgrades templates with `nameKey`, `updatedAt`, `builtinKey`, and `[updatedAt+id]`. The physical template object store remains named `prompts` for compatibility. Migrations are atomic and forward-only, with no automatic reset; template views react to IndexedDB changes through `useLiveQuery`. Prompt History pagination uses filter-bound cursor v2 with adaptive 200-row scan chunks and a 2,000-candidate ceiling per request. A dedicated `cryptoKeys` table persists the non-extractable AES-GCM master key, while sensitive `settings` values (e.g. `active_ai_config`, `ai_config_presets`) remain encrypted at rest.
-- **Form & Validation:** React Hook Form + Zod 4
-- **Routing:** React Router DOM v7
-- **Internationalization:** i18next 26 + `react-i18next` + `i18next-browser-languagedetector`
-- **HTTP Client:** Axios
-- **Analytics:** `@vercel/analytics`
+| Area | Technology |
+| --- | --- |
+| Application | React 19, TypeScript 6, Vite 8 |
+| Styling and UI | Tailwind CSS 4, Radix UI, shadcn/ui, Framer Motion |
+| State and storage | Zustand 5, Dexie 4, IndexedDB |
+| Routing and validation | React Router 7, React Hook Form, Zod 4 |
+| Internationalization | i18next, react-i18next |
+| Testing | Vitest 4, Testing Library, fake-indexeddb |
 
-## Project Structure
+### Project map
 
-```
+```text
 src/
-├── main.tsx                          # Entry point
-├── App.tsx                           # Root component (router, toaster, analytics)
-├── index.css                         # Tailwind entry
-├── theme.config.ts                   # Theme configuration
-├── app/
-│   ├── pages.tsx                     # Lazy-loaded page imports (uniform *Page naming)
-│   ├── routePaths.ts                 # Centralized route path constants (ROUTES)
-│   ├── router.ts                     # Router creation
-│   ├── routes.tsx                    # Route definitions
-│   └── providers/                    # App providers
-├── components/
-│   ├── animations/                   # React Bits animated components (AnimatedContent, Aurora, Aurora.test, CountUp, FadeContent, FadeContent.test, Noise, RotatingText, ShinyText, SplitText, SpotlightCard, TextType)
-│   ├── common/                       # AppLogo, EmptyState, LazyFallback, LoadingSpinner, PageHeader
-│   ├── forms/                        # FormField
-│   ├── layout/                       # Header, Layout, Sidebar
-│   └── ui/                           # Shadcn UI primitives (button, card, dialog, select, etc.)
-├── features/
-│   ├── formatter/                    # Prompt formatting & queue (components, types)
-│   ├── history/                      # Prompt history (components, hooks, types)
-│   ├── prompt-generator/             # V2 prompt composer (components, engine, hooks, schemas, services, store, types, constants)
-│   ├── settings/                     # Settings (components, services, types)
-│   └── templates/                    # Prompt Templates domain (components, hooks, services, types, utils, built-in default)
-├── hooks/                            # Shared hooks (useAppContext, useEffectiveTheme, useFavicon, useSpotlightBorder, useToast)
-├── i18n/                             # i18next configuration
-├── lib/                              # Utilities (axiosSetup, constants, crypto, eventBus, rateLimiter, sanitizeError, utils, validation)
-├── pages/                            # Page components (HomePage, GeneratorPage, HistoryPage, TemplatesPage, SettingsPage, FormatterPage, ErrorPage, NotFoundPage)
-├── services/
-│   ├── ai/                           # AI service (API integration)
-│   ├── export/                       # Export services (history, txt)
-│   ├── formatter/                    # Formatter batch services
-│   ├── similarity/                   # Duplicate detection service
-│   └── storage/                      # Per-domain Dexie modules (db, history, folders, settings, generatorState, ideaCache, formatter, templates) + indexeddb.ts barrel
-├── store/                            # Zustand stores (AIConfig, Generator, History, MasterPrompt)
-├── test/                             # Test setup and utilities
-└── types/                            # Shared TypeScript types
+├── app/              # Router, route definitions, and providers
+├── components/       # Shared UI, layout, and animation components
+├── features/         # Product domains and feature-specific logic
+├── pages/            # Route-level page components
+├── services/         # AI, storage, export, formatter, and similarity services
+├── store/            # Shared Zustand stores
+└── test/             # Test setup and utilities
+public/
+├── assets/           # Official brand, favicon, and application assets
+└── locales/          # English and Indonesian translations
+docs/                 # Maintainer guides and focused documentation
 ```
 
 ## Routes
 
-- `/` → HomePage (landing page)
-- `/dashboard` → Redirects automatically to `/templates`
-- `/formatter` → Prompt formatter (paste/CSV input, queue, download)
-- `/generator` → V2 Prompt Generator
-- `/history` → Prompt history log
-- `/templates` → Template management page
-- `/settings` → Configuration page (AI config, theme, and locale)
-- `*` → NotFoundPage (catch-all 404 route)
+| Route | Purpose |
+| --- | --- |
+| `/` | Home workspace |
+| `/dashboard` | Redirects to `/templates` |
+| `/formatter` | Batch prompt formatter |
+| `/generator` | Prompt generator |
+| `/history` | Saved prompt history |
+| `/templates` | Template library |
+| `/settings` | Provider, theme, and locale settings |
+| `*` | Fallback 404 page |
 
-## Design System
+## Development
 
-PromptForge implements a strict design system detailed in [`DESIGN.md`](./DESIGN.md). Key highlights include:
+| Command | Use |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm run lint` | Run ESLint |
+| `npx vitest run <file-or-files>` | Run only tests that cover the current change |
+| `npm run test` | Run Vitest in watch mode |
+| `npm run preview` | Preview an existing production build |
+| `npm run test:run` | Run the full suite; reserve for CI, releases, or explicit requests |
+| `npm run build` | Type-check and build; reserve for CI, releases, or explicit approval |
 
-- **Component Priority:** components are selected in strict order — shadcn/ui first for all interactive patterns (Radix primitives with built-in ARIA and keyboard support), then React Bits (TS + Tailwind variants via the `@react-bits` registry in `components.json`, e.g. `npx shadcn@latest add @react-bits/<Name>-TS-TW`) for animation-forward components shadcn doesn't ship (text entrances, spotlight cards, backgrounds), then Framer Motion for custom motion primitives (skeleton shimmer, layout animations), and custom Tailwind/CSS only as the last resort when none of the three fit or deep customization is needed (e.g. scrollbar styling, keyframe utilities).
-- **Semantic Colors:** Strict adherence to semantic variables (`bg-surface`, `text-primary`) rather than hardcoded hex values.
-- **Glassmorphism:** Mandatory for all floating elements (overlays, dropdowns, modals) to maintain spatial hierarchy.
-- **Typography:** Developer-centric typography utilizing `Geist` for UI elements and a monospace font (`JetBrains Mono` or `Geist Mono`) for outputs, prompts, and scores to convey precision.
-- **Streaming UI:** Instantaneous feel with text streaming interfaces and skeleton loaders for pending data.
+Routine verification should use lint and scoped test files rather than the full suite or a production build. Maintainers should follow the [release runbook](./docs/RELEASE.md); releases and production deployments use its documented release-it workflow rather than manual steps.
 
-## Available Scripts
+## Design and Brand Assets
 
-- `npm run dev`: Starts the development server with Vite.
-- `npm run build`: Performs TypeScript validation and creates a production build.
-- `npm run lint`: Performs lint checks via ESLint.
-- `npm run preview`: Previews the local production build.
-- `npm run test`: Runs the Vitest test suite in watch mode.
-- `npm run test:run`: Runs the full Vitest test suite once (slow, ~2 minutes); reserved for CI or explicit requests.
-- `npx vitest run <file-or-files>`: Runs only the tests covering the current change — the default way to verify changes.
+Implementation guidance for components, semantic colors, typography, motion, accessibility, and themed surfaces lives in [`DESIGN.md`](./DESIGN.md).
 
-> [!TIP]
-> The testing setup utilizes Vitest 4, `@testing-library/react`, `@testing-library/jest-dom`, and `fake-indexeddb` to execute tests under a simulated IndexedDB environment.
-> Routine local verification uses scoped tests; CI runs the full suite.
+Official marks, logos, favicons, and app icons live in [`public/assets`](./public/assets/README.txt). Use the provided light and dark variants that match the surface; do not recolor or redraw the artwork.
 
 ## Security
 
-PromptForge is a **client-side only** application — no data leaves your browser except explicit AI provider requests you initiate. Sensitive settings (including your configured API key) are encrypted at rest with AES-GCM 256 in IndexedDB; the master key is a non-extractable `CryptoKey` persisted in the same database. This is *encrypted-at-rest, not zero-leak*. See [`SECURITY.md`](./SECURITY.md) for the full threat model, and the *"Don't remember API key between sessions"* setting for a true zero-leak mode in which the API key is kept only in memory.
+PromptForge is client-side only: data leaves the browser only for AI provider requests that you initiate. Sensitive settings, including configured API keys, are encrypted at rest with AES-GCM 256 in IndexedDB using a non-extractable Web Crypto key stored in the same database. This is encrypted-at-rest, not a zero-leak vault. The **Don't remember API key between sessions** option keeps the API key in memory only.
+
+Read [`SECURITY.md`](./SECURITY.md) for the threat model, endpoint policy, security guidance, and private vulnerability reporting process.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for community standards, and [SECURITY.md](./SECURITY.md) for reporting vulnerabilities.
+Contributions are welcome. Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) before opening a change and follow the [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md). Report vulnerabilities through the private process in [`SECURITY.md`](./SECURITY.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+PromptForge is available under the [MIT License](./LICENSE).
