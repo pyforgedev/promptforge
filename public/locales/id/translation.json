@@ -137,19 +137,6 @@
     "resizeSidebar": "Ubah lebar sidebar",
     "resizeSidebarHint": "Seret untuk mengubah lebar — klik dua kali untuk reset"
   },
-  "prompts": {
-    "name": "Nama",
-    "content": "Konten",
-    "category": "Kategori",
-    "tags": "Tag",
-    "emptyTitle": "Belum ada prompt",
-    "emptyDescription": "Buat prompt pertama Anda untuk memulai",
-    "createTitle": "Buat Prompt",
-    "editTitle": "Edit Prompt",
-    "deleteTitle": "Hapus Prompt",
-    "deleteConfirmation": "Apakah Anda yakin ingin menghapus prompt ini? Tindakan ini tidak dapat dibatalkan.",
-    "duplicateError": "Prompt dengan nama ini sudah ada"
-  },
   "settings": {
     "pageDescription": "Kelola preferensi aplikasi dan konfigurasi AI",
     "preferences": "Preferensi",
@@ -186,6 +173,7 @@
     "masterPromptPlaceholder": "Master prompt bawaan akan muncul di sini...",
     "masterPromptSaved": "Master prompt disimpan",
     "masterPromptReset": "Master prompt berhasil direset ke bawaan",
+    "resetDefault": "Reset ke Bawaan",
     "configRecoverBanner": "Konfigurasi API tersimpan tidak dapat dipulihkan. Konfigurasi tersebut dienkripsi dengan kunci sesi sebelumnya yang sudah tidak ada. Masukkan ulang untuk melanjutkan.",
     "clearAndReenter": "Bersihkan & masukkan ulang",
     "sessionOnlyKey": "Jangan ingat kunci API antar sesi",
@@ -237,6 +225,7 @@
   "history": {
     "pageTitle": "Riwayat Prompt",
     "pageDescription": "Lihat dan kelola prompt yang telah dihasilkan",
+    "saveAsTemplate": "Simpan sebagai Template",
     "searchPlaceholder": "Cari prompt...",
     "searchEverywherePlaceholder": "Cari di semua tempat...",
     "searchInFolderPlaceholder": "Cari di folder ini...",
@@ -337,7 +326,9 @@
     "pageDescription": "Buat, edit, dan kelola template prompt Anda",
     "create": "Buat Template",
     "createTitle": "Template Baru",
+    "createDescription": "Tentukan konten prompt yang dapat digunakan ulang dan cara pengelompokannya.",
     "editTitle": "Edit Template",
+    "editDescription": "Perbarui kolom yang dapat digunakan ulang tanpa menghapus metadata generator tersimpan.",
     "deleteTitle": "Hapus Template",
     "deleteConfirmation": "Apakah Anda yakin ingin menghapus template ini? Tindakan ini tidak dapat dibatalkan.",
     "import": "Impor",
@@ -345,9 +336,78 @@
     "resetDefault": "Reset Default",
     "useAsReference": "Gunakan sebagai Referensi di Generator",
     "referenceToast": "Template dimuat sebagai referensi",
+    "referenceTruncatedToast": "Template dimuat sebagai referensi; konten dibatasi hingga 2.000 karakter",
     "searchPlaceholder": "Cari template berdasarkan nama atau konten...",
     "noResultsTitle": "Tidak ada template yang sesuai dengan pencarian Anda",
-    "noResultsDescription": "Coba sesuaikan pencarian atau filter Anda."
+    "noResultsDescription": "Coba sesuaikan pencarian atau filter Anda.",
+    "clearFilters": "Bersihkan filter",
+    "fullMetadataBadge": "Pengaturan generator disertakan",
+    "textOnlyBadge": "Teks saja",
+    "fields": {
+      "name": "Nama",
+      "content": "Konten",
+      "category": "Kategori",
+      "tags": "Tag",
+      "tagsPlaceholder": "stok, komersial, potret"
+    },
+    "categories": {
+      "general": "Umum",
+      "technology": "Teknologi",
+      "business": "Bisnis",
+      "nature": "Alam",
+      "lifestyle": "Gaya Hidup",
+      "healthcare": "Kesehatan",
+      "food": "Makanan",
+      "travel": "Perjalanan",
+      "education": "Pendidikan",
+      "abstract": "Abstrak",
+      "people": "Orang",
+      "architecture": "Arsitektur",
+      "other": "Lainnya",
+      "legacyOption": "{{category}} (warisan)"
+    },
+    "empty": {
+      "title": "Belum ada template",
+      "description": "Buat template yang dapat digunakan ulang atau simpan dari generator.",
+      "createAction": "Buat Template"
+    },
+    "validation": {
+      "nameRequired": "Nama wajib diisi",
+      "nameTooLong": "Nama maksimal 100 karakter",
+      "contentRequired": "Konten wajib diisi",
+      "contentTooLong": "Konten maksimal 10.000 karakter",
+      "categoryRequired": "Kategori wajib dipilih",
+      "tagTooLong": "Setiap tag maksimal 50 karakter",
+      "tooManyTags": "Gunakan maksimal 10 tag",
+      "invalidCharacters": "Karakter kontrol tidak diizinkan"
+    },
+    "errors": {
+      "loadFailed": "Gagal memuat template",
+      "duplicateName": "Template dengan nama ini sudah ada",
+      "notFound": "Template ini sudah tidak tersedia",
+      "invalidData": "Beberapa kolom template tidak valid",
+      "builtinConflict": "Template bawaan berkonflik dengan data yang ada",
+      "importLimit": "File impor terlalu besar atau berisi terlalu banyak template",
+      "importParseFailed": "File template tidak dapat diproses",
+      "storageFailed": "Gagal menyimpan data template",
+      "exportFailed": "Gagal mengekspor template",
+      "historySourceFailed": "Gagal memuat item riwayat ini untuk template"
+    },
+    "save": {
+      "dialogTitle": "Simpan Prompt sebagai Template",
+      "description": "Tinjau nama, kategori, tag, dan konten prompt yang dapat digunakan ulang sebelum menyimpan."
+    },
+    "toast": {
+      "created": "Template dibuat",
+      "updated": "Template diperbarui",
+      "deleted": "Template dihapus",
+      "defaultReset": "Template bawaan dipulihkan",
+      "importSummary": "Berhasil mengimpor {{imported}} template; melewati {{duplicates}} duplikat dan {{invalid}} data tidak valid",
+      "exported": "Template diekspor",
+      "exportedWithLegacyCategory": "Template diekspor; {{count}} kategori warisan akan diimpor sebagai Lainnya",
+      "savedFromGenerator": "Prompt disimpan sebagai template",
+      "savedFromHistory": "Prompt riwayat disimpan sebagai template"
+    }
   },
   "generator": {
     "pageTitle_v2": "Prompt Engine v2",
@@ -478,6 +538,17 @@
         "label": "Prompt Dasar / Referensi (opsional)",
         "description": "Berikan prompt yang ada sebagai inspirasi kreatif. AI akan menghasilkan prompt baru dan bervariasi yang berakar pada referensi ini tanpa menyalinnya.",
         "placeholder": "Tempel atau pilih template sebagai referensi..."
+      },
+      "templates": {
+        "label": "Template Prompt",
+        "placeholder": "Pilih template tersimpan",
+        "loadSettings": "Muat pengaturan",
+        "useAsReference": "Gunakan sebagai referensi",
+        "loadedSettings": "Pengaturan template dimuat",
+        "activeReference": "Referensi: {{name}}",
+        "activeSettings": "Pengaturan dimuat dari: {{name}}",
+        "clearReference": "Hapus template aktif",
+        "loadFailed": "Template tidak dapat dimuat"
       },
       "category": {
         "label": "Kategori",
@@ -645,8 +716,6 @@
     "copied": "Disalin",
     "copySegment": "Salin {{segment}}",
     "saveAsTemplate": "Simpan sebagai Template",
-    "saveAsTemplateTitle": "Simpan Prompt sebagai Template",
-    "savedAsTemplate": "Prompt disimpan sebagai template",
     "duplicateWarning": "Kemiripan tinggi dengan prompt sebelumnya terdeteksi",
     "keepAnyway": "Tetap gunakan"
   },
@@ -694,12 +763,6 @@
       "saveActiveConfigFailed": "Gagal menyimpan konfigurasi aktif",
       "savePresetFailed": "Gagal menyimpan prasetel",
       "deletePresetFailed": "Gagal menghapus prasetel"
-    },
-    "prompts": {
-      "loadFailed": "Gagal memuat prompt",
-      "createFailed": "Gagal membuat prompt",
-      "updateFailed": "Gagal memperbarui prompt",
-      "deleteFailed": "Gagal menghapus prompt"
     }
   }
 }

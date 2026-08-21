@@ -1,8 +1,9 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import Dexie from 'dexie'
-import { migrateLegacyPromptRow, upgradePromptHistoryToV10, upgradePromptHistoryToV11 } from './db'
+import { migrateLegacyPromptRow, upgradePromptHistoryToV10, upgradePromptHistoryToV11, upgradeTemplatesToV12 } from './db'
 import type { PromptHistoryV10, PromptBatchRecord } from './history'
 import { SENTINEL_UNKNOWN } from './historySearch'
+import { defaultTemplate, DEFAULT_TEMPLATE_KEY, DEFAULT_TEMPLATE_SEED_SETTING } from '@/features/templates/defaultTemplate'
 
 /**
  * Integration test for the REAL Dexie v9→v10 upgrade path:
@@ -20,6 +21,7 @@ import { SENTINEL_UNKNOWN } from './historySearch'
  */
 const FIXTURE_DB = 'promptforge-migration-fixture'
 const V11_FIXTURE_DB = 'promptforge-v10-v11-migration-fixture'
+const V12_FIXTURE_DB = 'promptforge-v11-v12-migration-fixture'
 
 const V9_STORES = {
   prompt_history: 'id, batchId, createdAt, isFavorite, adobeScore.total, *commercialKeywords, legacy, category, folderId',
@@ -51,6 +53,11 @@ const V10_STORES = {
 const V11_STORES = {
   ...V10_STORES,
   prompt_history: 'id, batchId, createdAt, folderId, folderKey, categoryKey, [createdAt+id], [folderKey+createdAt+id], [categoryKey+createdAt+id], [adobeScore.total+createdAt+id], [folderKey+adobeScore.total+createdAt+id]',
+}
+
+const V12_STORES = {
+  ...V11_STORES,
+  prompts: 'id, name, nameKey, category, createdAt, updatedAt, builtinKey, [updatedAt+id]',
 }
 
 interface V9HistoryRow {
@@ -135,6 +142,7 @@ function makeV9Batch(batchId: string, niche: string, category: string): PromptBa
 
 let migrator: Dexie
 let v11Migrator: Dexie
+let v12Migrator: Dexie
 
 beforeAll(async () => {
   // Phase 1 — create the database at v9 and seed legacy fixtures.
@@ -198,14 +206,38 @@ beforeAll(async () => {
   v11Migrator.version(10).stores(V10_STORES)
   v11Migrator.version(11).stores(V11_STORES).upgrade(upgradePromptHistoryToV11)
   await v11Migrator.open()
+
+  const v11 = new Dexie(V12_FIXTURE_DB)
+  v11.version(11).stores(V11_STORES)
+  await v11.open()
+  await v11.table('prompts').bulkAdd([
+    {
+      id: 'template-preserved', name: 'Preserved', content: 'core content', category: 'travel',
+      tags: ['one', 'two'], createdAt: 100, source: 'manual', negativePrompt: 'no blur',
+    },
+    { id: 'duplicate-a', name: ' Duplicate ', content: 'first', category: 'general', tags: [], createdAt: 200 },
+    { id: 'duplicate-b', name: 'duplicate', content: 'second', category: 'general', tags: [], createdAt: 300 },
+    {
+      id: 'default-fingerprint', name: defaultTemplate.name, content: defaultTemplate.content,
+      category: defaultTemplate.category, tags: defaultTemplate.tags, createdAt: 400,
+    },
+  ])
+  await v11.close()
+
+  v12Migrator = new Dexie(V12_FIXTURE_DB)
+  v12Migrator.version(11).stores(V11_STORES)
+  v12Migrator.version(12).stores(V12_STORES).upgrade(upgradeTemplatesToV12)
+  await v12Migrator.open()
 })
 
 afterAll(async () => {
   migrator?.close()
   v11Migrator?.close()
-  // Delete only the two throwaway fixture databases owned by this test file.
+  v12Migrator?.close()
+  // Delete only the three throwaway fixture databases owned by this test file.
   await Dexie.delete(FIXTURE_DB)
   await Dexie.delete(V11_FIXTURE_DB)
+  await Dexie.delete(V12_FIXTURE_DB)
 })
 
 describe('v9 → v10 database upgrade (real Dexie transaction)', () => {
@@ -311,6 +343,53 @@ describe('v10 → v11 database upgrade (real Dexie transaction)', () => {
     const texts = await v11Migrator.table('prompt_texts').orderBy('[promptId+platform]').toArray()
     expect(texts).toHaveLength(8)
     expect(texts.find((row) => row.promptId === 'user-mode' && row.platform === 'dalle3')?.content).toBe('dalle-user-mode')
+  })
+})
+
+describe('v11 → v12 template upgrade (real Dexie transaction)', () => {
+  it('preserves row identities and core content while backfilling normalized fields', async () => {
+    const rows = await v12Migrator.table('prompts').toArray()
+    expect(rows).toHaveLength(4)
+    expect(rows.map((row) => row.id).sort()).toEqual([
+      'default-fingerprint', 'duplicate-a', 'duplicate-b', 'template-preserved',
+    ])
+
+    const preserved = await v12Migrator.table('prompts').get('template-preserved')
+    expect(preserved).toMatchObject({
+      id: 'template-preserved',
+      name: 'Preserved',
+      nameKey: 'preserved',
+      content: 'core content',
+      category: 'travel',
+      tags: ['one', 'two'],
+      createdAt: 100,
+      updatedAt: 100,
+      source: 'manual',
+      negativePrompt: 'no blur',
+    })
+  })
+
+  it('marks every normalized legacy duplicate without merging either row', async () => {
+    const duplicates = await v12Migrator.table('prompts').bulkGet(['duplicate-a', 'duplicate-b'])
+    expect(duplicates).toHaveLength(2)
+    for (const row of duplicates) {
+      expect(row).toMatchObject({ nameKey: 'duplicate', legacyNameCollision: true, source: 'legacy' })
+    }
+    expect(duplicates.map((row) => row?.content)).toEqual(['first', 'second'])
+  })
+
+  it('recognizes the single exact default fingerprint as the builtin template', async () => {
+    expect(await v12Migrator.table('prompts').get('default-fingerprint')).toMatchObject({
+      builtinKey: DEFAULT_TEMPLATE_KEY,
+      source: 'builtin',
+    })
+  })
+
+  it('records that pre-v12 users have completed default-template seeding', async () => {
+    expect(await v12Migrator.table('settings').get(DEFAULT_TEMPLATE_SEED_SETTING)).toMatchObject({
+      key: DEFAULT_TEMPLATE_SEED_SETTING,
+      value: { status: 'pre-v12-complete', updatedAt: expect.any(Number) },
+    })
   })
 })
 

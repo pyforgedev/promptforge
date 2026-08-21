@@ -3,23 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Download, Upload, RotateCcw, Search } from 'lucide-react'
 import { toast } from 'sonner'
-import { usePrompts } from '@/features/prompts/hooks/usePrompts'
+import { useTemplates } from '@/features/templates/hooks/useTemplates'
 import { downloadFile } from '@/lib/download'
 import { ROUTES } from '@/app/routePaths'
-import { PromptList } from '@/features/prompts/components/PromptList'
-import { PromptForm } from '@/features/prompts/components/PromptForm'
+import { TemplateList } from '@/features/templates/components/TemplateList'
+import { TemplateForm } from '@/features/templates/components/TemplateForm'
 import { PageHeader } from '@/components/common/PageHeader'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
+import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { CardSkeleton, Skeleton } from '@/components/ui/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
 import {
   Dialog,
@@ -38,112 +32,169 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import type { Prompt } from '@/types'
-import type { PromptFormData } from '@/features/prompts/utils/promptValidators'
-import type { NicheCategory } from '@/features/prompt-generator/types'
-import { exportPromptsToTxt, parsePromptsFromTxt } from '@/services/export/txtExport'
-import { defaultTemplate, getDefaultTemplateContent } from '@/features/templates/defaultTemplate'
+import type { PromptTemplate, TemplateCategory } from '@/features/templates/types'
+import { TEMPLATE_CATEGORIES } from '@/features/templates/types'
+import type { TemplateFormData } from '@/features/templates/utils/templateValidators'
+import { exportTemplatesToTxt, parseTemplatesFromTxt } from '@/services/export/txtExport'
+import { TemplateError } from '@/features/templates/services/templateService'
 
 export default function TemplatesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { prompts, loading, error, create, update, remove, refresh } = usePrompts()
-  const storeSetInput = usePromptGeneratorStore((state) => state.setInput)
-  const storeSetAdvancedOpen = usePromptGeneratorStore((state) => state.setAdvancedOptionsOpen)
+  const {
+    templates,
+    loading,
+    loadError,
+    actionError,
+    pendingAction,
+    create,
+    update,
+    remove,
+    importBatch,
+    resetDefault,
+    clearActionError,
+  } = useTemplates()
+  const setTemplateReference = usePromptGeneratorStore((state) => state.setTemplateReference)
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [editPrompt, setEditPrompt] = useState<Prompt | null>(null)
+  const [editTemplate, setEditTemplate] = useState<PromptTemplate | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const importFileRef = useRef<HTMLInputElement>(null)
 
-  const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
+  const legacyCategories = useMemo(
+    () => [...new Set(templates.map((template) => template.category)
+      .filter((category) => !(TEMPLATE_CATEGORIES as readonly string[]).includes(category)))],
+    [templates],
+  )
+  const categoryOptions = useMemo<ComboboxOption[]>(() => [
+    { value: 'all', label: t('common.all') },
+    ...TEMPLATE_CATEGORIES.map((category) => {
+      const label = t(`templates.categories.${category}`)
+      return { value: category, label, searchText: `${category} ${label}` }
+    }),
+    ...legacyCategories.map((category) => {
+      const label = t('templates.categories.legacyOption', { category })
+      return { value: category, label, searchText: `${category} ${label}` }
+    }),
+  ], [legacyCategories, t])
 
-  const filteredPrompts = useMemo(() => {
-    let result = prompts
+  const filteredTemplates = useMemo(() => {
+    let result = templates
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          p.content.toLowerCase().includes(q),
+          p.content.toLowerCase().includes(q) ||
+          p.tags.some((tag) => tag.toLowerCase().includes(q)),
       )
     }
     if (categoryFilter !== 'all') {
       result = result.filter((p) => p.category === categoryFilter)
     }
     return result
-  }, [prompts, searchQuery, categoryFilter])
+  }, [templates, searchQuery, categoryFilter])
 
-  const handleCreate = async (data: PromptFormData) => {
-    await create(data)
-    setCreateOpen(false)
+  const errorMessage = (error: unknown) => {
+    const code = error instanceof TemplateError ? error.code : 'STORAGE_FAILED'
+    const key = code === 'DUPLICATE_NAME' ? 'duplicateName'
+      : code === 'NOT_FOUND' ? 'notFound'
+        : code === 'INVALID_DATA' ? 'invalidData'
+          : code === 'BUILTIN_CONFLICT' ? 'builtinConflict'
+            : code === 'IMPORT_LIMIT' ? 'importLimit'
+              : 'storageFailed'
+    return t(`templates.errors.${key}`)
   }
 
-  const handleEdit = async (data: PromptFormData) => {
-    if (!editPrompt) return
-    await update({ id: editPrompt.id, ...data })
-    setEditPrompt(null)
+  const handleCreate = async (data: TemplateFormData) => {
+    try {
+      await create({ ...data, category: data.category as TemplateCategory })
+      setCreateOpen(false)
+      toast.success(t('templates.toast.created'))
+    } catch (error) {
+      toast.error(errorMessage(error))
+    }
+  }
+
+  const handleEdit = async (data: TemplateFormData) => {
+    if (!editTemplate) return
+    try {
+      const category = data.category === editTemplate.category
+        && !(TEMPLATE_CATEGORIES as readonly string[]).includes(data.category)
+        ? undefined
+        : data.category as TemplateCategory
+      await update({ id: editTemplate.id, ...data, category })
+      setEditTemplate(null)
+      toast.success(t('templates.toast.updated'))
+    } catch (error) {
+      toast.error(errorMessage(error))
+    }
   }
 
   const handleDelete = async () => {
     if (!deleteId) return
-    await remove(deleteId)
-    setDeleteId(null)
+    try {
+      await remove(deleteId)
+      setDeleteId(null)
+      toast.success(t('templates.toast.deleted'))
+    } catch (error) {
+      toast.error(errorMessage(error))
+    }
   }
 
   const handleExport = () => {
-    const txt = exportPromptsToTxt(prompts)
-    downloadFile(txt, 'promptforge-templates.txt', 'text/plain')
+    try {
+      const txt = exportTemplatesToTxt(templates)
+      downloadFile(txt, 'promptforge-templates.txt', 'text/plain')
+      const legacyCount = templates.filter(
+        (template) => !(TEMPLATE_CATEGORIES as readonly string[]).includes(template.category),
+      ).length
+      toast.success(legacyCount > 0
+        ? t('templates.toast.exportedWithLegacyCategory', { count: legacyCount })
+        : t('templates.toast.exported'))
+    } catch {
+      toast.error(t('templates.errors.exportFailed'))
+    }
   }
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const text = await file.text()
-    const parsed = parsePromptsFromTxt(text)
-    for (const p of parsed) {
-      if (p.name && p.content) {
-        try {
-          await create({
-            name: p.name,
-            category: p.category || 'general',
-            tags: p.tags || [],
-            content: p.content,
-          })
-        } catch {
-          // skip duplicates
-        }
-      }
+    try {
+      if (file.size > 1_048_576) throw new TemplateError('IMPORT_LIMIT')
+      const parsed = parseTemplatesFromTxt(await file.text())
+      const summary = await importBatch(parsed)
+      toast.success(t('templates.toast.importSummary', {
+        imported: summary.imported,
+        duplicates: summary.duplicatesExisting + summary.duplicatesInFile,
+        invalid: summary.invalid,
+      }))
+    } catch (error) {
+      toast.error(error instanceof TemplateError
+        ? errorMessage(error)
+        : t('templates.errors.importParseFailed'))
+    } finally {
+      if (importFileRef.current) importFileRef.current.value = ''
     }
-    refresh()
-    if (importFileRef.current) importFileRef.current.value = ''
   }
 
   const handleResetDefault = async () => {
-    const existing = prompts.find(
-      (p) => p.name.toLowerCase() === defaultTemplate.name.toLowerCase(),
-    )
-    if (existing) {
-      await update({
-        id: existing.id,
-        content: getDefaultTemplateContent(),
-        name: defaultTemplate.name,
-        category: defaultTemplate.category,
-        tags: defaultTemplate.tags,
-      })
-    } else {
-      await create(defaultTemplate)
+    try {
+      await resetDefault()
+      toast.success(t('templates.toast.defaultReset'))
+    } catch (error) {
+      toast.error(errorMessage(error))
     }
-    refresh()
   }
 
-  const handleUseAsReference = (prompt: Prompt) => {
-    storeSetInput({ basePromptReference: prompt.content })
-    storeSetAdvancedOpen(true)
+  const handleUseAsReference = (template: PromptTemplate) => {
+    setTemplateReference(template.id, template.name, template.content)
     navigate(ROUTES.generator)
-    toast.success(t('templates.referenceToast'))
+    toast.success(t(template.content.length > 2_000
+      ? 'templates.referenceTruncatedToast'
+      : 'templates.referenceToast'))
   }
 
   return (
@@ -160,19 +211,19 @@ export default function TemplatesPage() {
               className="hidden"
               onChange={handleImportFile}
             />
-            <Button variant="outline" onClick={() => importFileRef.current?.click()}>
+            <Button variant="outline" onClick={() => importFileRef.current?.click()} disabled={pendingAction === 'import'}>
               <Upload className="mr-2 h-4 w-4" />
               {t('templates.import')}
             </Button>
-            <Button variant="outline" onClick={handleExport} disabled={prompts.length === 0}>
+            <Button variant="outline" onClick={handleExport} disabled={templates.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               {t('templates.export')}
             </Button>
-            <Button variant="outline" onClick={handleResetDefault}>
+            <Button variant="outline" onClick={handleResetDefault} disabled={pendingAction === 'reset'}>
               <RotateCcw className="mr-2 h-4 w-4" />
               {t('templates.resetDefault')}
             </Button>
-            <Button onClick={() => setCreateOpen(true)}>
+            <Button onClick={() => { clearActionError(); setCreateOpen(true) }}>
               <Plus className="mr-2 h-4 w-4" />
               {t('templates.create')}
             </Button>
@@ -180,7 +231,7 @@ export default function TemplatesPage() {
         }
       />
 
-      {loading && prompts.length === 0 ? (
+      {loading && templates.length === 0 ? (
         <div className="flex flex-col gap-6" role="status" aria-live="polite">
           <div className="flex flex-col sm:flex-row gap-3">
             <Skeleton className="h-10 flex-1 rounded-lg" />
@@ -204,34 +255,34 @@ export default function TemplatesPage() {
             className="pl-9"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            {nicheCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {t(`generator.form.category.options.${cat}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-[180px]">
+          <label htmlFor="template-category-filter" className="sr-only">
+            {t('templates.fields.category')}
+          </label>
+          <Combobox
+            id="template-category-filter"
+            options={categoryOptions}
+            value={categoryFilter}
+            onValueChange={setCategoryFilter}
+          />
+        </div>
       </div>
 
-      {filteredPrompts.length === 0 && !loading ? (
+      {templates.length > 0 && filteredTemplates.length === 0 && !loading ? (
         <EmptyState
           title={t('templates.noResultsTitle')}
           description={t('templates.noResultsDescription')}
+          action={<Button variant="outline" onClick={() => { setSearchQuery(''); setCategoryFilter('all') }}>{t('templates.clearFilters')}</Button>}
         />
       ) : (
-        <PromptList
-          prompts={filteredPrompts}
+        <TemplateList
+          templates={filteredTemplates}
           loading={loading}
-          error={error}
-          onEdit={setEditPrompt}
+          loadError={loadError}
+          onEdit={(template) => { clearActionError(); setEditTemplate(template) }}
           onDelete={setDeleteId}
           onUseAsReference={handleUseAsReference}
+          onCreate={() => { clearActionError(); setCreateOpen(true) }}
         />
       )}
         </>
@@ -241,23 +292,30 @@ export default function TemplatesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('templates.createTitle')}</DialogTitle>
-            <DialogDescription />
+            <DialogDescription>{t('templates.createDescription')}</DialogDescription>
           </DialogHeader>
-          <PromptForm onSubmit={handleCreate} onCancel={() => setCreateOpen(false)} />
+          <TemplateForm
+            onSubmit={handleCreate}
+            onCancel={() => setCreateOpen(false)}
+            submitError={actionError}
+            pending={pendingAction === 'create'}
+          />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editPrompt} onOpenChange={(open) => { if (!open) setEditPrompt(null) }}>
+      <Dialog open={!!editTemplate} onOpenChange={(open) => { if (!open) setEditTemplate(null) }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('templates.editTitle')}</DialogTitle>
-            <DialogDescription />
+            <DialogDescription>{t('templates.editDescription')}</DialogDescription>
           </DialogHeader>
-          <PromptForm
-            key={editPrompt?.id}
-            initialData={editPrompt ?? undefined}
+          <TemplateForm
+            key={editTemplate?.id}
+            initialData={editTemplate ?? undefined}
             onSubmit={handleEdit}
-            onCancel={() => setEditPrompt(null)}
+            onCancel={() => setEditTemplate(null)}
+            submitError={actionError}
+            pending={pendingAction === 'update'}
           />
         </DialogContent>
       </Dialog>
@@ -274,6 +332,7 @@ export default function TemplatesPage() {
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={pendingAction === 'delete'}
               className="bg-brand-danger text-text-on-brand hover:bg-brand-danger/90"
             >
               {t('common.delete')}

@@ -8,6 +8,7 @@ import { usePromptGeneratorStore } from '../store/promptGeneratorStore'
 import { useAIConfigStore } from '@/store/useAIConfigStore'
 import { ROUTES } from '@/app/routePaths'
 import { RandomIdeaButton } from './RandomIdeaButton'
+import { TemplatePicker } from './TemplatePicker'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { cn } from '@/lib/utils'
 import type { NicheCategory, TargetMarket, UsageContext, ImagePlatform, MoodOption, ColorPaletteOption, ArtStyleOption, BackgroundOption, HumanModelOption } from '../types'
 import { OPTION_LABELS, MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
+import { NICHE_CATEGORIES } from '../constants/categories'
 
 function SectionGroup({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
   return (
@@ -75,9 +77,11 @@ export const GeneratorForm = memo(function GeneratorForm() {
 
   const isAIConfigReady = useAIConfigStore(useShallow(state => state.isReady && !!state.activeConfig?.apiKey))
 
-  const [customInstructionsEnabled, setCustomInstructionsEnabled] = useState(() => !!input.customInstructions)
-  const [basePromptRefEnabled, setBasePromptRefEnabled] = useState(() => !!input.basePromptReference)
+  const [customInstructionsManuallyEnabled, setCustomInstructionsManuallyEnabled] = useState(false)
+  const [basePromptRefManuallyEnabled, setBasePromptRefManuallyEnabled] = useState(false)
   const [batchSizeDraft, setBatchSizeDraft] = useState<string | null>(null)
+  const customInstructionsEnabled = customInstructionsManuallyEnabled || !!input.customInstructions
+  const basePromptRefEnabled = basePromptRefManuallyEnabled || !!input.basePromptReference
 
   const isDiverseDisabled = input.humanModel?.mode === 'user' && input.humanModel?.value === 'no_people' || false
 
@@ -152,8 +156,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
     { value: '16:9', label: '16:9' },
   ]
 
-  const nicheCategories: NicheCategory[] = ['technology', 'business', 'nature', 'lifestyle', 'healthcare', 'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other']
-  const categoryOptions: ComboboxOption[] = nicheCategories.map((category) => ({
+  const categoryOptions: ComboboxOption[] = NICHE_CATEGORIES.map((category) => ({
     value: category,
     label: t(`generator.form.category.options.${category}`),
   }))
@@ -194,6 +197,7 @@ export const GeneratorForm = memo(function GeneratorForm() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-8">
+        <TemplatePicker />
         <div className="grid gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -463,7 +467,10 @@ export const GeneratorForm = memo(function GeneratorForm() {
             <Switch
               id="customInstructions-toggle"
               checked={customInstructionsEnabled}
-              onCheckedChange={setCustomInstructionsEnabled}
+              onCheckedChange={(checked) => {
+                setCustomInstructionsManuallyEnabled(checked)
+                if (!checked) setInput({ customInstructions: '' })
+              }}
             />
           </div>
           {customInstructionsEnabled && (
@@ -733,7 +740,10 @@ export const GeneratorForm = memo(function GeneratorForm() {
                     <Switch
                       id="basePromptReference-toggle"
                       checked={basePromptRefEnabled}
-                      onCheckedChange={setBasePromptRefEnabled}
+                      onCheckedChange={(checked) => {
+                        setBasePromptRefManuallyEnabled(checked)
+                        if (!checked) setInput({ basePromptReference: undefined })
+                      }}
                     />
                   </div>
                   {basePromptRefEnabled && (

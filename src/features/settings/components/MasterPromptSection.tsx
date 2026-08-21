@@ -100,7 +100,7 @@ export function MasterPromptSection() {
             disabled={!savedCustomPrompt}
           >
             <RotateCcw className="h-4 w-4" />
-            {t('templates.resetDefault', { defaultValue: 'Reset to Default' })}
+            {t('settings.resetDefault')}
           </Button>
         </div>
       </CardContent>

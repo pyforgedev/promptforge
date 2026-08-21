@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { waitFor } from '@testing-library/react'
 import { usePromptGeneratorStore } from '@/features/prompt-generator/store/promptGeneratorStore'
+import db from '@/services/storage/db'
 
 describe('usePromptGeneratorStore', () => {
   beforeEach(() => {
@@ -93,5 +95,24 @@ describe('usePromptGeneratorStore', () => {
     usePromptGeneratorStore.getState().toggleFavoriteInBatch('p1')
 
     expect(usePromptGeneratorStore.getState().batch?.prompts[0].isFavorite).toBe(true)
+  })
+
+  it('uses reference content in memory but excludes reference identity and content from persistence', async () => {
+    usePromptGeneratorStore.getState().setTemplateReference('template-1', 'Portrait Base', 'private reference text')
+
+    expect(usePromptGeneratorStore.getState()).toMatchObject({
+      activeTemplateReference: { id: 'template-1', name: 'Portrait Base', mode: 'reference' },
+      input: { basePromptReference: 'private reference text' },
+      advancedOptionsOpen: true,
+    })
+
+    await waitFor(async () => {
+      const persisted = await db.generatorState.get('prompt-generator-v2')
+      expect(persisted).toBeDefined()
+      const payload = persisted?.value as { state: Record<string, unknown> }
+      expect(payload.state).not.toHaveProperty('activeTemplateReference')
+      expect(payload.state).not.toHaveProperty('advancedOptionsOpen')
+      expect(payload.state.input).not.toHaveProperty('basePromptReference')
+    })
   })
 })

@@ -10,19 +10,7 @@ export type ImagePlatform = 'dalle3' | 'nano_banana' | 'both'
 
 export type BatchSize = number
 
-export type NicheCategory =
-  | 'technology'
-  | 'business'
-  | 'nature'
-  | 'lifestyle'
-  | 'healthcare'
-  | 'food'
-  | 'travel'
-  | 'education'
-  | 'abstract'
-  | 'people'
-  | 'architecture'
-  | 'other'
+export type { NicheCategory } from '../constants/categories'
 
 export type AspectRatio =
   | 'random'

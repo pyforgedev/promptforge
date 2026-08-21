@@ -86,6 +86,11 @@ export interface PromptHistoryRecord extends Omit<GeneratedPrompt, 'generatorInp
   artStyleKey?: ArtStyleOption | null
 }
 
+export interface HistoryTemplateSource {
+  record: PromptHistoryRecord
+  generatorInput?: GeneratorInput
+}
+
 // ─── Cursor-based pagination contract ───
 
 export type HistoryPlan = 'date-global' | 'folder-date' | 'rating-global' | 'folder-rating'
@@ -336,6 +341,19 @@ export async function saveHistoryItem(item: Omit<PromptHistoryRecord, 'createdAt
 export async function getHistoryItems(): Promise<PromptHistoryRecord[]> {
   const rows = await db.prompt_history.toArray()
   return hydrateRecords(rows)
+}
+
+/** Hydrate one history item for explicit user-initiated template creation. */
+export async function getHistoryTemplateSource(id: string): Promise<HistoryTemplateSource | undefined> {
+  const row = await db.prompt_history.get(id)
+  if (!row) return undefined
+  const [record] = await hydrateRecords([row])
+  if (!record) return undefined
+  const batch = await db.prompt_batches.get(row.batchId)
+  return {
+    record,
+    ...(batch?.generatorInput ? { generatorInput: batch.generatorInput } : {}),
+  }
 }
 
 /** The most recent prompts across all folders, hydrated (used by the Home page). */

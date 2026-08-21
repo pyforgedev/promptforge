@@ -137,19 +137,6 @@
     "resizeSidebar": "Resize sidebar",
     "resizeSidebarHint": "Drag to resize — double-click to reset"
   },
-  "prompts": {
-    "name": "Name",
-    "content": "Content",
-    "category": "Category",
-    "tags": "Tags",
-    "emptyTitle": "No prompts yet",
-    "emptyDescription": "Create your first prompt to get started",
-    "createTitle": "Create Prompt",
-    "editTitle": "Edit Prompt",
-    "deleteTitle": "Delete Prompt",
-    "deleteConfirmation": "Are you sure you want to delete this prompt? This action cannot be undone.",
-    "duplicateError": "A prompt with this name already exists"
-  },
   "settings": {
     "pageDescription": "Manage application preferences and AI configuration",
     "preferences": "Preferences",
@@ -186,6 +173,7 @@
     "masterPromptPlaceholder": "The default master prompt will appear here...",
     "masterPromptSaved": "Master prompt saved",
     "masterPromptReset": "Master prompt reset to default",
+    "resetDefault": "Reset to Default",
     "configRecoverBanner": "Your saved API configuration could not be restored. It was encrypted with a previous session-only key that no longer exists. Re-enter it to continue.",
     "clearAndReenter": "Clear & re-enter",
     "sessionOnlyKey": "Don't remember API key between sessions",
@@ -237,6 +225,7 @@
   "history": {
     "pageTitle": "Prompt History",
     "pageDescription": "View and manage your generated prompts",
+    "saveAsTemplate": "Save as Template",
     "searchPlaceholder": "Search prompts...",
     "searchEverywherePlaceholder": "Search everywhere...",
     "searchInFolderPlaceholder": "Search in this folder...",
@@ -337,7 +326,9 @@
     "pageDescription": "Create, edit, and manage your prompt templates",
     "create": "Create Template",
     "createTitle": "New Template",
+    "createDescription": "Define reusable prompt content and how it should be organized.",
     "editTitle": "Edit Template",
+    "editDescription": "Update the reusable fields without removing stored generator metadata.",
     "deleteTitle": "Delete Template",
     "deleteConfirmation": "Are you sure you want to delete this template? This action cannot be undone.",
     "import": "Import",
@@ -345,9 +336,78 @@
     "resetDefault": "Reset Default",
     "useAsReference": "Use as Reference in Generator",
     "referenceToast": "Template loaded as reference",
+    "referenceTruncatedToast": "Template loaded as a reference; content was limited to 2,000 characters",
     "searchPlaceholder": "Search templates by name or content...",
     "noResultsTitle": "No templates match your search",
-    "noResultsDescription": "Try adjusting your search or filter to find what you're looking for."
+    "noResultsDescription": "Try adjusting your search or filter to find what you're looking for.",
+    "clearFilters": "Clear filters",
+    "fullMetadataBadge": "Generator settings included",
+    "textOnlyBadge": "Text only",
+    "fields": {
+      "name": "Name",
+      "content": "Content",
+      "category": "Category",
+      "tags": "Tags",
+      "tagsPlaceholder": "stock, commercial, portrait"
+    },
+    "categories": {
+      "general": "General",
+      "technology": "Technology",
+      "business": "Business",
+      "nature": "Nature",
+      "lifestyle": "Lifestyle",
+      "healthcare": "Healthcare",
+      "food": "Food",
+      "travel": "Travel",
+      "education": "Education",
+      "abstract": "Abstract",
+      "people": "People",
+      "architecture": "Architecture",
+      "other": "Other",
+      "legacyOption": "{{category}} (legacy)"
+    },
+    "empty": {
+      "title": "No templates yet",
+      "description": "Create a reusable template or save one from the generator.",
+      "createAction": "Create Template"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name must be 100 characters or less",
+      "contentRequired": "Content is required",
+      "contentTooLong": "Content must be 10,000 characters or less",
+      "categoryRequired": "Category is required",
+      "tagTooLong": "Each tag must be 50 characters or less",
+      "tooManyTags": "Use no more than 10 tags",
+      "invalidCharacters": "Control characters are not allowed"
+    },
+    "errors": {
+      "loadFailed": "Failed to load templates",
+      "duplicateName": "A template with this name already exists",
+      "notFound": "This template no longer exists",
+      "invalidData": "Some template fields are invalid",
+      "builtinConflict": "The default template conflicts with existing data",
+      "importLimit": "The import file is too large or contains too many templates",
+      "importParseFailed": "The template file could not be parsed",
+      "storageFailed": "Failed to save template data",
+      "exportFailed": "Failed to export templates",
+      "historySourceFailed": "Failed to load this history item for a template"
+    },
+    "save": {
+      "dialogTitle": "Save Prompt as Template",
+      "description": "Review the reusable name, category, tags, and prompt content before saving."
+    },
+    "toast": {
+      "created": "Template created",
+      "updated": "Template updated",
+      "deleted": "Template deleted",
+      "defaultReset": "Default template restored",
+      "importSummary": "Imported {{imported}} templates; skipped {{duplicates}} duplicates and {{invalid}} invalid records",
+      "exported": "Templates exported",
+      "exportedWithLegacyCategory": "Templates exported; {{count}} legacy categories will import as Other",
+      "savedFromGenerator": "Prompt saved as a template",
+      "savedFromHistory": "History prompt saved as a template"
+    }
   },
   "generator": {
     "pageTitle_v2": "Prompt Engine v2",
@@ -478,6 +538,17 @@
         "label": "Base Prompt / Reference (optional)",
         "description": "Provide an existing prompt as creative inspiration. The AI will generate fresh, varied prompts anchored to this reference without copying it.",
         "placeholder": "Paste or select a template as reference..."
+      },
+      "templates": {
+        "label": "Prompt Template",
+        "placeholder": "Select a saved template",
+        "loadSettings": "Load settings",
+        "useAsReference": "Use as reference",
+        "loadedSettings": "Template settings loaded",
+        "activeReference": "Reference: {{name}}",
+        "activeSettings": "Settings loaded from: {{name}}",
+        "clearReference": "Clear active template",
+        "loadFailed": "Templates could not be loaded"
       },
       "category": {
         "label": "Category",
@@ -645,8 +716,6 @@
     "copied": "Copied",
     "copySegment": "Copy {{segment}}",
     "saveAsTemplate": "Save as Template",
-    "saveAsTemplateTitle": "Save Prompt as Template",
-    "savedAsTemplate": "Prompt saved as template",
     "duplicateWarning": "High similarity with previous prompt detected",
     "keepAnyway": "Keep anyway"
   },
@@ -694,12 +763,6 @@
       "saveActiveConfigFailed": "Failed to save active config",
       "savePresetFailed": "Failed to save preset",
       "deletePresetFailed": "Failed to delete preset"
-    },
-    "prompts": {
-      "loadFailed": "Failed to load prompts",
-      "createFailed": "Failed to create prompt",
-      "updateFailed": "Failed to update prompt",
-      "deleteFailed": "Failed to delete prompt"
     }
   }
 }

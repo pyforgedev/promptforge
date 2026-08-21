@@ -6,7 +6,19 @@ import { useHistoryStore } from '@/store/useHistoryStore'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import { HistoryList } from './HistoryList'
 
+const integrationMocks = vi.hoisted(() => ({
+  getHistoryTemplateSource: vi.fn(),
+}))
+
 vi.mock('@/hooks/useToast', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
+vi.mock('@/services/storage/indexeddb', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/storage/indexeddb')>()
+  return { ...actual, getHistoryTemplateSource: integrationMocks.getHistoryTemplateSource }
+})
+vi.mock('@/features/templates/components/SaveTemplateDialog', () => ({
+  SaveTemplateDialog: ({ input, open }: { input: unknown; open: boolean }) =>
+    open ? <div data-testid="save-template-dialog">{JSON.stringify(input)}</div> : null,
+}))
 
 const defaults = {
   aspectRatio: 'all' as const, artStyleKey: 'all' as const, minScore: 0,
@@ -33,6 +45,7 @@ function renderList(items: PromptHistoryRecord[] = []) {
 
 describe('HistoryList v11 states', () => {
   beforeEach(() => {
+    integrationMocks.getHistoryTemplateSource.mockReset()
     useHistoryStore.setState({
       selectedIds: [], currentFolderId: null, searchAllFolders: false, filters: defaults,
       hasMore: false, hasLoaded: true, loading: false,
@@ -90,5 +103,20 @@ describe('HistoryList v11 states', () => {
     expect(screen.queryByText('Random')).not.toBeInTheDocument()
     expect(screen.queryByText('Photorealistic')).not.toBeInTheDocument()
     expect(screen.queryByText('Minimalist')).not.toBeInTheDocument()
+  })
+
+  it('opens Save as Template from hydrated history data without toggling card selection', async () => {
+    const user = userEvent.setup()
+    const toggleSelect = vi.fn()
+    const record = item({ fullPrompt: 'source prompt', niche: 'Travel' })
+    integrationMocks.getHistoryTemplateSource.mockResolvedValue({ record })
+    useHistoryStore.setState({ toggleSelect })
+    renderList([record])
+
+    await user.click(screen.getByRole('button', { name: 'Save as Template' }))
+
+    expect(integrationMocks.getHistoryTemplateSource).toHaveBeenCalledWith(record.id)
+    expect(await screen.findByTestId('save-template-dialog')).toHaveTextContent('source prompt')
+    expect(toggleSelect).not.toHaveBeenCalled()
   })
 })

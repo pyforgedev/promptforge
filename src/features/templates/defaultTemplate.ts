@@ -1,6 +1,10 @@
-import type { CreatePromptInput } from '@/features/prompts/types'
+import type { CreateTemplateInput, PromptTemplate } from '@/features/templates/types'
 
-export const defaultTemplate: CreatePromptInput = {
+export const DEFAULT_TEMPLATE_ID = 'template:builtin:stock-photo-v1'
+export const DEFAULT_TEMPLATE_KEY = 'stock-photo-v1' as const
+export const DEFAULT_TEMPLATE_SEED_SETTING = 'templates.seed.stock-photo-v1'
+
+export const defaultTemplate: CreateTemplateInput = {
   name: 'Stock Photo Prompt',
   category: 'general',
   tags: ['stock', 'commercial', 'photo'],
@@ -11,6 +15,13 @@ Stock photography, high quality, professional, well-composed.
 8k resolution, detailed, sharp focus, natural lighting.`,
 }
 
-export function getDefaultTemplateContent(): string {
-  return defaultTemplate.content
+export function createDefaultTemplate(now = Date.now()): PromptTemplate {
+  return {
+    ...defaultTemplate,
+    id: DEFAULT_TEMPLATE_ID,
+    source: 'builtin',
+    builtinKey: DEFAULT_TEMPLATE_KEY,
+    createdAt: now,
+    updatedAt: now,
+  }
 }

@@ -12,6 +12,14 @@ import { globalRateLimiter } from '@/lib/rateLimiter'
 import { sanitizeError } from '@/lib/sanitizeError'
 import type { GeneratorInput, GeneratedPromptBatch, PromptGeneratorError } from '../types'
 import { generatorInputDefaults } from '../schemas/generatorInputSchema'
+import type { TemplateGeneratorSettings } from '@/features/templates/types'
+import { templateSettingsToGeneratorPatch } from '@/features/templates/utils/templateMappers'
+
+export interface ActiveTemplateReference {
+  id: string
+  name: string
+  mode: 'reference' | 'settings'
+}
 
 interface PromptGeneratorStoreState {
   input: GeneratorInput
@@ -19,10 +27,14 @@ interface PromptGeneratorStoreState {
   isGenerating: boolean
   error: PromptGeneratorError | null
   advancedOptionsOpen: boolean
+  activeTemplateReference: ActiveTemplateReference | null
   _hasHydrated: boolean
 
   setInput: (input: Partial<GeneratorInput>) => void
   setAdvancedOptionsOpen: (open: boolean) => void
+  applyTemplateSettings: (id: string, name: string, settings: TemplateGeneratorSettings) => void
+  setTemplateReference: (id: string, name: string, content: string) => void
+  clearTemplateReference: () => void
   generatePrompts: () => Promise<void>
   clearBatch: () => void
   resetInput: () => void
@@ -38,13 +50,45 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
       isGenerating: false,
       error: null,
       advancedOptionsOpen: false,
+      activeTemplateReference: null,
       _hasHydrated: true,
 
       setInput: (partial) =>
-        set((state) => ({ input: { ...state.input, ...partial } })),
+        set((state) => ({
+          input: { ...state.input, ...partial },
+          activeTemplateReference:
+            Object.prototype.hasOwnProperty.call(partial, 'basePromptReference')
+              && partial.basePromptReference === undefined
+              && state.activeTemplateReference?.mode === 'reference'
+              ? null
+              : state.activeTemplateReference,
+        })),
       
       setAdvancedOptionsOpen: (open) =>
         set({ advancedOptionsOpen: open }),
+
+      applyTemplateSettings: (id, name, settings) =>
+        set((state) => ({
+          input: { ...state.input, ...templateSettingsToGeneratorPatch(settings) },
+          activeTemplateReference: state.activeTemplateReference?.mode === 'reference'
+            ? state.activeTemplateReference
+            : { id, name, mode: 'settings' },
+        })),
+
+      setTemplateReference: (id, name, content) =>
+        set((state) => ({
+          input: { ...state.input, basePromptReference: content.slice(0, 2_000) },
+          activeTemplateReference: { id, name, mode: 'reference' },
+          advancedOptionsOpen: true,
+        })),
+
+      clearTemplateReference: () =>
+        set((state) => ({
+          input: state.activeTemplateReference?.mode === 'reference'
+            ? { ...state.input, basePromptReference: undefined }
+            : state.input,
+          activeTemplateReference: null,
+        })),
 
       generatePrompts: async () => {
         if (get().isGenerating) return
@@ -90,7 +134,7 @@ export const usePromptGeneratorStore = create<PromptGeneratorStoreState>()(
 
       clearBatch: () => set({ batch: null, error: null }),
       
-      resetInput: () => set({ input: { ...generatorInputDefaults } }),
+      resetInput: () => set({ input: { ...generatorInputDefaults }, activeTemplateReference: null }),
 
       toggleFavoriteInBatch: (id) =>
         set((state) => {

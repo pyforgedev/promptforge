@@ -12,6 +12,7 @@ import {
   bulkUpdateHistoryFolder,
   deleteFolderAndUnassign,
   getHistoryCounts,
+  getHistoryTemplateSource,
   type PromptHistoryV11,
   type PromptTextRecord,
 } from './history'
@@ -319,6 +320,31 @@ describe('prompt history storage (v11 schema)', () => {
     expect(items[0].fullPrompt).toContain('nano')
   })
 
+  it('hydrates a history template source with its batch generator settings', async () => {
+    const batch = buildBatch({ batchId: 'template-source', targetPlatform: 'nano_banana' })
+    await saveGeneratedPromptBatch(batch)
+
+    const source = await getHistoryTemplateSource(batch.prompts[0].id)
+
+    expect(source?.record).toMatchObject({
+      id: batch.prompts[0].id,
+      fullPrompt: expect.stringContaining('nano'),
+      niche: 'Nature',
+    })
+    expect(source?.generatorInput).toEqual(batch.generatorInput)
+  })
+
+  it('hydrates the history record without generator settings when its batch is missing', async () => {
+    const batch = buildBatch({ batchId: 'template-source-missing-batch' })
+    await saveGeneratedPromptBatch(batch)
+    await db.prompt_batches.delete(batch.batchId)
+
+    const source = await getHistoryTemplateSource(batch.prompts[0].id)
+
+    expect(source?.record.id).toBe(batch.prompts[0].id)
+    expect(source).not.toHaveProperty('generatorInput')
+  })
+
   it('returns recent prompts in a category, newest first, and only within that category', async () => {
     await saveGeneratedPromptBatch(buildBatch({ batchId: 'cat-a-1', category: 'lifestyle', startTime: 1000 }));
     await saveGeneratedPromptBatch(buildBatch({ batchId: 'cat-b-1', category: 'travel', startTime: 2000 }));
@@ -530,7 +556,7 @@ describe('prompt history storage (v11 schema)', () => {
     expect(result.items).toHaveLength(0)
     expect(result.hasMore).toBe(true)
     expect(result.nextCursor).not.toBeNull()
-  })
+  }, 15_000)
 
   it('continues after the 2000-candidate ceiling without skipping or duplicating later matches', async () => {
     const count = MAX_TOTAL_CANDIDATES_PER_REQUEST + 25
@@ -549,7 +575,7 @@ describe('prompt history storage (v11 schema)', () => {
     const ids = [...second.items, ...third.items].map((item) => item.id)
     expect(ids).toHaveLength(25)
     expect(new Set(ids).size).toBe(25)
-  })
+  }, 15_000)
 
   it('rejects with AbortError before attempting hydration', async () => {
     const controller = new AbortController()

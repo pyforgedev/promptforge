@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { GeneratorInput } from '../types'
 import { MOOD_OPTIONS, COLOR_PALETTE_OPTIONS, ART_STYLE_OPTIONS, BACKGROUND_OPTIONS, HUMAN_MODEL_OPTIONS } from '../types'
+import { NICHE_CATEGORIES } from '../constants/categories'
 
 function dualModeSchema<T extends readonly string[]>(options: T) {
   return z.discriminatedUnion('mode', [
@@ -25,10 +26,7 @@ export const generatorInputSchema = z.object({
   niche: z.string()
     .min(3, 'Niche must be at least 3 characters')
     .max(300, 'Niche must be under 300 characters'),
-  category: z.enum([
-    'technology', 'business', 'nature', 'lifestyle', 'healthcare',
-    'food', 'travel', 'education', 'abstract', 'people', 'architecture', 'other'
-  ]).optional(),
+  category: z.enum(NICHE_CATEGORIES).optional(),
   batchSize: z.number().int().min(1).max(10),
   usageContext: z.enum(['commercial', 'editorial', 'conceptual', 'abstract']),
   targetMarket: z.enum(['global', 'us', 'eu', 'asia', 'latin_america']),

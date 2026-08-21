@@ -1,8 +1,8 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/app/routePaths'
-import { AlertCircle, Copy, Trash2, Star, Clock } from 'lucide-react'
+import { AlertCircle, Copy, Trash2, Star, Clock, FilePlus2 } from 'lucide-react'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +14,10 @@ import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import type { PromptHistoryRecord } from '@/services/storage/indexeddb'
 import { tokenizeQuery } from '@/services/storage/historySearch'
+import { getHistoryTemplateSource } from '@/services/storage/indexeddb'
+import { historyPromptToTemplateInput } from '@/features/templates/utils/templateMappers'
+import { SaveTemplateDialog } from '@/features/templates/components/SaveTemplateDialog'
+import type { CreateTemplateInput } from '@/features/templates/types'
 
 interface HistoryListProps {
   items: PromptHistoryRecord[]
@@ -78,6 +82,8 @@ export const HistoryList = memo(function HistoryList({
   validateHistoryListProps({ items, loading, error, onCopy, onDelete })
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const [templateInput, setTemplateInput] = useState<CreateTemplateInput | null>(null)
+  const [templateLoadingId, setTemplateLoadingId] = useState<string | null>(null)
   const {
     selectedIds,
     toggleSelect,
@@ -109,6 +115,19 @@ export const HistoryList = memo(function HistoryList({
       showToast('success', t('toast.itemDeleted'))
     } catch {
       showToast('error', t('toast.error'))
+    }
+  }
+
+  const handleSaveAsTemplate = async (id: string) => {
+    setTemplateLoadingId(id)
+    try {
+      const source = await getHistoryTemplateSource(id)
+      if (!source) throw new Error('NOT_FOUND')
+      setTemplateInput(historyPromptToTemplateInput(source))
+    } catch {
+      showToast('error', t('templates.errors.historySourceFailed'))
+    } finally {
+      setTemplateLoadingId(null)
     }
   }
 
@@ -222,6 +241,16 @@ export const HistoryList = memo(function HistoryList({
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-7 cursor-pointer text-caption-ui sm:h-8"
+                  onClick={() => handleSaveAsTemplate(item.id)}
+                  disabled={templateLoadingId === item.id}
+                >
+                  <FilePlus2 className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-3.5 sm:w-3.5" />
+                  {t('history.saveAsTemplate')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="h-7 sm:h-8 text-caption-ui cursor-pointer"
                   onClick={() => handleCopy(item.fullPrompt)}
                 >
@@ -267,6 +296,13 @@ export const HistoryList = memo(function HistoryList({
           {t('history.endOfList')}
         </p>
       ) : null}
+      <SaveTemplateDialog
+        input={templateInput}
+        open={!!templateInput}
+        onOpenChange={(open) => { if (!open) setTemplateInput(null) }}
+        titleKey="templates.save.dialogTitle"
+        successKey="templates.toast.savedFromHistory"
+      />
     </div>
   )
 })

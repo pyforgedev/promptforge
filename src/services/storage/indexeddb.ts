@@ -18,4 +18,4 @@ export * from './ideaCache'
 
 export * from './formatter'
 
-export * from './prompts'
+export * from './templates'

@@ -63,6 +63,37 @@ describe('Combobox UI Component', () => {
     expect(content).toHaveClass('origin-[var(--radix-popover-content-transform-origin)]')
   })
 
+  it('can render popup content inline for use inside a modal focus scope', async () => {
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(
+      <Combobox
+        options={options}
+        value=""
+        onValueChange={vi.fn()}
+        portalled={false}
+      />
+    )
+
+    await user.click(screen.getByRole('button'))
+
+    const content = screen.getByRole('listbox').parentElement?.parentElement
+    expect(container).toContainElement(content ?? null)
+    expect(content).toHaveClass('z-dropdown')
+  })
+
+  it('forwards aria-invalid to the trigger', () => {
+    renderWithProviders(
+      <Combobox
+        options={options}
+        value=""
+        onValueChange={vi.fn()}
+        aria-invalid
+      />
+    )
+
+    expect(screen.getByRole('button')).toHaveAttribute('aria-invalid', 'true')
+  })
+
   it('renders check icon ONLY for selected option', async () => {
     const user = userEvent.setup()
     renderWithProviders(

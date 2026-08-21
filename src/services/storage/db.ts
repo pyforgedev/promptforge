@@ -1,6 +1,12 @@
 import Dexie, { type EntityTable, type Table, type Transaction } from 'dexie'
 import { v4 as uuidv4 } from 'uuid'
-import type { Prompt } from '@/types'
+import type { PersistedPromptTemplate, TemplateSource } from '@/features/templates/types'
+import { normalizeNameKey } from '@/features/templates/utils/templateValidators'
+import {
+  DEFAULT_TEMPLATE_KEY,
+  DEFAULT_TEMPLATE_SEED_SETTING,
+  defaultTemplate,
+} from '@/features/templates/defaultTemplate'
 import type { Folder } from '@/features/history/types'
 import type { GeneratorInput, PromptSegments, AdobeStockScore, VariationAnchors } from '@/features/prompt-generator/types'
 import type { IdeaCacheEntry } from './ideaCache'
@@ -297,8 +303,115 @@ export async function upgradePromptHistoryToV11(trans: Transaction): Promise<voi
   }
 }
 
+const TEMPLATE_SOURCES = new Set<TemplateSource>([
+  'manual', 'import', 'generator', 'history', 'builtin', 'legacy',
+])
+
+function finiteTimestamp(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function sanitizeTemplateSegments(value: unknown): PersistedPromptTemplate['segments'] {
+  if (!value || typeof value !== 'object') return undefined
+  const raw = value as Record<string, unknown>
+  return {
+    subject: boundedString(raw.subject, 10_000),
+    composition: boundedString(raw.composition, 10_000),
+    lighting: boundedString(raw.lighting, 10_000),
+    mood: boundedString(raw.mood, 10_000),
+    style: boundedString(raw.style, 10_000),
+    technical: boundedString(raw.technical, 10_000),
+    colorPalette: boundedString(raw.colorPalette, 10_000),
+    environment: boundedString(raw.environment, 10_000),
+  }
+}
+
+/** Atomic v11→v12 template backfill. It never deletes, renames, or merges legacy rows. */
+export async function upgradeTemplatesToV12(trans: Transaction): Promise<void> {
+  const promptsTable = trans.table('prompts')
+  const settingsTable = trans.table('settings')
+  const beforeRows = (await promptsTable.toArray()) as unknown[]
+  const beforeIds = new Set<string>()
+  const upgraded: PersistedPromptTemplate[] = []
+
+  for (const value of beforeRows) {
+    const raw = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>
+    if (typeof raw.id !== 'string' || raw.id.length === 0) {
+      throw new Error('[PromptForge] Template migration invariant failed: invalid primary key')
+    }
+    beforeIds.add(raw.id)
+
+    const name = typeof raw.name === 'string' ? raw.name : ''
+    const normalized = normalizeNameKey(name)
+    const nameKey = normalized && !normalized.includes('\u0000')
+      ? normalized
+      : `\u0000legacy-invalid:${raw.id}`
+    const createdAt = finiteTimestamp(raw.createdAt)
+    const source = typeof raw.source === 'string' && TEMPLATE_SOURCES.has(raw.source as TemplateSource)
+      ? raw.source as TemplateSource
+      : 'legacy'
+
+    const template: PersistedPromptTemplate = {
+      id: raw.id,
+      name,
+      nameKey,
+      content: typeof raw.content === 'string' ? raw.content : '',
+      category: typeof raw.category === 'string' ? raw.category : '',
+      tags: boundedStringArray(raw.tags, 10, 50),
+      createdAt,
+      updatedAt: finiteTimestamp(raw.updatedAt, createdAt),
+      source,
+    }
+    if (typeof raw.negativePrompt === 'string') {
+      template.negativePrompt = boundedString(raw.negativePrompt, 20_000)
+    }
+    const keywords = boundedStringArray(raw.commercialKeywords, 60, 500)
+    if (keywords.length > 0) template.commercialKeywords = keywords
+    const segments = sanitizeTemplateSegments(raw.segments)
+    if (segments) template.segments = segments
+    if (raw.platformVariants && typeof raw.platformVariants === 'object') {
+      const variants = raw.platformVariants as Record<string, unknown>
+      template.platformVariants = {
+        ...(typeof variants.dalle3 === 'string' ? { dalle3: boundedString(variants.dalle3, 20_000) } : {}),
+        ...(typeof variants.nano_banana === 'string' ? { nano_banana: boundedString(variants.nano_banana, 20_000) } : {}),
+      }
+    }
+    upgraded.push(template)
+  }
+
+  const nameCounts = new Map<string, number>()
+  for (const template of upgraded) {
+    nameCounts.set(template.nameKey, (nameCounts.get(template.nameKey) ?? 0) + 1)
+  }
+  for (const template of upgraded) {
+    if ((nameCounts.get(template.nameKey) ?? 0) > 1) template.legacyNameCollision = true
+  }
+
+  const defaultNameKey = normalizeNameKey(defaultTemplate.name)
+  const defaultCandidates = upgraded.filter(
+    (template) => template.nameKey === defaultNameKey
+      && template.content.trim() === defaultTemplate.content.trim(),
+  )
+  if (defaultCandidates.length === 1) {
+    defaultCandidates[0].builtinKey = DEFAULT_TEMPLATE_KEY
+    defaultCandidates[0].source = 'builtin'
+  }
+
+  if (upgraded.length > 0) await bulkPutChunked(promptsTable, upgraded)
+  await settingsTable.put({
+    key: DEFAULT_TEMPLATE_SEED_SETTING,
+    value: { status: 'pre-v12-complete', updatedAt: Date.now() },
+  })
+
+  const afterRows = (await promptsTable.toArray()) as Array<{ id?: unknown }>
+  if (afterRows.length !== beforeRows.length
+    || afterRows.some((row) => typeof row.id !== 'string' || !beforeIds.has(row.id))) {
+    throw new Error('[PromptForge] Template migration invariant failed: row identity mismatch')
+  }
+}
+
 class PromptForgeDB extends Dexie {
-  prompts!: EntityTable<Prompt, 'id'>
+  prompts!: EntityTable<PersistedPromptTemplate, 'id'>
   /** @deprecated legacy flat table (v5) — dropped as of v6. */
   history!: EntityTable<Record<string, unknown>, 'id'>
   prompt_history!: EntityTable<PromptHistoryV11, 'id'>
@@ -495,6 +608,22 @@ class PromptForgeDB extends Dexie {
       formatter_batch: '++id, createdAt',
       formatter_items: '++id, order, status',
     }).upgrade(upgradePromptHistoryToV11)
+
+    // Version 12: normalized template names, deterministic ordering, and stable
+    // builtin identity. The physical `prompts` store name remains for compatibility.
+    this.version(12).stores({
+      prompt_history: 'id, batchId, createdAt, folderId, folderKey, categoryKey, [createdAt+id], [folderKey+createdAt+id], [categoryKey+createdAt+id], [adobeScore.total+createdAt+id], [folderKey+adobeScore.total+createdAt+id]',
+      prompt_texts: '[promptId+platform], promptId',
+      prompt_batches: 'batchId, generatedAt, generatorInput.niche, generatorInput.category, generatorInput.usageContext',
+      prompts: 'id, name, nameKey, category, createdAt, updatedAt, builtinKey, [updatedAt+id]',
+      folders: 'id, name, parentId, createdAt',
+      settings: 'key',
+      cryptoKeys: 'key',
+      generatorState: 'key',
+      idea_cache: 'cacheKey, lastUpdated',
+      formatter_batch: '++id, createdAt',
+      formatter_items: '++id, order, status',
+    }).upgrade(upgradeTemplatesToV12)
   }
 }
 

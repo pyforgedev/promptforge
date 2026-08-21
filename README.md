@@ -18,7 +18,7 @@ PromptForge is a professional-grade prompt engineering tool designed to generate
 - **Prompt Generator:** Configurable aspect ratios (1:1, 16:9, etc.), niche selection, style presets (Commercial, Lifestyle, etc.), batch generation (numeric input, 1–10), target platform selection (DALL-E 3 / Nano Banana / Both), negative prompts, stock keywords toggling, Adobe Stock scoring, and prompt breakdown (per-segment source badges showing User/AI attribution).
 - **Prompt Quality Rating:** Scores prompts on Commercial Potential, Creativity, Clarity, Marketability, and Uniqueness.
 - **Duplicate Detection:** Similarity analysis against prompt history to prevent repetitive generations.
-- **Templates:** Save, edit, reset, import, and export custom templates.
+- **Templates:** A reactive local template library with create, edit, delete, search, canonical category filtering (including the Templates-only `general` category), and stable built-in seed/reset behavior. Generator and History results can be saved with validated, allowlisted metadata; the Generator can load saved settings or use template text as a session-only reference. TXT import is size/record bounded and schema-validated, while TXT export remains text-only (name, category, tags, and content).
 - **History:** Local IndexedDB cache with bounded AND-prefix search; folder, aspect-ratio, art-style, minimum-score (0–100), and inclusive local-date filters; newest, oldest, or highest-rating sorting; and TXT export/import.
 - **Theme:** Strict Light/Dark/System theme support via next-themes, utilizing a semantic color system and glassmorphism.
 - **Internationalization (i18n):** Full support for English (en) and Bahasa Indonesia (id).
@@ -57,7 +57,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 
 ### Architecture Layers
 
-- **Feature-Based Modules (`src/features/`):** Self-contained domains encapsulating components, hooks, schemas, state slices, and assets relevant to specific features (e.g., prompt generator, history, templates).
+- **Feature-Based Modules (`src/features/`):** Self-contained domains encapsulating components, hooks, schemas, state slices, and assets relevant to specific features. Prompt Templates live in `src/features/templates/` with their components, hooks, service facade, types, validators/mappers, and built-in default definition.
 - **Services Layer (`src/services/`):** External integrations and core application business logic, including AI API clients, a per-domain IndexedDB storage layer (Dexie) behind a barrel re-export, export utilities, and text similarity algorithms.
 - **State Management (`src/store/`):** Zustand-powered stores managing global application state, including AI configuration, generator preferences, and historical logs.
 - **Routing Layer (`src/app/`):** React Router DOM v7 utilizing `createBrowserRouter` for declarative, lazy-loaded routing, error boundaries, and nested layout structures.
@@ -68,7 +68,7 @@ PromptForge uses a modular, feature-based architecture structured into dedicated
 - **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite` plugin) + Shadcn UI (Radix UI primitives) + React Bits (animated components) + Framer Motion 12
 - **Icons:** Lucide React (UI) + `@icons-pack/react-simple-icons` (brand icons)
 - **State Management:** Zustand 5
-- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — schema v11 keeps the three v10 date/category indexes for `prompt_history`, adds global and folder-scoped rating indexes, and stores `aspectRatioKey`/`artStyleKey` snapshots for filtering. The v10→v11 migration is atomic and forward-only, with no automatic reset. Prompt History pagination uses filter-bound cursor v2 with adaptive 200-row scan chunks and a 2,000-candidate ceiling per request. A dedicated `cryptoKeys` table persists the non-extractable AES-GCM master key, while sensitive `settings` values (e.g. `active_ai_config`, `ai_config_presets`) remain encrypted at rest.
+- **Storage:** Dexie 4 (IndexedDB) + `dexie-react-hooks` — schema v12 keeps the v11 Prompt History indexes and filtering snapshots, and upgrades templates with `nameKey`, `updatedAt`, `builtinKey`, and `[updatedAt+id]`. The physical template object store remains named `prompts` for compatibility. Migrations are atomic and forward-only, with no automatic reset; template views react to IndexedDB changes through `useLiveQuery`. Prompt History pagination uses filter-bound cursor v2 with adaptive 200-row scan chunks and a 2,000-candidate ceiling per request. A dedicated `cryptoKeys` table persists the non-extractable AES-GCM master key, while sensitive `settings` values (e.g. `active_ai_config`, `ai_config_presets`) remain encrypted at rest.
 - **Form & Validation:** React Hook Form + Zod 4
 - **Routing:** React Router DOM v7
 - **Internationalization:** i18next 26 + `react-i18next` + `i18next-browser-languagedetector`
@@ -99,9 +99,8 @@ src/
 │   ├── formatter/                    # Prompt formatting & queue (components, types)
 │   ├── history/                      # Prompt history (components, hooks, types)
 │   ├── prompt-generator/             # V2 prompt composer (components, engine, hooks, schemas, services, store, types, constants)
-│   ├── prompts/                      # Prompt utilities (components, hooks, services, types, utils)
 │   ├── settings/                     # Settings (components, services, types)
-│   └── templates/                    # Default template definitions
+│   └── templates/                    # Prompt Templates domain (components, hooks, services, types, utils, built-in default)
 ├── hooks/                            # Shared hooks (useAppContext, useEffectiveTheme, useFavicon, useSpotlightBorder, useToast)
 ├── i18n/                             # i18next configuration
 ├── lib/                              # Utilities (axiosSetup, constants, crypto, eventBus, rateLimiter, sanitizeError, utils, validation)
@@ -111,7 +110,7 @@ src/
 │   ├── export/                       # Export services (history, txt)
 │   ├── formatter/                    # Formatter batch services
 │   ├── similarity/                   # Duplicate detection service
-│   └── storage/                      # Per-domain Dexie modules (db, history, folders, settings, generatorState, ideaCache, formatter, prompts) + indexeddb.ts barrel
+│   └── storage/                      # Per-domain Dexie modules (db, history, folders, settings, generatorState, ideaCache, formatter, templates) + indexeddb.ts barrel
 ├── store/                            # Zustand stores (AIConfig, Generator, History, MasterPrompt)
 ├── test/                             # Test setup and utilities
 └── types/                            # Shared TypeScript types

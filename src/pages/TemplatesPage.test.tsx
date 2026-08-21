@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { renderWithProviders, screen } from '@/test/utils'
+import { renderWithProviders, screen, userEvent, within } from '@/test/utils'
 import TemplatesPage from '@/pages/TemplatesPage'
 
 function renderPage() {
@@ -25,5 +25,31 @@ describe('TemplatesPage toolbar responsiveness', () => {
     const wrapper = toolbar.parentElement!
     expect(wrapper.className).toContain('min-w-0')
     expect(wrapper.className).not.toContain('shrink-0')
+  })
+})
+
+describe('TemplatesPage category filter', () => {
+  it('lets users search canonical categories and shows the selected category in the trigger', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    // The filters render only after the initial template load completes.
+    await screen.findByPlaceholderText('Search templates by name or content...')
+
+    const categoryTrigger = screen.getByRole('button', { name: 'Category' })
+    await user.click(categoryTrigger)
+
+    const categorySearch = screen.getByPlaceholderText('Search...')
+    const listbox = screen.getByRole('listbox')
+    expect(categorySearch).toBeInTheDocument()
+
+    await user.type(categorySearch, 'Technology')
+
+    expect(within(listbox).getByText('Technology')).toBeInTheDocument()
+    expect(within(listbox).queryByText('Business')).not.toBeInTheDocument()
+
+    await user.click(within(listbox).getByText('Technology'))
+
+    expect(categoryTrigger).toHaveTextContent('Technology')
   })
 })

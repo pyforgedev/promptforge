@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import db, {
   withRetry,
-  getPrompt,
-  savePrompt,
-  deletePrompt,
+  createTemplate,
+  getTemplate,
+  deleteTemplate,
   getSetting,
   saveSetting,
   peekRawSetting,
@@ -16,7 +16,6 @@ import db, {
   saveFolder,
   deleteFolder
 } from './indexeddb'
-import type { Prompt } from '@/types'
 
 describe('withRetry utility', () => {
   it('resolves immediately if the function succeeds on first try', async () => {
@@ -51,30 +50,22 @@ describe('Dexie Storage Service CRUD', () => {
   })
 
   it('performs CRUD operations for prompt custom templates', async () => {
-    const prompt: Prompt = {
-      id: 'p1',
+    const prompt = await createTemplate({
       name: 'Test Prompt',
       category: 'lifestyle',
-      createdAt: new Date().getTime(),
       content: 'commercial photography of a cup',
-      aspectRatio: '16:9',
-      stylePreset: 'Commercial',
-      niche: 'commercial',
-      tags: ['cup', 'commercial']
-    } as unknown as Prompt
-
-    // Save/Create
-    await savePrompt(prompt)
+      tags: ['cup', 'commercial'],
+    })
 
     // Read
-    const saved = await getPrompt('p1')
+    const saved = await getTemplate(prompt.id)
     expect(saved).toBeDefined()
     expect(saved?.name).toBe('Test Prompt')
     expect(saved?.category).toBe('lifestyle')
 
     // Delete
-    await deletePrompt('p1')
-    const deleted = await getPrompt('p1')
+    await deleteTemplate(prompt.id)
+    const deleted = await getTemplate(prompt.id)
     expect(deleted).toBeUndefined()
   })
 

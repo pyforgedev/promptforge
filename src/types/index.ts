@@ -6,16 +6,6 @@ export interface AppPreferences {
   rememberApiKey: boolean
 }
 
-export interface Prompt {
-  id: string
-  name: string
-  content: string
-  category: string
-  tags: string[]
-  createdAt: number
-  updatedAt: number
-}
-
 export interface AIServiceConfig {
   provider: string
   apiKey: string
