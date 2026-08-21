@@ -1371,6 +1371,33 @@ containing nested metric cards.
   batches created earlier**; ID **Tidak tersedia untuk batch yang dibuat
   sebelumnya**.
 
+## 6.22 Formatter Active Prompt Disclosure
+
+Long prompts in the active Formatter queue card start visually clamped to four
+lines below `sm` and six lines at `sm+`. The card keeps one exact escaped prompt
+text node with its original whitespace and word breaking; it never slices,
+normalizes, duplicates, or parses the prompt as HTML.
+
+- **Eligibility:** show the disclosure only after the clamped paragraph's
+  actual geometry exceeds its visible height by more than 1px. Measure after
+  layout, on `ResizeObserver` updates, and after fonts are ready. Once overflow
+  is detected for the active item, latch the result so expanding or resizing
+  cannot remove the focused control. Disconnect observers and ignore stale
+  asynchronous callbacks after unmount.
+- **State lifetime:** each newly active or revisited item starts collapsed,
+  keyed by stable item identity. A status-only refresh of the same item keeps
+  its current disclosure state. Never persist expansion state in page state,
+  storage, or formatter records.
+- **Control and accessibility:** use one visible localized shadcn Button with
+  **Show full** / **Hide full** (ID: **Tampilkan penuh** / **Sembunyikan tampilan
+  penuh**), native keyboard behavior, `aria-expanded`, and `aria-controls`
+  pointing to a `useId()`-generated prompt ID. Do not add a tooltip, live
+  region, focus movement, height animation, or Radix Collapsible.
+- **Data boundary:** visual clamping is neither redaction nor DOM/performance
+  optimization. The complete prompt remains in the DOM and accessibility tree.
+  Copy continues to use the exact active item model value, never rendered text.
+  This behavior adds no service, storage, schema, or dependency change.
+
 ---
 
 ## 7. Layout & Spacing
@@ -1490,3 +1517,4 @@ containing nested metric cards.
 | v1.12 | Page header action toolbar now uses progressive icon collapse (§6.19): all actions are icon-only below `sm`, then Create, Import, Export, and Reset Default reveal labels at `sm`, `md`, `lg`, and `xl`; one wrapping flex toolbar and one accessible, tooltip-backed Button per action replace the historical base 2×2 grid |
 | v1.13 | Added Formatter input disclosure contract (§6.20): controlled Radix semantics, queue-aware open defaults and transitions, parent-owned input persistence, single upload input, measured-height motion, and programmatic-collapse focus restoration |
 | v1.14 | Added Formatter process summary contract (§6.21): compact static strip, semantic localized metrics, immutable batch snapshots, duplicate-row counting, and migration-free legacy fallback behavior |
+| v1.15 | Added Formatter active prompt disclosure contract (§6.22): responsive measured line clamp, item-scoped state, accessible localized control, exact model-driven copy, and explicit non-confidentiality boundary |

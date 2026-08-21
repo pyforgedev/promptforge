@@ -95,6 +95,36 @@ describe('FormatterPage optimistic copy flow', () => {
     expect(screen.getByText('Prompt #2')).toBeInTheDocument()
   })
 
+  it('copies a multiline Unicode prompt exactly and advances normally', async () => {
+    const exactPrompt = [
+      '  Opening line 🌌 with leading spaces',
+      'A deliberately long second line with punctuation <>& and trailing spaces  ',
+      '',
+      '硬い改行を含む Unicode line — café — 🚀',
+      'Final line keeps its trailing whitespace  ',
+    ].join('\n')
+    await createTestBatch([exactPrompt, 'next prompt'])
+
+    renderPage()
+    const user = userEvent.setup()
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    })
+
+    await screen.findByText('Prompt #1')
+    await user.click(screen.getByRole('button', { name: COPY_BUTTON_NAME }))
+
+    expect(writeTextMock).toHaveBeenCalledOnce()
+    expect(writeTextMock).toHaveBeenCalledWith(exactPrompt)
+    await screen.findByText('Prompt #2')
+    await waitFor(async () => {
+      const settled = await getActiveBatch()
+      expect(settled?.batch.currentIndex).toBe(1)
+      expect(settled?.items[0].status).toBe('copied')
+    })
+  })
+
   it('reverts to the previous prompt and shows error toast when the DB write fails', async () => {
     vi.mocked(markCopiedAndAdvance).mockRejectedValueOnce(new Error('db down'))
 
